@@ -16,10 +16,13 @@
 
     <SearchView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:id="@+id/srch_vw_all_contacts" />
 
     <ListView
         android:layout_width="match_parent"
-        android:layout_height="fill_parent"
-        android:divider="@android:color/darker_gray" />
+        android:layout_height="wrap_content"
+        android:id="@+id/lst_vw_all_contacts"
+        android:divider="@android:color/darker_gray"
+        android:dividerHeight="0.5dp"/>
 </LinearLayout>
