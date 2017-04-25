@@ -21,4 +21,15 @@ public final class AppUtils {
         }
         return connectionViewDataList;
     }
+
+    public static List<ConnectionViewData> getRecentConnections(){
+        //for testing
+        List<ConnectionViewData> connectionViewDataList = new ArrayList<>();
+        for(int i = 0; i < 10; i++){
+            ConnectionViewData data = new ConnectionViewData();
+            data.profileName = "Connection " + (i + 1);
+            connectionViewDataList.add(data);
+        }
+        return connectionViewDataList;
+    }
 }

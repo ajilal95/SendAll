@@ -1,6 +1,7 @@
 package com.aj.sendall.adapter;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -49,27 +50,39 @@ public class ConnectionListAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        ConnectionViewData profileData = null;
-        if(dataList != null){
-            profileData = dataList.get(position);
+        if(convertView == null){
+            convertView = ((LayoutInflater)context
+                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE))
+                    .inflate(R.layout.contact_list_item, parent, false);
         }
-        if(profileData != null){
-            if(convertView == null){
-                convertView = ((LayoutInflater)context
-                        .getSystemService(Context.LAYOUT_INFLATER_SERVICE))
-                        .inflate(R.layout.contact_list_item, parent, false);
-            }
+
+        convertView = getProfileDataView(position, convertView);
+        return convertView;
+    }
+
+    private View getProfileDataView(int position, View convertView) {
+        ConnectionViewData profileData = getProfileData(position);
+        if (profileData != null) {
+            ImageView profilePic = (ImageView) convertView.findViewById(R.id.img_vw_profile_pic);
+            profilePic.setVisibility(View.VISIBLE);
             if (profileData.profilePicBitmap != null) {
-                ImageView profilePic = (ImageView) convertView.findViewById(R.id.img_vw_profile_pic);
                 profilePic.setImageBitmap(profileData.profilePicBitmap);
             }
-            if(profileData.profileName == null){
+            if (profileData.profileName == null) {
                 profileData.profileName = "";
             }
-            TextView profileName = (TextView)convertView.findViewById(R.id.txt_vw_profile_name);
+            TextView profileName = (TextView) convertView.findViewById(R.id.txt_vw_profile_name);
             profileName.setText(profileData.profileName);
-            return convertView;
+            profileName.setTextColor(Color.BLACK);
         }
-        return null;
+        return convertView;
+    }
+
+    private ConnectionViewData getProfileData(int position) {
+        ConnectionViewData profileData = null;
+        if (dataList != null) {
+            profileData = dataList.get(position);
+        }
+        return profileData;
     }
 }
