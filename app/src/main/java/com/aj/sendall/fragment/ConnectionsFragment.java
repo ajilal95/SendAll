@@ -14,7 +14,7 @@ import android.widget.ListView;
 import com.aj.sendall.R;
 import com.aj.sendall.adapter.ConnectionListAdapter;
 import com.aj.sendall.dto.ConnectionViewData;
-import com.aj.sendall.utils.AppUtils;
+import com.aj.sendall.utils.ConnectionsActivityService;
 
 import java.util.List;
 
@@ -75,9 +75,9 @@ public class ConnectionsFragment extends Fragment {
         protected List<ConnectionViewData> doInBackground(Void... params) {
             List<ConnectionViewData> connections;
             if(showOnlyRecent){
-                connections = AppUtils.getRecentConnections();
+                connections = ConnectionsActivityService.getRecentConnections();
             } else {
-                connections = AppUtils.getAllConnections();
+                connections = ConnectionsActivityService.getAllConnections();
             }
             return connections;
         }

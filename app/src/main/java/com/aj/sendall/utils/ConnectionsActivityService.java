@@ -9,7 +9,7 @@ import java.util.List;
  * Created by ajilal on 24/4/17.
  */
 
-public final class AppUtils {
+public final class ConnectionsActivityService {
 
     public static List<ConnectionViewData> getAllConnections(){
         //for testing

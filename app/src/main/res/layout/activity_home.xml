@@ -19,6 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
+            app:layout_scrollFlags="snap"
             app:popupTheme="@style/AppTheme.PopupOverlay"
             app:logo="@mipmap/ic_launcher"
             android:backgroundTint="@android:color/black">

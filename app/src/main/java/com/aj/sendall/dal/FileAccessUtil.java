@@ -1,4 +1,4 @@
-package com.aj.sendall.utils;
+package com.aj.sendall.dal;
 
 import android.os.Environment;
 
