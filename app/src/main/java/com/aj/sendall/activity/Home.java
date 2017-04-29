@@ -16,6 +16,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import android.widget.SearchView;
 import android.widget.TextView;
 
 import com.aj.sendall.R;
@@ -25,6 +26,7 @@ import com.aj.sendall.fragment.GalleryFragment;
 public class Home extends AppCompatActivity {
     private ViewPager mViewPager;
     private TabLayout tabLayout;
+    private SearchView searchView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,14 +47,16 @@ public class Home extends AppCompatActivity {
     private void findViews(){
         mViewPager = (ViewPager) findViewById(R.id.container);
         tabLayout = (TabLayout) findViewById(R.id.tabs_vw_home);
+        searchView = (SearchView) findViewById(R.id.srch_vw_home);
     }
 
     private void initViews(){
         mViewPager.setAdapter(new HomePageTabsAdapter(getSupportFragmentManager()));
-        mViewPager.setCurrentItem(getIntent().getIntExtra("tabIndex", 1));
+        mViewPager.setCurrentItem(getIntent().getIntExtra("tabIndex", 0));
 
         tabLayout.setupWithViewPager(mViewPager);
 
+        searchView.setSubmitButtonEnabled(true);
     }
 
     @Override
@@ -138,7 +142,7 @@ public class Home extends AppCompatActivity {
         public CharSequence getPageTitle(int position) {
             switch (position) {
                 case 0:
-                    return "Connections";
+                    return "Devices";
                 case 1:
                     return "Gallery";
                 case 2:

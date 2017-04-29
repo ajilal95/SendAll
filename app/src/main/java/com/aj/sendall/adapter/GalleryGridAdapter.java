@@ -1,11 +1,11 @@
 package com.aj.sendall.adapter;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,31 +16,39 @@ import android.widget.TextView;
 import com.aj.sendall.R;
 import com.aj.sendall.consts.MediaConsts;
 import com.aj.sendall.dto.FileInfoDTO;
+import com.aj.sendall.interfaces.ItemSelectableView;
 import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by ajilal on 25/4/17.
  */
 
 public class GalleryGridAdapter extends RecyclerView.Adapter<GalleryGridAdapter.ViewHolder>{
-    private String baseUri = "";
-    private int mediaType;
+    private String baseUriString = "";
+    private final int mediaType;
     private String[] projections;
     private String sortField;
-    private Context context;
+    private final Context context;
     private List<FileInfoDTO> fileInfoDTOList;
+
+    private Set<Uri> selectedItemUris = new HashSet<>();
 
     private int thumbnailWidth = 96;
     private int thumbnailHeight = 96;
 
     private int titleStringMaxLength = 14;
 
-    public GalleryGridAdapter(Context context, int mediaType){
+    private ItemSelectableView viewParent;
+
+    public GalleryGridAdapter(Context context, int mediaType, ItemSelectableView viewParent){
         this.context = context;
         this.mediaType = mediaType;
+        this.viewParent = viewParent;
         setSortField(mediaType);
         setProjections(mediaType);
         setBaseContentUri(mediaType);
@@ -49,45 +57,46 @@ public class GalleryGridAdapter extends RecyclerView.Adapter<GalleryGridAdapter.
 
     private void setSortField(int mediaType) {
         switch(mediaType){
-            case MediaConsts.VIDEO :
-                sortField = MediaStore.Video.VideoColumns.DATE_MODIFIED;
+            case MediaConsts.TYPE_VIDEO:
+                sortField = MediaConsts.VIDEO_SORT_FIELD;
                 break;
-            case MediaConsts.AUDIO:
-                sortField = MediaStore.Audio.AudioColumns.DATE_MODIFIED;
+            case MediaConsts.TYPE_AUDIO:
+                sortField = MediaConsts.AUDIO_SORT_FIELD;
                 break;
-            case MediaConsts.IMAGE:
-                sortField = MediaStore.Images.ImageColumns.DATE_MODIFIED;
+            case MediaConsts.TYPE_IMAGE:
+                sortField = MediaConsts.IMAGE_SORT_FIELD;
                 break;
-            case MediaConsts.OTHER:
-                sortField = MediaStore.Files.FileColumns.DATE_MODIFIED;
+            case MediaConsts.TYPE_OTHER:
+                sortField = MediaConsts.OTHER_SORT_FIELD;
                 break;
         }
     }
 
     private void setProjections(int mediaType){
         switch(mediaType){
-            case MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO :
+            case MediaConsts.TYPE_VIDEO:
                 projections = new String[]{
                         MediaStore.Video.VideoColumns._ID,
                         MediaStore.Video.VideoColumns.TITLE,
                         MediaStore.Video.VideoColumns.SIZE
                 };
                 break;
-            case MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO:
+            case MediaConsts.TYPE_AUDIO:
                 projections = new String[]{
                         MediaStore.Audio.AudioColumns._ID,
                         MediaStore.Audio.AudioColumns.TITLE,
-                        MediaStore.Audio.AudioColumns.SIZE
+                        MediaStore.Audio.AudioColumns.SIZE,
+                        MediaStore.Audio.AudioColumns.ALBUM_ID
                 };
                 break;
-            case MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE:
+            case MediaConsts.TYPE_IMAGE:
                 projections = new String[]{
                         MediaStore.Images.ImageColumns._ID,
                         MediaStore.Images.ImageColumns.TITLE,
                         MediaStore.Images.ImageColumns.SIZE
                 };
                 break;
-            case MediaStore.Files.FileColumns.MEDIA_TYPE_NONE:
+            case MediaConsts.TYPE_OTHER:
                 projections = new String[]{
                         MediaStore.Files.FileColumns._ID,
                         MediaStore.Files.FileColumns.TITLE,
@@ -99,17 +108,17 @@ public class GalleryGridAdapter extends RecyclerView.Adapter<GalleryGridAdapter.
 
     private void setBaseContentUri(int mediaType){
         switch(mediaType){
-            case MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO :
-                baseUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI.toString();
+            case MediaConsts.TYPE_VIDEO:
+                baseUriString = MediaStore.Video.Media.EXTERNAL_CONTENT_URI.toString();
                 break;
-            case MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO:
-                baseUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString();
+            case MediaConsts.TYPE_AUDIO:
+                baseUriString = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString();
                 break;
-            case MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE:
-                baseUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString();
+            case MediaConsts.TYPE_IMAGE:
+                baseUriString = MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString();
                 break;
-            case MediaStore.Files.FileColumns.MEDIA_TYPE_NONE:
-                baseUri = MediaStore.Files.getContentUri("external").toString();
+            case MediaConsts.TYPE_OTHER:
+                baseUriString = MediaStore.Files.getContentUri("external").toString();
                 break;
         }
     }
@@ -131,41 +140,39 @@ public class GalleryGridAdapter extends RecyclerView.Adapter<GalleryGridAdapter.
             int sizeColIndex = cursor.getColumnIndex(projections[2]);
             while(cursor.moveToNext()){
                 FileInfoDTO dto = new FileInfoDTO();
-                dto.id = cursor.getInt(idColIndex);
                 dto.title = cursor.getString(titleColIndex);
+                if(dto.title == null){
+                    continue;//Cannot list the file
+                }
+                dto.id = cursor.getInt(idColIndex);
                 if(dto.title.length() > titleStringMaxLength){
                     dto.title = dto.title.substring(0, titleStringMaxLength - 3) + "...";
                 }
                 long sizeInBytes = cursor.getLong(sizeColIndex);
-                if(sizeInBytes < 1024l){
-                    dto.size = sizeInBytes + " Bytes";
-                } else if(sizeInBytes < (1024 * 1024)){
-                    dto.size = (sizeInBytes / 1024) + " KB";
-                } else if(sizeInBytes < (1024 * 1024 * 1024)){
-                    String sizeString = ((float) sizeInBytes) / (1024 * 1024) + "";
-                    int indexOfDecimalPoint = sizeString.indexOf('.');
-                    sizeString = sizeString.substring(0,
-                            indexOfDecimalPoint > 0 ?
-                                    Math.min(indexOfDecimalPoint + 3, sizeString.length()) :
-                                    sizeString.length());
-                    dto.size = sizeString + " MB";
-                } else {
-                    String sizeString = ((float) sizeInBytes) / (1024 * 1024 * 1024) + "";
-                    int indexOfDecimalPoint = sizeString.indexOf('.');
-                    sizeString = sizeString.substring(0,
-                            indexOfDecimalPoint > 0 ?
-                                    Math.min(indexOfDecimalPoint + 3, sizeString.length()) :
-                                    sizeString.length());
-                    dto.size = sizeString + " MB";
+                dto.size = sizeInBytes;
+                if(mediaType == MediaConsts.TYPE_AUDIO){
+                    dto.albumId = cursor.getInt(cursor.getColumnIndex(MediaStore.Audio.AudioColumns.ALBUM_ID));
                 }
+                dto.uri = Uri.parse(baseUriString + '/' + dto.id);
                 fileInfoDTOList.add(dto);
             }
+            cursor.close();
         }
     }
 
-    @NonNull
     private String getSelectString() {
-        return MediaStore.Files.FileColumns.MEDIA_TYPE + "=" + mediaType;
+        switch(mediaType){
+            case MediaConsts.TYPE_VIDEO:
+            case MediaConsts.TYPE_AUDIO:
+            case MediaConsts.TYPE_IMAGE: return MediaConsts.COL_MEDIA_TYPE + "=" + mediaType;
+            case MediaConsts.TYPE_OTHER: return getSelectStringForNonMediaTypes();
+        }
+        return "";
+    }
+
+    private String getSelectStringForNonMediaTypes(){
+        String selectString = MediaConsts.COL_MIME_TYPE + " IN " + MediaConsts.OTHER_FILE_MIME_SET;
+        return selectString;
     }
 
     public void refresh(){
@@ -184,17 +191,53 @@ public class GalleryGridAdapter extends RecyclerView.Adapter<GalleryGridAdapter.
     public void onBindViewHolder(ViewHolder holder, int position) {
         FileInfoDTO fileInfoDTO = fileInfoDTOList.get(position);
         holder.txtVwFileName.setText(fileInfoDTO.title);
-        holder.txtVwFileSize.setText(fileInfoDTO.size);
+        holder.txtVwFileSize.setText(fileInfoDTO.getSizeString());
 
-        Uri fileUri = Uri.parse(baseUri + "/" + fileInfoDTO.id);
-        Glide.with(context)
-                .load(fileUri)
-                .centerCrop()
-                .override(thumbnailWidth, thumbnailHeight)
-                .into(holder.imgVwThumbnail);
+        setTumbnail(holder, fileInfoDTO);
 
-        holder.itemView.setTag(fileUri);
+        holder.itemView.setTag(fileInfoDTO);
+        if(fileInfoDTO.isSelected){
+            holder.itemView.setBackgroundResource(R.color.colorPrimary);
+        } else {
+            holder.itemView.setBackgroundResource(R.color.colorGrey);
+        }
     }
+
+    private void setTumbnail(ViewHolder holder, FileInfoDTO fileInfoDTO) {
+        switch(mediaType){
+            case MediaConsts.TYPE_VIDEO:
+                Glide.with(context)
+                        .load(fileInfoDTO.uri)
+                        .centerCrop()
+                        .override(thumbnailWidth, thumbnailHeight)
+                        .into(holder.imgVwThumbnail);
+                break;
+            case MediaConsts.TYPE_IMAGE:
+                Glide.with(context)
+                            .load(fileInfoDTO.uri)
+                            .centerCrop()
+                            .override(thumbnailWidth, thumbnailHeight)
+                            .into(holder.imgVwThumbnail);
+                break;
+            case MediaConsts.TYPE_AUDIO:
+                Uri albumArtURI = ContentUris.withAppendedId(MediaConsts.ALBUM_ART_URI, fileInfoDTO.albumId);
+                Glide.with(context)
+                        .load(albumArtURI)
+                        .error(R.mipmap.def_media_thumb)
+                        .centerCrop()
+                        .override(thumbnailWidth, thumbnailHeight)
+                        .into(holder.imgVwThumbnail);
+                break;
+            case MediaConsts.TYPE_OTHER:
+                Glide.with(context)
+                        .load(R.mipmap.def_other_file_thumb)
+                        .centerCrop()
+                        .override(thumbnailWidth, thumbnailHeight)
+                        .into(holder.imgVwThumbnail);
+                break;
+        }
+    }
+
 
     @Override
     public int getItemCount() {
@@ -210,6 +253,25 @@ public class GalleryGridAdapter extends RecyclerView.Adapter<GalleryGridAdapter.
             imgVwThumbnail = (ImageView) view.findViewById(R.id.img_vw_thumbnail);
             txtVwFileName = (TextView) view.findViewById(R.id.txt_vw_filename);
             txtVwFileSize = (TextView) view.findViewById(R.id.txt_vw_file_size);
+            setClickListeners(view);
+        }
+
+        private void setClickListeners(View view){
+            view.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ((FileInfoDTO)v.getTag()).isSelected = !((FileInfoDTO)v.getTag()).isSelected;
+                    if(((FileInfoDTO)v.getTag()).isSelected){
+                        v.setBackgroundResource(R.color.colorPrimary);
+                        selectedItemUris.add(((FileInfoDTO)v.getTag()).uri);
+                        viewParent.incrementTotalNoOfSelections();
+                    } else {
+                        v.setBackgroundResource(R.color.colorGrey);
+                        selectedItemUris.remove(((FileInfoDTO)v.getTag()).uri);
+                        viewParent.decrementTotalNoOfSelections();
+                    }
+                }
+            });
         }
     }
 }

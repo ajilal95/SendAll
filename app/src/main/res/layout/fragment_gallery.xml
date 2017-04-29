@@ -1,110 +1,126 @@
-<HorizontalScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.aj.sendall.fragment.GalleryFragment"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content">
-
-    <LinearLayout
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
+    <HorizontalScrollView
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:orientation="horizontal"
-        >
+        android:layout_height="wrap_content">
+
         <LinearLayout
-            android:layout_width="@dimen/gallery_section_width"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:orientation="horizontal"
+            >
+            <LinearLayout
+                android:layout_width="@dimen/gallery_section_width"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
-            <TextView
-                android:text="@string/string_videos"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="@dimen/appbar_padding_top"
-                android:background="@color/colorDarkGrey"
-                android:textColor="@color/colorWhite"
-                android:layout_marginBottom="@dimen/appbar_padding_top"
-                android:id="@+id/txt_vw_lable_videos" />
+                <TextView
+                    android:text="@string/string_videos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/appbar_padding_top"
+                    android:background="@color/colorDarkGrey"
+                    android:textColor="@color/colorWhite"
+                    android:layout_marginBottom="@dimen/appbar_padding_top"
+                    android:id="@+id/txt_vw_lable_videos" />
 
-            <android.support.v7.widget.RecyclerView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/recycl_vw_gallery_videos"
-                android:scrollbars="vertical"
-                android:layout_marginBottom="@dimen/appbar_padding_top"/>
+                <android.support.v7.widget.RecyclerView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/recycl_vw_gallery_videos"
+                    android:scrollbars="vertical"
+                    android:layout_marginBottom="@dimen/appbar_padding_top"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="@dimen/gallery_section_width"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:text="@string/string_audios"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/appbar_padding_top"
+                    android:background="@color/colorDarkGrey"
+                    android:textColor="@color/colorWhite"
+                    android:layout_marginBottom="@dimen/appbar_padding_top"
+                    android:id="@+id/txt_vw_lable_audios"/>
+
+                <android.support.v7.widget.RecyclerView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/recycl_vw_gallery_audios"
+                    android:scrollbars="vertical"
+                    android:layout_marginBottom="@dimen/appbar_padding_top"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="@dimen/gallery_section_width"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:text="@string/string_images"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/appbar_padding_top"
+                    android:background="@color/colorDarkGrey"
+                    android:textColor="@color/colorWhite"
+                    android:layout_marginBottom="@dimen/appbar_padding_top"
+                    android:id="@+id/txt_vw_lable_images"/>
+
+                <android.support.v7.widget.RecyclerView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/recycl_vw_gallery_images"
+                    android:scrollbars="vertical"
+                    android:layout_marginBottom="@dimen/appbar_padding_top"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="@dimen/gallery_section_width"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:text="@string/string_other"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/appbar_padding_top"
+                    android:background="@color/colorDarkGrey"
+                    android:textColor="@color/colorWhite"
+                    android:layout_marginBottom="@dimen/appbar_padding_top"
+                    android:id="@+id/txt_vw_lable_other"/>
+
+                <android.support.v7.widget.RecyclerView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/recycl_vw_gallery_other"
+                    android:scrollbars="vertical"
+                    android:layout_marginBottom="@dimen/appbar_padding_top"/>
+
+            </LinearLayout>
 
         </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="@dimen/gallery_section_width"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+    </HorizontalScrollView>
 
-            <TextView
-                android:text="@string/string_audios"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="@dimen/appbar_padding_top"
-                android:background="@color/colorDarkGrey"
-                android:textColor="@color/colorWhite"
-                android:layout_marginBottom="@dimen/appbar_padding_top"
-                android:id="@+id/txt_vw_lable_audios"/>
-
-            <android.support.v7.widget.RecyclerView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/recycl_vw_gallery_audios"
-                android:scrollbars="vertical"
-                android:layout_marginBottom="@dimen/appbar_padding_top"/>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="@dimen/gallery_section_width"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
-
-            <TextView
-                android:text="@string/string_images"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="@dimen/appbar_padding_top"
-                android:background="@color/colorDarkGrey"
-                android:textColor="@color/colorWhite"
-                android:layout_marginBottom="@dimen/appbar_padding_top"
-                android:id="@+id/txt_vw_lable_images"/>
-
-            <android.support.v7.widget.RecyclerView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/recycl_vw_gallery_images"
-                android:scrollbars="vertical"
-                android:layout_marginBottom="@dimen/appbar_padding_top"/>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="@dimen/gallery_section_width"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
-
-            <TextView
-                android:text="@string/string_other"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="@dimen/appbar_padding_top"
-                android:background="@color/colorDarkGrey"
-                android:textColor="@color/colorWhite"
-                android:layout_marginBottom="@dimen/appbar_padding_top"
-                android:id="@+id/txt_vw_lable_other"/>
-
-            <android.support.v7.widget.RecyclerView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/recycl_vw_gallery_other"
-                android:scrollbars="vertical"
-                android:layout_marginBottom="@dimen/appbar_padding_top"/>
-
-        </LinearLayout>
-
-    </LinearLayout>
-
-</HorizontalScrollView>
+    <android.support.design.widget.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="@dimen/fab_margin"
+        android:clickable="true"
+        app:fabSize="normal"
+        app:srcCompat="@mipmap/send_white_up_arrow"
+        app:backgroundTint="@color/colorPrimaryDark"
+        android:id="@+id/flt_btn_send_items_gallery" />
+</android.support.design.widget.CoordinatorLayout>
