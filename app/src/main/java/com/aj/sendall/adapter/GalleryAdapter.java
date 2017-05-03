@@ -1,7 +1,6 @@
 package com.aj.sendall.adapter;
 
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -17,7 +16,7 @@ import com.aj.sendall.R;
 import com.aj.sendall.consts.MediaConsts;
 import com.aj.sendall.dto.FileInfoDTO;
 import com.aj.sendall.interfaces.ItemSelectableView;
-import com.bumptech.glide.Glide;
+import com.aj.sendall.utils.AppUtils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -28,24 +27,19 @@ import java.util.Set;
  * Created by ajilal on 25/4/17.
  */
 
-public class GalleryGridAdapter extends RecyclerView.Adapter<GalleryGridAdapter.ViewHolder>{
-    private String baseUriString = "";
+public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHolder>{
+    private String baseUriString;
     private final int mediaType;
     private String[] projections;
     private String sortField;
     private final Context context;
     private List<FileInfoDTO> fileInfoDTOList;
 
-    private Set<Uri> selectedItemUris = new HashSet<>();
-
-    private int thumbnailWidth = 96;
-    private int thumbnailHeight = 96;
-
-    private int titleStringMaxLength = 14;
+    private Set<Uri> selectedItemUris;
 
     private ItemSelectableView viewParent;
 
-    public GalleryGridAdapter(Context context, int mediaType, ItemSelectableView viewParent){
+    public GalleryAdapter(Context context, int mediaType, ItemSelectableView viewParent){
         this.context = context;
         this.mediaType = mediaType;
         this.viewParent = viewParent;
@@ -124,6 +118,12 @@ public class GalleryGridAdapter extends RecyclerView.Adapter<GalleryGridAdapter.
     }
 
     public void initAdapter(){
+        selectedItemUris = new HashSet<>();
+        fileInfoDTOList = getGalleryItemsList();
+    }
+
+    private List<FileInfoDTO> getGalleryItemsList() {
+        List<FileInfoDTO> fileInfoDTOs = null;
         ContentResolver contentResolver = context.getContentResolver();
         Uri uri = MediaStore.Files.getContentUri("external");
         String select = getSelectString();
@@ -134,7 +134,7 @@ public class GalleryGridAdapter extends RecyclerView.Adapter<GalleryGridAdapter.
         }
         Cursor cursor = contentResolver.query(uri, projections, select, selectionArgs, sort);
         if(cursor != null) {
-            fileInfoDTOList = new ArrayList<>();
+            fileInfoDTOs = new ArrayList<>();
             int idColIndex = cursor.getColumnIndex(projections[0]);
             int titleColIndex = cursor.getColumnIndex(projections[1]);
             int sizeColIndex = cursor.getColumnIndex(projections[2]);
@@ -145,19 +145,16 @@ public class GalleryGridAdapter extends RecyclerView.Adapter<GalleryGridAdapter.
                     continue;//Cannot list the file
                 }
                 dto.id = cursor.getInt(idColIndex);
-                if(dto.title.length() > titleStringMaxLength){
-                    dto.title = dto.title.substring(0, titleStringMaxLength - 3) + "...";
-                }
-                long sizeInBytes = cursor.getLong(sizeColIndex);
-                dto.size = sizeInBytes;
+                dto.size = cursor.getLong(sizeColIndex);
                 if(mediaType == MediaConsts.TYPE_AUDIO){
                     dto.albumId = cursor.getInt(cursor.getColumnIndex(MediaStore.Audio.AudioColumns.ALBUM_ID));
                 }
                 dto.uri = Uri.parse(baseUriString + '/' + dto.id);
-                fileInfoDTOList.add(dto);
+                fileInfoDTOs.add(dto);
             }
             cursor.close();
         }
+        return fileInfoDTOs;
     }
 
     private String getSelectString() {
@@ -175,8 +172,8 @@ public class GalleryGridAdapter extends RecyclerView.Adapter<GalleryGridAdapter.
         return selectString;
     }
 
-    public void refresh(){
-        initAdapter();
+    public Set<Uri> getSelectedItemUris(){
+        return selectedItemUris;
     }
 
     @Override
@@ -190,54 +187,25 @@ public class GalleryGridAdapter extends RecyclerView.Adapter<GalleryGridAdapter.
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         FileInfoDTO fileInfoDTO = fileInfoDTOList.get(position);
-        holder.txtVwFileName.setText(fileInfoDTO.title);
-        holder.txtVwFileSize.setText(fileInfoDTO.getSizeString());
+        if(mediaType != MediaConsts.TYPE_IMAGE) {
+            holder.txtVwFileName.setVisibility(View.VISIBLE);
+            holder.txtVwFileName.setText(AppUtils.getShortTitle(fileInfoDTO.title));
+        } else {
+            holder.txtVwFileName.setVisibility(View.GONE);
+        }
+        holder.txtVwFileSize.setText(AppUtils.getFileSizeString(fileInfoDTO.size));
 
-        setTumbnail(holder, fileInfoDTO);
+        AppUtils.setFileThumbnail(
+                mediaType,
+                context,
+                holder.imgVwThumbnail,
+                MediaConsts.MEDIA_THUMBNAIL_WIDTH_SMALL,
+                MediaConsts.MEDIA_THUMBNAIL_HEIGHT_SMALL,
+                fileInfoDTO);
 
         holder.itemView.setTag(fileInfoDTO);
-        if(fileInfoDTO.isSelected){
-            holder.itemView.setBackgroundResource(R.color.colorPrimary);
-        } else {
-            holder.itemView.setBackgroundResource(R.color.colorGrey);
-        }
+        AppUtils.setViewSelectedAppearance(holder.itemView, fileInfoDTO.isSelected);
     }
-
-    private void setTumbnail(ViewHolder holder, FileInfoDTO fileInfoDTO) {
-        switch(mediaType){
-            case MediaConsts.TYPE_VIDEO:
-                Glide.with(context)
-                        .load(fileInfoDTO.uri)
-                        .centerCrop()
-                        .override(thumbnailWidth, thumbnailHeight)
-                        .into(holder.imgVwThumbnail);
-                break;
-            case MediaConsts.TYPE_IMAGE:
-                Glide.with(context)
-                            .load(fileInfoDTO.uri)
-                            .centerCrop()
-                            .override(thumbnailWidth, thumbnailHeight)
-                            .into(holder.imgVwThumbnail);
-                break;
-            case MediaConsts.TYPE_AUDIO:
-                Uri albumArtURI = ContentUris.withAppendedId(MediaConsts.ALBUM_ART_URI, fileInfoDTO.albumId);
-                Glide.with(context)
-                        .load(albumArtURI)
-                        .error(R.mipmap.def_media_thumb)
-                        .centerCrop()
-                        .override(thumbnailWidth, thumbnailHeight)
-                        .into(holder.imgVwThumbnail);
-                break;
-            case MediaConsts.TYPE_OTHER:
-                Glide.with(context)
-                        .load(R.mipmap.def_other_file_thumb)
-                        .centerCrop()
-                        .override(thumbnailWidth, thumbnailHeight)
-                        .into(holder.imgVwThumbnail);
-                break;
-        }
-    }
-
 
     @Override
     public int getItemCount() {
@@ -250,9 +218,9 @@ public class GalleryGridAdapter extends RecyclerView.Adapter<GalleryGridAdapter.
         private TextView txtVwFileSize;
         public ViewHolder(View view){
             super(view);
-            imgVwThumbnail = (ImageView) view.findViewById(R.id.img_vw_thumbnail);
-            txtVwFileName = (TextView) view.findViewById(R.id.txt_vw_filename);
-            txtVwFileSize = (TextView) view.findViewById(R.id.txt_vw_file_size);
+            imgVwThumbnail = (ImageView) view.findViewById(R.id.gallery_img_vw_thumbnail);
+            txtVwFileName = (TextView) view.findViewById(R.id.gallery_txt_vw_filename);
+            txtVwFileSize = (TextView) view.findViewById(R.id.gallery_txt_vw_file_size);
             setClickListeners(view);
         }
 
@@ -261,12 +229,11 @@ public class GalleryGridAdapter extends RecyclerView.Adapter<GalleryGridAdapter.
                 @Override
                 public void onClick(View v) {
                     ((FileInfoDTO)v.getTag()).isSelected = !((FileInfoDTO)v.getTag()).isSelected;
+                    AppUtils.setViewSelectedAppearance(v, ((FileInfoDTO)v.getTag()).isSelected);
                     if(((FileInfoDTO)v.getTag()).isSelected){
-                        v.setBackgroundResource(R.color.colorPrimary);
                         selectedItemUris.add(((FileInfoDTO)v.getTag()).uri);
                         viewParent.incrementTotalNoOfSelections();
                     } else {
-                        v.setBackgroundResource(R.color.colorGrey);
                         selectedItemUris.remove(((FileInfoDTO)v.getTag()).uri);
                         viewParent.decrementTotalNoOfSelections();
                     }

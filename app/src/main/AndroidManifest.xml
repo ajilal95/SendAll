@@ -20,6 +20,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".activity.PesonalInteractionView"
+            android:label="@string/title_activity_pesonal_interaction_view"
+            android:parentActivityName=".activity.Home"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.aj.sendall.activity.Home" />
+        </activity>
     </application>
 
 </manifest>

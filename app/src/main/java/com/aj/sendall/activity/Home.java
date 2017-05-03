@@ -128,7 +128,7 @@ public class Home extends AppCompatActivity {
                 case 0 :
                     return ConnectionsFragment.newInstance(false);
                 case 1 :
-                    return GalleryFragment.newInstance();
+                    return GalleryFragment.newInstance(Home.this);
             }
             return PlaceholderFragment.newInstance(position + 1);
         }

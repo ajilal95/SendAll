@@ -4,7 +4,7 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/colorGrey"
+    android:background="@drawable/style_item_not_selected"
     android:layout_margin="@dimen/gallery_item_margin"
     android:id="@+id/lnrlyt_gallery_grid_item">
 
@@ -12,17 +12,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="@dimen/appbar_padding_top"
-        android:id="@+id/img_vw_thumbnail" />
+        android:id="@+id/gallery_img_vw_thumbnail" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="17sp"
-        android:id="@+id/txt_vw_filename" />
+        android:textColor="@color/colorBlack"
+        android:textSize="15sp"
+        android:id="@+id/gallery_txt_vw_filename" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/txt_vw_file_size"/>
+        android:layout_gravity="bottom"
+        android:id="@+id/gallery_txt_vw_file_size"/>
 
 </LinearLayout>

@@ -18,11 +18,11 @@ import java.util.List;
  * Created by ajilal on 24/4/17.
  */
 
-public class ConnectionListAdapter extends BaseAdapter {
+public class ConnectionAdapter extends BaseAdapter {
     private List<ConnectionViewData> dataList;
     private Context context;
 
-    public ConnectionListAdapter(List<ConnectionViewData> dataList, Context context){
+    public ConnectionAdapter(List<ConnectionViewData> dataList, Context context){
         this.dataList = dataList;
         this.context = context;
     }
@@ -74,6 +74,7 @@ public class ConnectionListAdapter extends BaseAdapter {
             TextView profileName = (TextView) convertView.findViewById(R.id.txt_vw_profile_name);
             profileName.setText(profileData.profileName);
             profileName.setTextColor(Color.BLACK);
+            convertView.setTag(profileData);
         }
         return convertView;
     }

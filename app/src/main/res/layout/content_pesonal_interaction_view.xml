@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/content_pesonal_interaction_view"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/pers_inter_items_parent_vert_margin"
+    android:paddingRight="@dimen/pers_inter_items_parent_vert_margin"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.aj.sendall.activity.PesonalInteractionView"
+    tools:showIn="@layout/activity_pesonal_interaction_view">
+
+    <android.support.v7.widget.RecyclerView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_weight="1"
+        android:id="@+id/recycl_vw_personal_inter"
+        app:reverseLayout="true"/>
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="right">
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/flt_btn_send_personally"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/fab_margin"
+            android:layout_margin="@dimen/pers_inter_item_top_margin"
+            app:backgroundTint="@color/colorPrimaryDark" />
+    </LinearLayout>
+
+</LinearLayout>

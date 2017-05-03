@@ -1,4 +1,4 @@
-package com.aj.sendall.utils;
+package com.aj.sendall.services;
 
 import com.aj.sendall.dto.ConnectionViewData;
 

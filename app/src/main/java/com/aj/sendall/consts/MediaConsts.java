@@ -9,6 +9,7 @@ import android.provider.MediaStore;
 
 public class MediaConsts {
     public static Uri ALBUM_ART_URI = Uri.parse("content://media/external/audio/albumart");
+    public static int TITLE_STRING_MAX_LENGTH = 20;
 
     public static final int TYPE_VIDEO = MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
     public static final int TYPE_AUDIO = MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO;
@@ -16,7 +17,7 @@ public class MediaConsts {
     public static final int TYPE_OTHER = -1;
 
     public static final String VIDEO_SORT_FIELD = MediaStore.Video.VideoColumns.DATE_MODIFIED;
-    public static final String AUDIO_SORT_FIELD = MediaStore.Audio.AudioColumns.DATE_MODIFIED;
+    public static final String AUDIO_SORT_FIELD = MediaStore.Audio.AudioColumns.ALBUM_ID;
     public static final String IMAGE_SORT_FIELD = MediaStore.Images.ImageColumns.DATE_MODIFIED;
     public static final String OTHER_SORT_FIELD = MediaStore.Files.FileColumns.DATE_MODIFIED;
 
@@ -54,4 +55,11 @@ public class MediaConsts {
             + QUOTED_MIME_TYPE_XZIP + ','
             + QUOTED_MIME_TYPE_DOC
             +')';
+
+    public static int MEDIA_THUMBNAIL_WIDTH_SMALL = 100;
+    public static int MEDIA_THUMBNAIL_HEIGHT_SMALL = 100;
+
+    public static int MEDIA_THUMBNAIL_WIDTH_BIG = 200;
+    public static int MEDIA_THUMBNAIL_HEIGHT_BIG = 200;
+
 }

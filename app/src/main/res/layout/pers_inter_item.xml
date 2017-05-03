@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/style_item_not_selected"
+    android:layout_marginTop="@dimen/pers_inter_item_top_margin">
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@mipmap/def_media_thumb"
+        android:id="@+id/img_vw_pers_inter_thumbnail"
+        android:padding="@dimen/pers_inter_item_img_padding"
+        android:layout_gravity="center"/>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:layout_gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/colorBlack"
+            android:padding="@dimen/pers_inter_item_title_padding"
+            android:id="@+id/txt_vw_pers_inter_file_name"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/pers_inter_items_title_size_separator"
+            android:background="@color/colorDarkGrey" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/pers_inter_item_title_padding"
+            android:id="@+id/txt_vw_pers_inter_file_size" />
+    </LinearLayout>
+</LinearLayout>

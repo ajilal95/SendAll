@@ -5,6 +5,7 @@
     android:id="@+id/main_content"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     tools:context="com.aj.sendall.activity.Home">
 
     <android.support.design.widget.AppBarLayout
@@ -22,7 +23,7 @@
             app:layout_scrollFlags="snap"
             app:popupTheme="@style/AppTheme.PopupOverlay"
             app:logo="@mipmap/ic_launcher"
-            android:backgroundTint="@android:color/black">
+            android:backgroundTint="@color/colorPrimary">
 
         </android.support.v7.widget.Toolbar>
 

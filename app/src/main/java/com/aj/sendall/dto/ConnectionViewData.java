@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
  */
 
 public class ConnectionViewData {
+    public int profileId;
     public Bitmap profilePicBitmap;
     public String profileName;
 }

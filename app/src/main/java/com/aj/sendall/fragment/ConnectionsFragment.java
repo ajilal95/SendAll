@@ -1,5 +1,6 @@
 package com.aj.sendall.fragment;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -12,9 +13,10 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.aj.sendall.R;
-import com.aj.sendall.adapter.ConnectionListAdapter;
+import com.aj.sendall.activity.PesonalInteractionView;
+import com.aj.sendall.adapter.ConnectionAdapter;
 import com.aj.sendall.dto.ConnectionViewData;
-import com.aj.sendall.utils.ConnectionsActivityService;
+import com.aj.sendall.services.ConnectionsActivityService;
 
 import java.util.List;
 
@@ -53,7 +55,10 @@ public class ConnectionsFragment extends Fragment {
         lstVwConnections.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Snackbar.make(view, "Clicked on an item", Snackbar.LENGTH_LONG).show();
+                Intent personalInteractionView = new Intent(getContext(), PesonalInteractionView.class);
+                personalInteractionView.putExtra("id", ((ConnectionViewData)view.getTag()).profileId);
+                personalInteractionView.putExtra("title", ((ConnectionViewData)view.getTag()).profileName);
+                getContext().startActivity(personalInteractionView);
             }
         });
         fltActionButtonAdd.setOnClickListener(new View.OnClickListener() {
@@ -84,7 +89,7 @@ public class ConnectionsFragment extends Fragment {
 
         @Override
         protected void onPostExecute(List<ConnectionViewData> connections) {
-            lstVwConnections.setAdapter(new ConnectionListAdapter(connections, getContext()));
+            lstVwConnections.setAdapter(new ConnectionAdapter(connections, getContext()));
         }
     }
 }

@@ -6,6 +6,17 @@
     <dimen name="appbar_padding_top">8dp</dimen>
 
     <!-- for gallery fragment-->
-    <dimen name="gallery_item_margin">1dp</dimen>
-    <dimen name="gallery_section_width">300dp</dimen>
+    <dimen name="gallery_section_label_size">16sp</dimen>
+    <dimen name="gallery_item_margin">2dp</dimen>
+    <dimen name="gallery_item_width">300dp</dimen>
+
+    <!-- for personal interaction view-->
+    <dimen name="pers_inter_item_side_marker">5dp</dimen>
+    <dimen name="pers_inter_item_img_padding">3dp</dimen>
+    <dimen name="pers_inter_item_title_padding">3dp</dimen>
+    <dimen name="pers_inter_item_top_margin">4dp</dimen>
+    <dimen name="pers_inter_items_parent_vert_margin">2dp</dimen>
+    <dimen name="pers_inter_items_side_margin">50dp</dimen>
+    <dimen name="pers_inter_items_title_size_separator">1dp</dimen>
+    <dimen name="pers_inter_items_title_size_separator_margin">2dp</dimen>
 </resources>
