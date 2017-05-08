@@ -5,13 +5,12 @@
     android:id="@+id/layout_connections"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.aj.sendall.fragment.ConnectionsFragment">
+    tools:context=".ui.fragment.ConnectionsFragment">
 
     <ListView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/lst_vw_all_contacts"
-        android:divider="@android:color/darker_gray"
         android:dividerHeight="0.5dp"/>
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/flt_btn_add_connection"

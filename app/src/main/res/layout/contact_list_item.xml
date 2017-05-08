@@ -20,6 +20,7 @@
         android:layout_height="match_parent"
         android:id="@+id/txt_vw_profile_name"
         android:layout_margin="5dp"
+        android:maxLines="1"
         android:gravity="left|center"
         style="@style/Base.TextAppearance.AppCompat.Headline" />
 </LinearLayout>

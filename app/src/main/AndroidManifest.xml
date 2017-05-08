@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.aj.sendall">
 
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
@@ -11,7 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".activity.Home"
+            android:name=".ui.activity.Home"
             android:label="@string/title_activity_home"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -21,14 +25,16 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".activity.PesonalInteractionView"
+            android:name=".ui.activity.PesonalInteractionView"
             android:label="@string/title_activity_pesonal_interaction_view"
-            android:parentActivityName=".activity.Home"
+            android:parentActivityName=".ui.activity.Home"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.aj.sendall.activity.Home" />
+                android:value=".ui.activity.Home" />
         </activity>
+        <activity android:name=".ui.activity.SelectReceiversActivity" />
+        <activity android:name=".ui.activity.SelectMediaActivity" />
     </application>
 
 </manifest>
