@@ -1,6 +1,6 @@
 package com.aj.sendall.ui.services;
 
-import com.aj.sendall.ui.consts.FileStatus;
+import com.aj.sendall.dal.enums.FileStatus;
 import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.dal.dto.PersonalInteractionDTO;
 
