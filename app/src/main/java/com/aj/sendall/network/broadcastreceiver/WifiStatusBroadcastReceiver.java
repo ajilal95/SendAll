@@ -4,12 +4,16 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.NetworkInfo;
+import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
 
-public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
-    String[] currentPeers;
+import com.aj.sendall.network.utils.LocalWifiManager;
 
-    public WifiStatusBroadcastReceiver() {
+public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
+    LocalWifiManager localWifiManager;
+
+    public WifiStatusBroadcastReceiver(LocalWifiManager localWifiManager) {
+        this.localWifiManager = localWifiManager;
     }
 
     @Override

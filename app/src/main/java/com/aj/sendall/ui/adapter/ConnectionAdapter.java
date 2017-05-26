@@ -10,8 +10,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.aj.sendall.R;
-import com.aj.sendall.dal.dto.ConnectionViewData;
-import com.aj.sendall.ui.utils.AppUtils;
+import com.aj.sendall.db.dto.ConnectionViewData;
+import com.aj.sendall.ui.utils.CommonUiUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,9 +90,6 @@ public class ConnectionAdapter extends BaseAdapter {
         if (profileData != null) {
             ImageView profilePic = (ImageView) convertView.findViewById(R.id.img_vw_profile_pic);
             profilePic.setVisibility(View.VISIBLE);
-            if (profileData.profilePicBitmap != null) {
-                profilePic.setImageBitmap(profileData.profilePicBitmap);
-            }
             if (profileData.profileName == null) {
                 profileData.profileName = "";
             }
@@ -100,7 +97,7 @@ public class ConnectionAdapter extends BaseAdapter {
             profileName.setText(profileData.profileName);
             profileName.setTextColor(Color.BLACK);
             convertView.setTag(profileData);
-            AppUtils.setViewSelectedAppearanceSimple(convertView, profileData.isSelected);
+            CommonUiUtils.setViewSelectedAppearanceSimple(convertView, profileData.isSelected);
         }
         return convertView;
     }

@@ -14,9 +14,9 @@ import android.widget.TextView;
 
 import com.aj.sendall.R;
 import com.aj.sendall.ui.consts.MediaConsts;
-import com.aj.sendall.dal.dto.FileInfoDTO;
+import com.aj.sendall.db.dto.FileInfoDTO;
 import com.aj.sendall.ui.interfaces.ItemSelectableView;
-import com.aj.sendall.ui.utils.AppUtils;
+import com.aj.sendall.ui.utils.CommonUiUtils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -190,13 +190,13 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         FileInfoDTO fileInfoDTO = getFilteredFileInfoDTOs().get(position);
         if(mediaType != MediaConsts.TYPE_IMAGE) {
             holder.txtVwFileName.setVisibility(View.VISIBLE);
-            holder.txtVwFileName.setText(AppUtils.getShortTitle(fileInfoDTO.title));
+            holder.txtVwFileName.setText(CommonUiUtils.getShortTitle(fileInfoDTO.title));
         } else {
             holder.txtVwFileName.setVisibility(View.GONE);
         }
-        holder.txtVwFileSize.setText(AppUtils.getFileSizeString(fileInfoDTO.size));
+        holder.txtVwFileSize.setText(CommonUiUtils.getFileSizeString(fileInfoDTO.size));
 
-        AppUtils.setFileThumbnail(
+        CommonUiUtils.setFileThumbnail(
                 mediaType,
                 context,
                 holder.imgVwThumbnail,
@@ -205,7 +205,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                 fileInfoDTO);
 
         holder.itemView.setTag(fileInfoDTO);
-        AppUtils.setViewSelectedAppearanceRoundEdged(holder.itemView, fileInfoDTO.isSelected);
+        CommonUiUtils.setViewSelectedAppearanceRoundEdged(holder.itemView, fileInfoDTO.isSelected);
     }
 
     @Override
@@ -230,7 +230,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                 @Override
                 public void onClick(View v) {
                     ((FileInfoDTO)v.getTag()).isSelected = !((FileInfoDTO)v.getTag()).isSelected;
-                    AppUtils.setViewSelectedAppearanceRoundEdged(v, ((FileInfoDTO)v.getTag()).isSelected);
+                    CommonUiUtils.setViewSelectedAppearanceRoundEdged(v, ((FileInfoDTO)v.getTag()).isSelected);
                     if(((FileInfoDTO)v.getTag()).isSelected){
                         selectedItemUris.add(((FileInfoDTO)v.getTag()).uri);
                         viewParent.incrementTotalNoOfSelections();

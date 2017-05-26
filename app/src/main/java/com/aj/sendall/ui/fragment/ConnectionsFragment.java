@@ -19,11 +19,11 @@ import com.aj.sendall.ui.activity.PesonalInteractionView;
 import com.aj.sendall.ui.activity.SelectMediaActivity;
 import com.aj.sendall.ui.adapter.ConnectionAdapter;
 import com.aj.sendall.ui.consts.ConnectionsConstants;
-import com.aj.sendall.dal.dto.ConnectionViewData;
-import com.aj.sendall.ui.services.ConnectionsActivityService;
-import com.aj.sendall.ui.services.FileSendingService;
+import com.aj.sendall.db.dto.ConnectionViewData;
+import com.aj.sendall.ui.businessservices.ConnectionsActivityService;
+import com.aj.sendall.ui.businessservices.FileSendingService;
 import com.aj.sendall.ui.interfaces.ItemFilterableView;
-import com.aj.sendall.ui.utils.AppUtils;
+import com.aj.sendall.ui.utils.CommonUiUtils;
 
 import java.util.HashSet;
 import java.util.List;
@@ -93,8 +93,7 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
 
         @Override
         protected List<ConnectionViewData> doInBackground(Void... params) {
-            List<ConnectionViewData> connections = ConnectionsActivityService.getAllConnections();
-            return connections;
+            return ConnectionsActivityService.getAllConnections(parentActivity);
         }
 
         @Override
@@ -121,7 +120,7 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             ((ConnectionViewData)view.getTag()).isSelected = !((ConnectionViewData)view.getTag()).isSelected;
-            AppUtils.setViewSelectedAppearanceSimple(view, ((ConnectionViewData)view.getTag()).isSelected);
+            CommonUiUtils.setViewSelectedAppearanceSimple(view, ((ConnectionViewData)view.getTag()).isSelected);
 
             if(((ConnectionViewData)view.getTag()).isSelected){
                 receivers.add((ConnectionViewData)view.getTag());

@@ -20,8 +20,8 @@ import com.aj.sendall.ui.adapter.GalleryAdapter;
 import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.ui.interfaces.ItemFilterableView;
 import com.aj.sendall.ui.interfaces.ItemSelectableView;
-import com.aj.sendall.ui.services.FileSendingService;
-import com.aj.sendall.ui.utils.AppUtils;
+import com.aj.sendall.ui.businessservices.FileSendingService;
+import com.aj.sendall.ui.utils.CommonUiUtils;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -85,10 +85,10 @@ public class GalleryFragment extends Fragment implements ItemSelectableView, Ite
     }
 
     private void initView() {
-        lnrLytVideos.getLayoutParams().width = AppUtils.getGallerySectionWidth(parentActivity);
-        lnrLytAudios.getLayoutParams().width = AppUtils.getGallerySectionWidth(parentActivity);
-        lnrLytImages.getLayoutParams().width = AppUtils.getGallerySectionWidth(parentActivity);
-        lnrLytOtherFiles.getLayoutParams().width = AppUtils.getGallerySectionWidth(parentActivity);
+        lnrLytVideos.getLayoutParams().width = CommonUiUtils.getGallerySectionWidth(parentActivity);
+        lnrLytAudios.getLayoutParams().width = CommonUiUtils.getGallerySectionWidth(parentActivity);
+        lnrLytImages.getLayoutParams().width = CommonUiUtils.getGallerySectionWidth(parentActivity);
+        lnrLytOtherFiles.getLayoutParams().width = CommonUiUtils.getGallerySectionWidth(parentActivity);
 
         recyclerViewVideos.setHasFixedSize(true);
         GridLayoutManager layoutManagerVideo = new GridLayoutManager(parentActivity, 4);

@@ -2,10 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.aj.sendall">
 
+    <uses-feature android:name="android.hardware.wifi" />
+
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
-    
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
@@ -16,7 +17,7 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".ui.activity.Home"
-            android:label="@string/title_activity_home"
+            android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -35,6 +36,19 @@
         </activity>
         <activity android:name=".ui.activity.SelectReceiversActivity" />
         <activity android:name=".ui.activity.SelectMediaActivity" />
+        <activity
+            android:name=".ui.activity.Settings"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".ui.activity.Home"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.aj.sendall.ui.activity.Home" />
+        </activity>
+
+        <service
+            android:name=".network.services.ToggleReceiverService"
+            android:exported="false" />
     </application>
 
 </manifest>

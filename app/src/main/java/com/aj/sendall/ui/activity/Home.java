@@ -1,5 +1,6 @@
 package com.aj.sendall.ui.activity;
 
+import android.content.Intent;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v7.app.AppCompatActivity;
@@ -15,6 +16,7 @@ import android.view.MenuItem;
 import android.widget.SearchView;
 
 import com.aj.sendall.R;
+import com.aj.sendall.notification.util.NotificationUtil;
 import com.aj.sendall.ui.consts.ConnectionsConstants;
 import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.ui.fragment.ConnectionsFragment;
@@ -36,6 +38,8 @@ public class Home extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         initActivity();
+
+        NotificationUtil.showToggleReceivingNotification(this);
     }
 
     private void initActivity() {
@@ -97,7 +101,8 @@ public class Home extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.action_settings) {
-            //if(mViewPager != null)  mViewPager.setCurrentItem(2, true);
+            Intent settings = new Intent(this, Settings.class);
+            startActivity(settings);
             return true;
         }
 

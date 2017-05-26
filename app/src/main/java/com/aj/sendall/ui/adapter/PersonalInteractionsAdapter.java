@@ -14,10 +14,10 @@ import android.widget.TextView;
 
 import com.aj.sendall.R;
 import com.aj.sendall.ui.consts.MediaConsts;
-import com.aj.sendall.dal.dto.PersonalInteractionDTO;
+import com.aj.sendall.db.dto.PersonalInteractionDTO;
 import com.aj.sendall.ui.interfaces.ItemSelectableView;
-import com.aj.sendall.ui.services.PersonalInteractionsService;
-import com.aj.sendall.ui.utils.AppUtils;
+import com.aj.sendall.ui.businessservices.PersonalInteractionsService;
+import com.aj.sendall.ui.utils.CommonUiUtils;
 
 import java.util.HashSet;
 import java.util.List;
@@ -60,7 +60,7 @@ public class PersonalInteractionsAdapter extends RecyclerView.Adapter<PersonalIn
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         PersonalInteractionDTO dto = personalInteractionDTOs.get(position);
-        AppUtils.setFileThumbnail(
+        CommonUiUtils.setFileThumbnail(
                 dto.mediaType,
                 context,
                 holder.imgVwItemThumbnail,
@@ -68,7 +68,7 @@ public class PersonalInteractionsAdapter extends RecyclerView.Adapter<PersonalIn
                 MediaConsts.MEDIA_THUMBNAIL_HEIGHT_BIG,
                 dto);
         holder.txtVwFileName.setText(dto.title);
-        holder.txtVwFileSize.setText(AppUtils.getFileSizeString(dto.size));
+        holder.txtVwFileSize.setText(CommonUiUtils.getFileSizeString(dto.size));
         holder.itemView.setTag(dto);
         setInteractionViewParams(holder, dto);
     }
@@ -115,7 +115,7 @@ public class PersonalInteractionsAdapter extends RecyclerView.Adapter<PersonalIn
                 @Override
                 public void onClick(View v) {
                     ((PersonalInteractionDTO)v.getTag()).isSelected = !((PersonalInteractionDTO)v.getTag()).isSelected;
-                    AppUtils.setViewSelectedAppearanceRoundEdged(v, ((PersonalInteractionDTO)v.getTag()).isSelected);
+                    CommonUiUtils.setViewSelectedAppearanceRoundEdged(v, ((PersonalInteractionDTO)v.getTag()).isSelected);
                     if(((PersonalInteractionDTO)v.getTag()).isSelected){
                         selectedItemUris.add(((PersonalInteractionDTO)v.getTag()).uri);
                         parentItemSelectable.incrementTotalNoOfSelections();
