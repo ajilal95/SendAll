@@ -2,6 +2,7 @@ package com.aj.sendall.network.utils;
 
 import android.content.Context;
 import android.net.wifi.WifiManager;
+import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 
 import java.io.Serializable;
@@ -11,7 +12,6 @@ import java.io.Serializable;
  */
 
 public class LocalWifiManager implements Serializable{
-    public static final String INTENT_EXTRA_NAME = "local_wifi_manager";
     private final WifiManager wifiManager;
     private final WifiP2pManager wifiP2pManager;
     private final WifiP2pManager.Channel channel;
@@ -32,12 +32,32 @@ public class LocalWifiManager implements Serializable{
     }
 
     public void enableWifi(boolean enable){
-        if(isWifiEnabled() != enable) {
-            wifiManager.setWifiEnabled(enable);
-        }
+        wifiManager.setWifiEnabled(enable);
     }
 
-    public void searchPeersAndNotifyBroadcastReceiver(WifiP2pManager.ActionListener listener){
+    public void scanPeersAndNotifyBroadcastReceiver(WifiP2pManager.ActionListener listener){
         wifiP2pManager.discoverPeers(channel, listener);
+    }
+
+    public void stopScanning(){
+        wifiP2pManager.stopPeerDiscovery(channel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+
+            }
+
+            @Override
+            public void onFailure(int reason) {
+
+            }
+        });
+    }
+
+    public void requestPeers(WifiP2pManager.PeerListListener listener){
+        wifiP2pManager.requestPeers(channel, listener);
+    }
+
+    public void connectAndReceiveFiles(WifiP2pDevice device){
+
     }
 }

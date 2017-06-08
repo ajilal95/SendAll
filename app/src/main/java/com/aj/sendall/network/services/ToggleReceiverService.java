@@ -17,28 +17,24 @@ public class ToggleReceiverService extends IntentService {
 
     public ToggleReceiverService() {
         super("ToggleReceiverService");
-        localWifiManager = new LocalWifiManager(this);
+    }
+
+    private void createLocalWifiManager(){
+        if(localWifiManager == null) {
+            localWifiManager = new LocalWifiManager(this);
+        }
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        createLocalWifiManager();
         boolean isRecActive = SharedPrefUtil.getCurrentReceivingStatus(this);
 
         if(isRecActive){
             stopBroadcastReceiver();
-            if(!wasWifiEnabled){
-                //restoring wifi state
-                localWifiManager.enableWifi(false);
-            }
             SharedPrefUtil.setCurrentReceivingState(this, false, true);
         } else {
             startBroadcastReceiver();
-            wasWifiEnabled = localWifiManager.isWifiEnabled();//to restore wifi state
-            if(!wasWifiEnabled){
-                localWifiManager.enableWifi(true);
-            }
-            localWifiManager.searchPeersAndNotifyBroadcastReceiver(new PeerDiscoveryActionListener());
-
             SharedPrefUtil.setCurrentReceivingState(this, true, true);
         }
 
@@ -47,6 +43,10 @@ public class ToggleReceiverService extends IntentService {
 
     private void startBroadcastReceiver(){
         createBroadcastReceiver();
+        wasWifiEnabled = localWifiManager.isWifiEnabled();//to restore wifi state on stopping the app
+        if(!wasWifiEnabled){
+            localWifiManager.enableWifi(true);
+        }
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
@@ -55,11 +55,17 @@ public class ToggleReceiverService extends IntentService {
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
         registerReceiver(wifiStatusBroadcastReceiver, intentFilter);
+        wifiStatusBroadcastReceiver.overrideAndScan();
     }
 
     private void stopBroadcastReceiver(){
         if(wifiStatusBroadcastReceiver != null){
+            wifiStatusBroadcastReceiver.overrideAndStopScan();
             unregisterReceiver(wifiStatusBroadcastReceiver);
+            if(!wasWifiEnabled){
+                //restoring wifi state
+                localWifiManager.enableWifi(false);
+            }
             wifiStatusBroadcastReceiver = null;
         }
     }
@@ -69,25 +75,4 @@ public class ToggleReceiverService extends IntentService {
         wifiStatusBroadcastReceiver = new WifiStatusBroadcastReceiver(localWifiManager);
     }
 
-    public class PeerDiscoveryActionListener implements WifiP2pManager.ActionListener{
-        private int noOfFailedAttempts = 0;
-        @Override
-        public void onSuccess() {
-            noOfFailedAttempts = 0;
-        }
-
-        @Override
-        public void onFailure(int reason) {
-            noOfFailedAttempts++;
-            if(noOfFailedAttempts >= 3){
-                //TODO stop listening
-            }
-            try{
-                Thread.sleep(5000);
-                localWifiManager.searchPeersAndNotifyBroadcastReceiver(this);
-            } catch(Exception e){
-                e.printStackTrace();
-            }
-        }
-    }
 }
