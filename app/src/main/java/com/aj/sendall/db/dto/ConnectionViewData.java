@@ -7,6 +7,7 @@ package com.aj.sendall.db.dto;
 public class ConnectionViewData {
     public boolean isSelected = false;
     public long profileId;
+    public String uniqueId;
     public String profilePicPath;
     public String profileName;
 }

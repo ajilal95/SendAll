@@ -4,55 +4,68 @@ import android.net.Uri;
 
 import com.aj.sendall.db.dto.ConnectionViewData;
 import com.aj.sendall.db.dto.ConnectionsAndUris;
+import com.aj.sendall.network.utils.LocalWifiManager;
 
 import java.util.Set;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Created by ajilal on 3/5/17.
  */
 
+@Singleton
 public final class FileSendingService {
-    private static ConnectionsAndUris connectionsAndUris;
+    private  ConnectionsAndUris connectionsAndUris;
 
-    private static ConnectionsAndUris getConnectionsAndUris(){
+    private LocalWifiManager localWifiManager;
+
+    @Inject
+    public FileSendingService(LocalWifiManager localWifiManager){
+        this.localWifiManager = localWifiManager;
+    }
+
+    private ConnectionsAndUris getConnectionsAndUris(){
         if(connectionsAndUris == null){
             connectionsAndUris = new ConnectionsAndUris();
         }
         return connectionsAndUris;
     }
 
-    public static SendOperationResult send_to(Set<ConnectionViewData> receiverSet){
+    public SendOperationResult send_to(Set<ConnectionViewData> receiverSet){
         getConnectionsAndUris().connections = receiverSet;
         if(getConnectionsAndUris().mediaUris == null || getConnectionsAndUris().mediaUris.isEmpty()){
             return SendOperationResult.URI_EMPTY;
         } else {
-            addCurrentToSendQueue();
-            clear();
+//            addCurrentToSendQueue();
             send();
+            clear();
             return SendOperationResult.SENDING;
         }
     }
 
-    public static SendOperationResult send_items(Set<Uri> mediaUris){
+    public SendOperationResult send_items(Set<Uri> mediaUris){
         getConnectionsAndUris().mediaUris = mediaUris;
         if(getConnectionsAndUris().connections == null || getConnectionsAndUris().connections.isEmpty()){
             return SendOperationResult.RECEIVER_EMPTY;
         } else {
-            addCurrentToSendQueue();
-            clear();
+//            addCurrentToSendQueue();
             send();
+            clear();
             return SendOperationResult.SENDING;
         }
     }
 
-    private static void send(){
+    private void send(){
+        localWifiManager.createGroupAndAdvertise(connectionsAndUris);
     }
 
-    private static void addCurrentToSendQueue(){
+//    private static void addCurrentToSendQueue(){
+//
+//    }
 
-    }
-
-    public static void clear(){
+    private void clear(){
         connectionsAndUris = null;
     }
 

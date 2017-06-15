@@ -5,13 +5,20 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.p2p.WifiP2pManager;
 
+import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
 import com.aj.sendall.network.broadcastreceiver.WifiStatusBroadcastReceiver;
 import com.aj.sendall.network.utils.LocalWifiManager;
 import com.aj.sendall.notification.util.NotificationUtil;
 
+import javax.inject.Inject;
+
 public class ToggleReceiverService extends IntentService {
-    private LocalWifiManager localWifiManager;
+    @Inject
+    public LocalWifiManager localWifiManager;
+    @Inject
+    public NotificationUtil notificationUtil;
+
     private WifiStatusBroadcastReceiver wifiStatusBroadcastReceiver;
     private boolean wasWifiEnabled;
 
@@ -19,15 +26,14 @@ public class ToggleReceiverService extends IntentService {
         super("ToggleReceiverService");
     }
 
-    private void createLocalWifiManager(){
-        if(localWifiManager == null) {
-            localWifiManager = new LocalWifiManager(this);
-        }
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        ((AndroidApplication)getApplication()).getDaggerInjector().inject(this);
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        createLocalWifiManager();
         boolean isRecActive = SharedPrefUtil.getCurrentReceivingStatus(this);
 
         if(isRecActive){
@@ -38,7 +44,7 @@ public class ToggleReceiverService extends IntentService {
             SharedPrefUtil.setCurrentReceivingState(this, true, true);
         }
 
-        NotificationUtil.showToggleReceivingNotification(this);
+        notificationUtil.showToggleReceivingNotification();
     }
 
     private void startBroadcastReceiver(){

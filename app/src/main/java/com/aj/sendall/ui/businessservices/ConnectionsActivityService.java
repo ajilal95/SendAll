@@ -7,14 +7,22 @@ import com.aj.sendall.db.util.DBUtil;
 
 import java.util.List;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 /**
  * Created by ajilal on 24/4/17.
  */
 
+@Singleton
 public final class ConnectionsActivityService {
+    private DBUtil dbUtil;
 
-    public static List<ConnectionViewData> getAllConnections(Context context){
-        List<ConnectionViewData> connectionViewDataList = DBUtil.getAllConnectionViewData(context);
-        return connectionViewDataList;
+    @Inject
+    public ConnectionsActivityService(DBUtil dbUtil){
+        this.dbUtil = dbUtil;
+    }
+    public List<ConnectionViewData> getAllConnections(){
+        return dbUtil.getAllConnectionViewData();
     }
 }

@@ -7,13 +7,22 @@ import com.aj.sendall.db.dto.PersonalInteractionDTO;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 /**
  * Created by ajilal on 1/5/17.
  */
 
+@Singleton
 public final class PersonalInteractionsService {
 
-    public static List<PersonalInteractionDTO> getFileInteractionsByConnectionId(int connectionId){
+    @Inject
+    public PersonalInteractionsService(){
+
+    }
+
+    public List<PersonalInteractionDTO> getFileInteractionsByConnectionId(int connectionId){
         List<PersonalInteractionDTO> dtos = new ArrayList<>();
         for(int i = 0; i < 100; i++){
             PersonalInteractionDTO infoDTO = new PersonalInteractionDTO();

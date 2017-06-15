@@ -15,6 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.aj.sendall.R;
+import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.ui.activity.SelectReceiversActivity;
 import com.aj.sendall.ui.adapter.GalleryAdapter;
 import com.aj.sendall.ui.consts.MediaConsts;
@@ -25,6 +26,8 @@ import com.aj.sendall.ui.utils.CommonUiUtils;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import javax.inject.Inject;
 
 
 public class GalleryFragment extends Fragment implements ItemSelectableView, ItemFilterableView{
@@ -44,12 +47,16 @@ public class GalleryFragment extends Fragment implements ItemSelectableView, Ite
     private Activity parentActivity;
     private int totalNoOfSelections = 0;
 
+    @Inject
+    public FileSendingService fileSendingService;
+
     public GalleryFragment() {
     }
 
     public static GalleryFragment newInstance(Activity parentActivity) {
         GalleryFragment fragment = new GalleryFragment();
         fragment.parentActivity = parentActivity;
+        ((AndroidApplication)parentActivity.getApplication()).getDaggerInjector().inject(fragment);
         Bundle args = new Bundle();
         fragment.setArguments(args);
         return fragment;
@@ -125,7 +132,7 @@ public class GalleryFragment extends Fragment implements ItemSelectableView, Ite
                 for(RecyclerView recyclerView : getRecyclerViews()){
                     selectedItems.addAll(((GalleryAdapter)recyclerView.getAdapter()).getSelectedItemUris());
                 }
-                FileSendingService.SendOperationResult result = FileSendingService.send_items(selectedItems);
+                FileSendingService.SendOperationResult result = fileSendingService.send_items(selectedItems);
                 if(result.equals(FileSendingService.SendOperationResult.SENDING)){
                     Toast.makeText(parentActivity, "Sending...", Toast.LENGTH_SHORT).show();
                 } else if(result.equals(FileSendingService.SendOperationResult.RECEIVER_EMPTY)){

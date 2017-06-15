@@ -16,13 +16,22 @@ import android.view.MenuItem;
 import android.widget.SearchView;
 
 import com.aj.sendall.R;
+import com.aj.sendall.application.AndroidApplication;
+import com.aj.sendall.network.utils.LocalWifiManager;
 import com.aj.sendall.notification.util.NotificationUtil;
 import com.aj.sendall.ui.consts.ConnectionsConstants;
 import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.ui.fragment.ConnectionsFragment;
 import com.aj.sendall.ui.fragment.GalleryFragment;
 
+import javax.inject.Inject;
+
 public class Home extends AppCompatActivity {
+    @Inject
+    public LocalWifiManager localWifiManager;
+    @Inject
+    public NotificationUtil notificationUtil;
+
     private ViewPager mViewPager;
     private TabLayout tabLayout;
     private SearchView searchView;
@@ -32,6 +41,7 @@ public class Home extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ((AndroidApplication)getApplication()).getDaggerInjector().inject(this);
         setContentView(R.layout.activity_home);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_home);
@@ -39,7 +49,7 @@ public class Home extends AppCompatActivity {
 
         initActivity();
 
-        NotificationUtil.showToggleReceivingNotification(this);
+        notificationUtil.showToggleReceivingNotification();
     }
 
     private void initActivity() {

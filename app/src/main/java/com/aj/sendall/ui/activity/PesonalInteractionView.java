@@ -10,10 +10,16 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 
 import com.aj.sendall.R;
+import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.ui.adapter.PersonalInteractionsAdapter;
+import com.aj.sendall.ui.businessservices.PersonalInteractionsService;
 import com.aj.sendall.ui.interfaces.ItemSelectableView;
 
+import javax.inject.Inject;
+
 public class PesonalInteractionView extends AppCompatActivity implements ItemSelectableView{
+    @Inject
+    public PersonalInteractionsService personalInteractionsService;
     private FloatingActionButton fltActionButtonSend;
     private RecyclerView recyclrVwPersInteractions;
 
@@ -22,6 +28,7 @@ public class PesonalInteractionView extends AppCompatActivity implements ItemSel
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ((AndroidApplication)getApplication()).getDaggerInjector().inject(this);
         setContentView(R.layout.activity_pesonal_interaction_view);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle(getIntent().getStringExtra("title"));
@@ -58,7 +65,7 @@ public class PesonalInteractionView extends AppCompatActivity implements ItemSel
     private void initPersonalInteractionView() {
         LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, true);
         recyclrVwPersInteractions.setLayoutManager(layoutManager);
-        PersonalInteractionsAdapter personalInteractionsAdapter = new PersonalInteractionsAdapter(0, this, this);
+        PersonalInteractionsAdapter personalInteractionsAdapter = new PersonalInteractionsAdapter(0, this, this, personalInteractionsService);
         recyclrVwPersInteractions.setAdapter(personalInteractionsAdapter);
     }
 

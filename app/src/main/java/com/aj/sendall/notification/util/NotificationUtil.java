@@ -10,12 +10,23 @@ import com.aj.sendall.R;
 import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
 import com.aj.sendall.network.services.ToggleReceiverService;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 /**
  * Created by ajilal on 18/5/17.
  */
 
+@Singleton
 public class NotificationUtil {
-    public static void showToggleReceivingNotification(Context context){
+    Context context;
+
+    @Inject
+    public NotificationUtil(Context context){
+        this.context = context;
+    }
+
+    public void showToggleReceivingNotification(){
         Intent serviceIntent = new Intent(context, ToggleReceiverService.class);
         PendingIntent pendingServiceIntent = PendingIntent.getService(context, 0, serviceIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 

@@ -15,6 +15,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.aj.sendall.R;
+import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.ui.activity.PesonalInteractionView;
 import com.aj.sendall.ui.activity.SelectMediaActivity;
 import com.aj.sendall.ui.adapter.ConnectionAdapter;
@@ -29,6 +30,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Inject;
+
 public class ConnectionsFragment extends Fragment implements ItemFilterableView{
     private ListView lstVwConnections;
     private ConnectionAdapter adapter;
@@ -36,11 +39,17 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
     private Activity parentActivity;
     private String purpose;
 
+    @Inject
+    public ConnectionsActivityService connectionsActivityService;
+    @Inject
+    public FileSendingService fileSendingService;
+
     public static ConnectionsFragment newInstance(Activity parentActivity, String purpose){
         ConnectionsFragment connectionsFragment = new ConnectionsFragment();
         connectionsFragment.parentActivity = parentActivity;
         connectionsFragment.purpose = purpose;
         connectionsFragment.adapter = new ConnectionAdapter(null, parentActivity);
+        ((AndroidApplication)parentActivity.getApplication()).getDaggerInjector().inject(connectionsFragment);
 
         return connectionsFragment;
     }
@@ -93,7 +102,7 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
 
         @Override
         protected List<ConnectionViewData> doInBackground(Void... params) {
-            return ConnectionsActivityService.getAllConnections(parentActivity);
+            return connectionsActivityService.getAllConnections();
         }
 
         @Override
@@ -169,7 +178,7 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
 
         @Override
         public void onClick(View view) {
-            FileSendingService.SendOperationResult result = FileSendingService.send_to(receivers);
+            FileSendingService.SendOperationResult result = fileSendingService.send_to(receivers);
             if(FileSendingService.SendOperationResult.URI_EMPTY.equals(result)){
                 Intent fileSelectIntent = new Intent(parentActivity, SelectMediaActivity.class);
                 parentActivity.startActivity(fileSelectIntent);

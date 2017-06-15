@@ -8,6 +8,7 @@ import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pManager;
 
+import com.aj.sendall.db.util.DBUtil;
 import com.aj.sendall.network.utils.LocalWifiManager;
 
 public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
@@ -15,8 +16,7 @@ public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
     private PeersAvailableActionListener peersAvailableActionListener = new PeersAvailableActionListener();
     private PeerScanActionListener peerScanActionListener = new PeerScanActionListener();
     public boolean broadCastReceiverActive = false;
-    public final Object synch = new Object();
-    public boolean tryingConnection = false;
+    public final Object sync = new Object();
 
     public WifiStatusBroadcastReceiver(LocalWifiManager localWifiManager) {
         this.localWifiManager = localWifiManager;
@@ -79,14 +79,35 @@ public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
     }
 
     public class PeerScanActionListener implements WifiP2pManager.ActionListener{
+        int failureCount = 0;
         @Override
         public void onSuccess() {
+            failureCount = 0;
             localWifiManager.requestPeers(peersAvailableActionListener);
         }
 
         @Override
         public void onFailure(int reason) {
-
+            if(failureCount == 10){
+                return;
+            } else{
+                failureCount++;
+            }
+            if(WifiP2pManager.BUSY == reason) {
+                try {
+                    Thread.sleep(2000);
+                    localWifiManager.scanPeersAndNotifyBroadcastReceiver(this);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            } else if(WifiP2pManager.ERROR == reason){
+                try {
+                    Thread.sleep(3000);
+                    localWifiManager.scanPeersAndNotifyBroadcastReceiver(this);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -95,15 +116,27 @@ public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onPeersAvailable(WifiP2pDeviceList peers) {
             unservicedPeers = peers;
-            synchronized (synch) {
-                for (WifiP2pDevice wifiP2pDevice : unservicedPeers.getDeviceList()) {
-                    localWifiManager.connectAndReceiveFiles(wifiP2pDevice);
-                }
-                if(peers.equals(unservicedPeers)){
-                    unservicedPeers = null;
-                }
+            synchronized (sync) {
                 if (broadCastReceiverActive) {
-                    localWifiManager.scanPeersAndNotifyBroadcastReceiver(new PeerScanActionListener());
+                    WifiP2pDeviceList localDeviceList = unservicedPeers;//for avoiding synchronization issues
+                    if(localDeviceList != null) {
+                        for (WifiP2pDevice wifiP2pDevice : localDeviceList.getDeviceList()) {
+                            if(broadCastReceiverActive) {
+                                localWifiManager.connectAndReceiveFiles(wifiP2pDevice);
+                            } else {
+                                break;
+                            }
+                        }
+
+                        //Checking if the unserviced device list has not been changed
+                        if(localDeviceList.equals(unservicedPeers)){
+                            unservicedPeers = null;
+                        }
+                    }
+                    if(broadCastReceiverActive){
+                        localWifiManager.scanPeersAndNotifyBroadcastReceiver(peerScanActionListener);
+                    }
+
                 }
             }
         }

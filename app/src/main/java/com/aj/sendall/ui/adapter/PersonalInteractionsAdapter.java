@@ -23,6 +23,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Inject;
+
 /**
  * Created by ajilal on 1/5/17.
  */
@@ -37,17 +39,20 @@ public class PersonalInteractionsAdapter extends RecyclerView.Adapter<PersonalIn
 
     private Set<Uri> selectedItemUris;
 
+    private PersonalInteractionsService personalInteractionsService;
 
-    public PersonalInteractionsAdapter(int connectionId, @NonNull Context context, ItemSelectableView parentItemSelectable){
+
+    public PersonalInteractionsAdapter(int connectionId, @NonNull Context context, ItemSelectableView parentItemSelectable, PersonalInteractionsService personalInteractionsService){
         this.parentItemSelectable = parentItemSelectable;
         this.context = context;
         this.connectionId = connectionId;
+        this.personalInteractionsService = personalInteractionsService;
         initAdapter();
     }
 
     private void initAdapter(){
         selectedItemUris = new HashSet<>();
-        personalInteractionDTOs = PersonalInteractionsService.getFileInteractionsByConnectionId(connectionId);
+        personalInteractionDTOs = personalInteractionsService.getFileInteractionsByConnectionId(connectionId);
     }
 
     @Override

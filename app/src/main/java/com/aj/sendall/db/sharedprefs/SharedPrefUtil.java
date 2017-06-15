@@ -63,7 +63,7 @@ public class SharedPrefUtil {
         for(int i = 0; i < SharedPrefConsts.THIS_DEVICE_ID_LENGTH; i++){
             idRandomize.append(candidate[random.nextInt(37)]);
         }
-        String thisDeviceId = SharedPrefConsts.THIS_DEVICE_ID_PREFIX + idRandomize.toString();
+        String thisDeviceId = SharedPrefConsts.DEVICE_ID_PREFIX + idRandomize.toString();
         getEditor(context).putString(SharedPrefConsts.THIS_DEVICE_ID, thisDeviceId);
         commit();
         return thisDeviceId;
