@@ -38,7 +38,6 @@ public final class FileSendingService {
         if(getConnectionsAndUris().mediaUris == null || getConnectionsAndUris().mediaUris.isEmpty()){
             return SendOperationResult.URI_EMPTY;
         } else {
-//            addCurrentToSendQueue();
             send();
             clear();
             return SendOperationResult.SENDING;
@@ -50,7 +49,6 @@ public final class FileSendingService {
         if(getConnectionsAndUris().connections == null || getConnectionsAndUris().connections.isEmpty()){
             return SendOperationResult.RECEIVER_EMPTY;
         } else {
-//            addCurrentToSendQueue();
             send();
             clear();
             return SendOperationResult.SENDING;

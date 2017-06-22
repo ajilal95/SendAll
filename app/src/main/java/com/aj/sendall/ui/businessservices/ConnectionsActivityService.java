@@ -5,6 +5,7 @@ import android.content.Context;
 import com.aj.sendall.db.dto.ConnectionViewData;
 import com.aj.sendall.db.util.DBUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -23,6 +24,13 @@ public final class ConnectionsActivityService {
         this.dbUtil = dbUtil;
     }
     public List<ConnectionViewData> getAllConnections(){
-        return dbUtil.getAllConnectionViewData();
+        ConnectionViewData dummy = new ConnectionViewData();
+        dummy.uniqueId = "anda";
+        dummy.isSelected = false;
+        dummy.profileId = 0;
+        dummy.profileName = "Dummy";
+        List<ConnectionViewData> list = new ArrayList<>();
+        list.add(dummy);
+        return /*dbUtil.getAllConnectionViewData();*/list;
     }
 }

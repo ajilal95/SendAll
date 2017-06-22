@@ -1,18 +1,29 @@
 package com.aj.sendall.network.utils;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.Handler;
+import android.widget.Toast;
 
 import com.aj.sendall.db.dto.ConnectionsAndUris;
 import com.aj.sendall.db.util.DBUtil;
+import com.aj.sendall.depndency.dagger.DModule;
+import com.aj.sendall.network.asych.GroupCreator;
 import com.aj.sendall.network.asych.ServiceAdvertiser;
+import com.aj.sendall.network.broadcastreceiver.BroadcastReceiverForSender;
+import com.aj.sendall.network.services.ToggleReceiverService;
 
 import java.io.Serializable;
 
 import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Qualifier;
 import javax.inject.Singleton;
 
 /**
@@ -27,11 +38,13 @@ public class LocalWifiManager implements Serializable{
     private WifiManager wifiManager;
     private WifiP2pManager wifiP2pManager;
     private WifiP2pManager.Channel channel;
+    private Handler groupHandler;
 
     @Inject
-    public LocalWifiManager(Context context, DBUtil dbUtil){
+    public LocalWifiManager(Context context, DBUtil dbUtil, @Named(DModule.NAME_WIFI_GROUP_HANDLER) Handler groupHandler){
         this.context = context;
         this.dbUtil = dbUtil;
+        this.groupHandler = groupHandler;
         init();
     }
 
@@ -98,17 +111,15 @@ public class LocalWifiManager implements Serializable{
     }
 
     public void createGroupAndAdvertise(ConnectionsAndUris connectionsAndUris){
-        wifiP2pManager.createGroup(channel, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
+        enableWifi(true);
 
-            }
+        //Start the receiver to receive the connection data
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
+        BroadcastReceiverForSender broadcastReceiverForSender = new BroadcastReceiverForSender(wifiP2pManager, channel, connectionsAndUris, groupHandler);
+        context.registerReceiver(broadcastReceiverForSender, intentFilter);
 
-            @Override
-            public void onFailure(int reason) {
-
-            }
-        });
-//        new ServiceAdvertiser(connectionsAndUris, this).start();
+        //Delay for the service to start
+        groupHandler.postDelayed(new GroupCreator(wifiP2pManager, channel, context, groupHandler), 2000);
     }
 }
