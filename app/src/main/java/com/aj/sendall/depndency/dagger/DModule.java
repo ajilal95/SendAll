@@ -9,6 +9,9 @@ import com.aj.sendall.network.utils.LocalWifiManager;
 import com.aj.sendall.notification.util.NotificationUtil;
 import com.aj.sendall.ui.utils.CommonUiUtils;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+
 import javax.inject.Named;
 import javax.inject.Qualifier;
 import javax.inject.Singleton;

@@ -8,7 +8,6 @@ import com.aj.sendall.db.dao.DaoMaster;
 import com.aj.sendall.db.dao.DaoSession;
 import com.aj.sendall.db.dto.ConnectionViewData;
 import com.aj.sendall.db.model.Connections;
-import com.aj.sendall.db.sharedprefs.SharedPrefConsts;
 
 import org.greenrobot.greendao.database.Database;
 

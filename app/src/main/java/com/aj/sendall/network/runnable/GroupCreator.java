@@ -1,4 +1,4 @@
-package com.aj.sendall.network.asych;
+package com.aj.sendall.network.runnable;
 
 import android.content.Context;
 import android.net.wifi.p2p.WifiP2pGroup;

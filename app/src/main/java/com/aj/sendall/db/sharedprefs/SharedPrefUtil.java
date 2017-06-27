@@ -5,52 +5,67 @@ import android.content.SharedPreferences;
 
 import java.util.Random;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 /**
  * Created by ajilal on 18/5/17.
  */
 
+@Singleton
 public class SharedPrefUtil {
-    private static SharedPreferences.Editor editor;
+    public Context context;
+    private SharedPreferences.Editor editor;
 
-    private static SharedPreferences getSharedPrefs(Context context){
-        SharedPreferences sharedPreferences = context.getSharedPreferences(SharedPrefConsts.SHARED_PREF_NAME, Context.MODE_PRIVATE);
+    @Inject
+    public SharedPrefUtil(Context context){
+        this.context = context;
+    }
+
+    private SharedPreferences getSharedPrefs(){
+        SharedPreferences sharedPreferences = context.getSharedPreferences(SharedPrefConstants.SHARED_PREF_NAME, Context.MODE_PRIVATE);
         return sharedPreferences;
     }
 
-    private static SharedPreferences.Editor getEditor(Context context){
+    private SharedPreferences.Editor getEditor(){
         if(editor == null){
-            editor = getSharedPrefs(context).edit();
+            editor = getSharedPrefs().edit();
         }
         return editor;
     }
 
-    private static void commit(){
+    public void commit(){
         if(editor != null){
             editor.apply();
         }
         editor = null;
     }
 
-    public static boolean getCurrentReceivingStatus(Context context){
-        return getSharedPrefs(context).getBoolean(SharedPrefConsts.CURR_RECEIVING_STATE, false);
+    public int getCurrentAppStatus(){
+        return getSharedPrefs().getInt(SharedPrefConstants.CURR_APP_STATE, SharedPrefConstants.CURR_STATUS_IDLE);
     }
 
-    public static void setCurrentReceivingState(Context context, boolean value, boolean doCommit){
-        getEditor(context).putBoolean(SharedPrefConsts.CURR_RECEIVING_STATE, value);
-        if(doCommit){
-            commit();
-        }
+    public void setCurrentAppStatus(int value){
+        getEditor().putInt(SharedPrefConstants.CURR_APP_STATE, value);
     }
 
-    public static String getThisDeviceId(Context context){
-        String thisDeviceId = getSharedPrefs(context).getString(SharedPrefConsts.THIS_DEVICE_ID, null);
+    public boolean isAutoscanOnWifiEnabled(){
+        return getSharedPrefs().getBoolean(SharedPrefConstants.IS_AUTOSCAN_ON_WIFI_ENABLED, false);
+    }
+
+    public void setAutoscanOnWifiEnabled(boolean isAutoScan){
+        getEditor().putBoolean(SharedPrefConstants.IS_AUTOSCAN_ON_WIFI_ENABLED, isAutoScan);
+    }
+
+    public String getThisDeviceId(Context context){
+        String thisDeviceId = getSharedPrefs().getString(SharedPrefConstants.THIS_DEVICE_ID, null);
         if(thisDeviceId == null){
             thisDeviceId = createIdForThisDevice(context);
         }
         return thisDeviceId;
     }
 
-    private static String createIdForThisDevice(Context context){
+    private String createIdForThisDevice(Context context){
         //creating a random string
         char[] candidate =  new char[]{ 'A', 'B', 'C', 'D', 'E', 'F', 'G',
                                         'H', 'I', 'J', 'K', 'L', 'M', 'N',
@@ -60,11 +75,11 @@ public class SharedPrefUtil {
                                         '7', '8', '9' };
         StringBuilder idRandomize = new StringBuilder();
         Random random = new Random();
-        for(int i = 0; i < SharedPrefConsts.THIS_DEVICE_ID_LENGTH; i++){
+        for(int i = 0; i < SharedPrefConstants.THIS_DEVICE_ID_LENGTH; i++){
             idRandomize.append(candidate[random.nextInt(37)]);
         }
-        String thisDeviceId = SharedPrefConsts.DEVICE_ID_PREFIX + idRandomize.toString();
-        getEditor(context).putString(SharedPrefConsts.THIS_DEVICE_ID, thisDeviceId);
+        String thisDeviceId = SharedPrefConstants.DEVICE_ID_PREFIX + idRandomize.toString();
+        getEditor().putString(SharedPrefConstants.THIS_DEVICE_ID, thisDeviceId);
         commit();
         return thisDeviceId;
     }

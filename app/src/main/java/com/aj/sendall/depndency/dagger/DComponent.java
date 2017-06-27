@@ -1,5 +1,7 @@
 package com.aj.sendall.depndency.dagger;
 
+import com.aj.sendall.network.broadcastreceiver.WifiStatusBroadcastReceiver;
+import com.aj.sendall.network.runnable.Server;
 import com.aj.sendall.network.services.ToggleReceiverService;
 import com.aj.sendall.ui.activity.Home;
 import com.aj.sendall.ui.activity.PesonalInteractionView;
@@ -23,4 +25,5 @@ public interface DComponent {
     void inject(GalleryFragment galleryFragment);
     void inject(ToggleReceiverService toggleReceiverService);
     void inject(PesonalInteractionView personalInteractionView);
+    void inject(WifiStatusBroadcastReceiver wifiStatusBroadcastReceiver);
 }

@@ -6,6 +6,7 @@ import android.content.IntentFilter;
 import android.net.wifi.p2p.WifiP2pManager;
 
 import com.aj.sendall.application.AndroidApplication;
+import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
 import com.aj.sendall.network.broadcastreceiver.WifiStatusBroadcastReceiver;
 import com.aj.sendall.network.utils.LocalWifiManager;
@@ -18,9 +19,8 @@ public class ToggleReceiverService extends IntentService {
     public LocalWifiManager localWifiManager;
     @Inject
     public NotificationUtil notificationUtil;
-
-    private WifiStatusBroadcastReceiver wifiStatusBroadcastReceiver;
-    private boolean wasWifiEnabled;
+    @Inject
+    public SharedPrefUtil sharedPrefUtil;
 
     public ToggleReceiverService() {
         super("ToggleReceiverService");
@@ -34,51 +34,26 @@ public class ToggleReceiverService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        boolean isRecActive = SharedPrefUtil.getCurrentReceivingStatus(this);
+        int currentAppStatus = sharedPrefUtil.getCurrentAppStatus();
 
-        if(isRecActive){
-            stopBroadcastReceiver();
-            SharedPrefUtil.setCurrentReceivingState(this, false, true);
+        if(currentAppStatus == SharedPrefConstants.CURR_STATUS_IDLE){
+            sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_RECEIVABLE);
+            sharedPrefUtil.setAutoscanOnWifiEnabled(true);
+            sharedPrefUtil.commit();
+        } else if (currentAppStatus == SharedPrefConstants.CURR_STATUS_RECEIVABLE){
+            sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
+            sharedPrefUtil.setAutoscanOnWifiEnabled(false);
+            sharedPrefUtil.commit();
         } else {
-            startBroadcastReceiver();
-            SharedPrefUtil.setCurrentReceivingState(this, true, true);
+            //App is in sending state
+            //if wifi is enabled then the application might be in the middle of receiving or sending something
+            //else just override and change the state. The state must be the residue of the last operation.
+            if(!localWifiManager.isWifiEnabled()){
+                sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
+                sharedPrefUtil.commit();
+            }
         }
 
         notificationUtil.showToggleReceivingNotification();
     }
-
-    private void startBroadcastReceiver(){
-        createBroadcastReceiver();
-        wasWifiEnabled = localWifiManager.isWifiEnabled();//to restore wifi state on stopping the app
-        if(!wasWifiEnabled){
-            localWifiManager.enableWifi(true);
-        }
-
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
-        intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
-        intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
-        intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
-
-        registerReceiver(wifiStatusBroadcastReceiver, intentFilter);
-        wifiStatusBroadcastReceiver.overrideAndScan();
-    }
-
-    private void stopBroadcastReceiver(){
-        if(wifiStatusBroadcastReceiver != null){
-            wifiStatusBroadcastReceiver.overrideAndStopScan();
-            unregisterReceiver(wifiStatusBroadcastReceiver);
-            if(!wasWifiEnabled){
-                //restoring wifi state
-                localWifiManager.enableWifi(false);
-            }
-            wifiStatusBroadcastReceiver = null;
-        }
-    }
-
-    private void createBroadcastReceiver(){
-        stopBroadcastReceiver();
-        wifiStatusBroadcastReceiver = new WifiStatusBroadcastReceiver(localWifiManager);
-    }
-
 }

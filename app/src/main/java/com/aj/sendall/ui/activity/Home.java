@@ -29,8 +29,6 @@ import javax.inject.Inject;
 public class Home extends AppCompatActivity {
     @Inject
     public LocalWifiManager localWifiManager;
-    @Inject
-    public NotificationUtil notificationUtil;
 
     private ViewPager mViewPager;
     private TabLayout tabLayout;
@@ -48,8 +46,6 @@ public class Home extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         initActivity();
-
-        notificationUtil.showToggleReceivingNotification();
     }
 
     private void initActivity() {
@@ -126,7 +122,7 @@ public class Home extends AppCompatActivity {
         private String connectionsFilterString;
         private String galleryFilterString;
 
-        public HomePageTabsAdapter(FragmentManager fm) {
+        HomePageTabsAdapter(FragmentManager fm) {
             super(fm);
         }
 
