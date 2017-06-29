@@ -6,6 +6,8 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Handler;
 import android.widget.Toast;
 
+import com.aj.sendall.notification.util.NotificationUtil;
+
 /**
  * Created by ajilal on 16/6/17.
  */

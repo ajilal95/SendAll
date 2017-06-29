@@ -16,6 +16,7 @@ import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
 import com.aj.sendall.network.runnable.Server;
 import com.aj.sendall.network.utils.Constants;
+import com.aj.sendall.notification.util.NotificationUtil;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -32,17 +33,20 @@ public class BroadcastReceiverForSender extends BroadcastReceiver {
     private ConnectionsAndUris connectionsAndUris;
     private Handler handler;
     private SharedPrefUtil sharedPrefUtil;
+    private NotificationUtil notificationUtil;
 
     public BroadcastReceiverForSender(WifiP2pManager wifiP2pManager
             , WifiP2pManager.Channel channel
             , ConnectionsAndUris connectionsAndUris
             , Handler handler
-            , SharedPrefUtil sharedPrefUtil) {
+            , SharedPrefUtil sharedPrefUtil
+            , NotificationUtil notificationUtil) {
         this.wifiP2pManager = wifiP2pManager;
         this.channel = channel;
         this.connectionsAndUris = connectionsAndUris;
         this.handler = handler;
         this.sharedPrefUtil = sharedPrefUtil;
+        this.notificationUtil = notificationUtil;
     }
 
     @Override
@@ -81,7 +85,7 @@ public class BroadcastReceiverForSender extends BroadcastReceiver {
                                     record.put(Constants.ADV_KEY_SERVER_PORT, String.valueOf(port));
 
                                     final WifiP2pDnsSdServiceInfo serviceInfo = WifiP2pDnsSdServiceInfo
-                                            .newInstance(Constants.P2P_SERVICE_ISTANCE_NAME, Constants.P2P_SERVICE_SERVICE_TYPE, record);
+                                            .newInstance(Constants.P2P_SERVICE_INSTANCE_NAME, Constants.P2P_SERVICE_SERVICE_TYPE, record);
                                     wifiP2pManager.addLocalService(channel, serviceInfo, new WifiP2pManager.ActionListener() {
                                         private int addServiceFailureCount = 0;
 
@@ -96,6 +100,7 @@ public class BroadcastReceiverForSender extends BroadcastReceiver {
                                             handler.post(server);
 
                                             context.unregisterReceiver(BroadcastReceiverForSender.this);
+                                            notificationUtil.removeToggleNotification();
                                         }
 
                                         @Override

@@ -6,7 +6,9 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.os.Handler;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.aj.sendall.db.dto.ConnectionsAndUris;
@@ -16,11 +18,11 @@ import com.aj.sendall.db.util.DBUtil;
 import com.aj.sendall.depndency.dagger.DModule;
 import com.aj.sendall.network.runnable.GroupCreator;
 import com.aj.sendall.network.broadcastreceiver.BroadcastReceiverForSender;
+import com.aj.sendall.notification.util.NotificationUtil;
 
 import java.io.Serializable;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 
 /**
@@ -38,17 +40,23 @@ public class LocalWifiManager implements Serializable{
     private Handler groupHandler;
     private SharedPrefUtil sharedPrefUtil;
     private int wifiP2pState;
+    private NotificationUtil notificationUtil;
 
     @Inject
-    public LocalWifiManager(Context context, DBUtil dbUtil, @Named(DModule.NAME_WIFI_GROUP_HANDLER) Handler groupHandler, SharedPrefUtil sharedPrefUtil){
+    public LocalWifiManager(Context context,
+                            DBUtil dbUtil,
+                            Handler groupHandler,
+                            SharedPrefUtil sharedPrefUtil,
+                            NotificationUtil notificationUtil){
         this.context = context;
         this.dbUtil = dbUtil;
         this.groupHandler = groupHandler;
         this.sharedPrefUtil = sharedPrefUtil;
-        init();
+        this.notificationUtil = notificationUtil;
+        init(context);
     }
 
-    private void init() {
+    private void init(Context context) {
         if(!initialised) {
             wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
             wifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
@@ -75,45 +83,6 @@ public class LocalWifiManager implements Serializable{
         this.wifiP2pState = currentWifiStatus;
     }
 
-    public void scanPeersAndNotifyBroadcastReceiver(WifiP2pManager.ActionListener listener){
-        wifiP2pManager.discoverPeers(channel, listener);
-    }
-
-    public void stopScanning(){
-        wifiP2pManager.stopPeerDiscovery(channel, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-
-            }
-
-            @Override
-            public void onFailure(int reason) {
-
-            }
-        });
-    }
-
-    public void requestPeers(WifiP2pManager.PeerListListener listener){
-        wifiP2pManager.requestPeers(channel, listener);
-    }
-
-    public void connectAndReceiveFiles(WifiP2pDevice device){
-        if(dbUtil.isConnectedSendAllDevice(device.deviceName)) {
-            WifiP2pConfig config = new WifiP2pConfig();
-            config.deviceAddress = device.deviceAddress;
-            wifiP2pManager.connect(channel, config, new WifiP2pManager.ActionListener() {
-                @Override
-                public void onSuccess() {
-
-                }
-
-                @Override
-                public void onFailure(int reason) {
-
-                }
-            });
-        }
-    }
 
     public void createGroupAndAdvertise(ConnectionsAndUris connectionsAndUris){
         //first of all, change the app status
@@ -126,7 +95,7 @@ public class LocalWifiManager implements Serializable{
             //Start the receiver to receive the group data
             IntentFilter intentFilter = new IntentFilter();
             intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
-            BroadcastReceiverForSender broadcastReceiverForSender = new BroadcastReceiverForSender(wifiP2pManager, channel, connectionsAndUris, groupHandler, sharedPrefUtil);
+            BroadcastReceiverForSender broadcastReceiverForSender = new BroadcastReceiverForSender(wifiP2pManager, channel, connectionsAndUris, groupHandler, sharedPrefUtil, notificationUtil);
             context.registerReceiver(broadcastReceiverForSender, intentFilter);
 
             //Delay for the service to start
@@ -137,11 +106,107 @@ public class LocalWifiManager implements Serializable{
 
     }
 
-    public void startP2pServiceDiscovery(){
+    public void startP2pServiceDiscovery(WifiP2pManager.DnsSdTxtRecordListener textListener, final WifiP2pManager.DnsSdServiceResponseListener serviceResponseListener){
+        wifiP2pManager.setDnsSdResponseListeners(channel, serviceResponseListener, textListener);
 
+        final WifiP2pDnsSdServiceRequest serviceRequest = WifiP2pDnsSdServiceRequest.newInstance();
+        wifiP2pManager.addServiceRequest(channel, serviceRequest, new WifiP2pManager.ActionListener() {
+            int failureCount = 0;
+            @Override
+            public void onSuccess() {
+                Log.d(LocalWifiManager.class.getSimpleName(), "Added service request");
+                notificationUtil.showToggleReceivingNotification();
+            }
+
+            @Override
+            public void onFailure(int reason) {
+                Log.d(LocalWifiManager.class.getSimpleName(), "Adding Service request failed");
+                failureCount++;
+                if(isWifiEnabled() && WifiP2pManager.BUSY == reason && failureCount < 5) {
+                    //retry after 2 seconds
+                    final WifiP2pManager.ActionListener thisListener = this;
+                    groupHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            wifiP2pManager.addServiceRequest(channel, serviceRequest, thisListener);
+                        }
+                    }, 2000);
+                } else {
+                    Log.d(LocalWifiManager.class.getSimpleName(), "Removed service request");
+                    Toast.makeText(context, "Scanning failed", Toast.LENGTH_SHORT).show();
+                    sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
+                    sharedPrefUtil.commit();
+                    notificationUtil.showToggleReceivingNotification();
+                }
+            }
+        });
+
+        wifiP2pManager.discoverServices(channel, new WifiP2pManager.ActionListener() {
+            int failureCount = 0;
+
+            @Override
+            public void onSuccess() {
+                Log.d(LocalWifiManager.class.getSimpleName(), "Started service discovery");
+                notificationUtil.showToggleReceivingNotification();
+            }
+
+            @Override
+            public void onFailure(int reason) {
+                Log.d(LocalWifiManager.class.getSimpleName(), "Failed starting service discovery");
+                failureCount++;
+                if(isWifiEnabled() && WifiP2pManager.BUSY == reason && failureCount < 5) {
+                    //retry after 2 seconds
+                    final WifiP2pManager.ActionListener thisListener = this;
+                    groupHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            wifiP2pManager.discoverServices(channel, thisListener);
+                        }
+                    }, 2000);
+                } else {
+                    Log.d(LocalWifiManager.class.getSimpleName(), "Aborted service discovery");
+                    Toast.makeText(context, "Scanning failed", Toast.LENGTH_SHORT).show();
+                    sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
+                    sharedPrefUtil.commit();
+                    notificationUtil.showToggleReceivingNotification();
+                }
+            }
+        });
     }
 
     public void stopP2pServiceDiscovery(){
+        wifiP2pManager.clearServiceRequests(channel, new WifiP2pManager.ActionListener() {
+            int failureCount = 0;
+            @Override
+            public void onSuccess() {
+                Log.d(LocalWifiManager.class.getSimpleName(), "Stopped service discovery");
+                sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
+                sharedPrefUtil.commit();
+                notificationUtil.showToggleReceivingNotification();
+            }
 
+            @Override
+            public void onFailure(int reason) {
+                Log.d(LocalWifiManager.class.getSimpleName(), "Failed stopping service discovery");
+                failureCount++;
+                if(isWifiEnabled() && WifiP2pManager.BUSY == reason && failureCount < 2) {
+                    //retry after 0.5 seconds
+                    final WifiP2pManager.ActionListener thisListener = this;
+                    groupHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            wifiP2pManager.clearServiceRequests(channel, thisListener);
+                        }
+                    }, 500);
+                } else {
+                    Log.d(LocalWifiManager.class.getSimpleName(), "Stopped service discovery");
+                    sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
+                    sharedPrefUtil.commit();
+                    if(isWifiEnabled()) {
+                        notificationUtil.showToggleReceivingNotification();
+                    }
+                }
+            }
+        });
     }
 }

@@ -39,7 +39,6 @@ public class DModule {
     }
 
     @Provides
-    @Named(value = NAME_WIFI_GROUP_HANDLER)
     Handler provideWifiGroupHandler(){
         return new Handler();
     }
