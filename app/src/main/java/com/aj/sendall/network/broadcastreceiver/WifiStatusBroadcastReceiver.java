@@ -3,8 +3,6 @@ package com.aj.sendall.network.broadcastreceiver;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pManager;
 
 import com.aj.sendall.application.AndroidApplication;
@@ -50,7 +48,7 @@ public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
         int currentAppStatus = sharedPrefUtil.getCurrentAppStatus();
 
         if(WifiP2pManager.WIFI_P2P_STATE_ENABLED == state) {
-            if(sharedPrefUtil.isAutoscanOnWifiEnabled()) {
+            if(sharedPrefUtil.isAutoScanOnWifiEnabled()) {
                 networkUtil.startP2pServiceDiscovery();
             }
             notificationUtil.showToggleReceivingNotification();

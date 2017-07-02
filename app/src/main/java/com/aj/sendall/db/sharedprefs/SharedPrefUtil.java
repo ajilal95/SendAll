@@ -2,6 +2,7 @@ package com.aj.sendall.db.sharedprefs;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.widget.Toast;
 
 import java.util.Random;
 
@@ -39,6 +40,17 @@ public class SharedPrefUtil {
             editor.apply();
         }
         editor = null;
+        switch(getCurrentAppStatus()){
+            case SharedPrefConstants.CURR_STATUS_IDLE:
+                Toast.makeText(context, "Idle", Toast.LENGTH_LONG).show();
+                break;
+            case SharedPrefConstants.CURR_STATUS_RECEIVABLE:
+                Toast.makeText(context, "Receivable", Toast.LENGTH_LONG).show();
+                break;
+            case SharedPrefConstants.CURR_STATUS_SENDING:
+                Toast.makeText(context, "Sending", Toast.LENGTH_LONG).show();
+                break;
+        }
     }
 
     public int getCurrentAppStatus(){
@@ -49,11 +61,11 @@ public class SharedPrefUtil {
         getEditor().putInt(SharedPrefConstants.CURR_APP_STATE, value);
     }
 
-    public boolean isAutoscanOnWifiEnabled(){
+    public boolean isAutoScanOnWifiEnabled(){
         return getSharedPrefs().getBoolean(SharedPrefConstants.IS_AUTOSCAN_ON_WIFI_ENABLED, false);
     }
 
-    public void setAutoscanOnWifiEnabled(boolean isAutoScan){
+    public void setAutoScanOnWifiEnabled(boolean isAutoScan){
         getEditor().putBoolean(SharedPrefConstants.IS_AUTOSCAN_ON_WIFI_ENABLED, isAutoScan);
     }
 

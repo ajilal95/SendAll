@@ -95,7 +95,7 @@ public class LocalWifiManager implements Serializable{
             //Start the receiver to receive the group data
             IntentFilter intentFilter = new IntentFilter();
             intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
-            BroadcastReceiverForSender broadcastReceiverForSender = new BroadcastReceiverForSender(wifiP2pManager, channel, connectionsAndUris, groupHandler, sharedPrefUtil, notificationUtil);
+            BroadcastReceiverForSender broadcastReceiverForSender = new BroadcastReceiverForSender(wifiP2pManager, channel, connectionsAndUris);
             context.registerReceiver(broadcastReceiverForSender, intentFilter);
 
             //Delay for the service to start

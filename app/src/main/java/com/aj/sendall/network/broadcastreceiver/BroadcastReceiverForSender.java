@@ -10,6 +10,8 @@ import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.aj.sendall.application.AndroidApplication;
+import com.aj.sendall.db.contentprovidutil.ContentProviderUtil;
 import com.aj.sendall.db.dto.ConnectionViewData;
 import com.aj.sendall.db.dto.ConnectionsAndUris;
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
@@ -23,6 +25,8 @@ import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 /**
  * Created by ajilal on 17/6/17.
  */
@@ -31,26 +35,26 @@ public class BroadcastReceiverForSender extends BroadcastReceiver {
     private WifiP2pManager wifiP2pManager;
     private WifiP2pManager.Channel channel;
     private ConnectionsAndUris connectionsAndUris;
-    private Handler handler;
-    private SharedPrefUtil sharedPrefUtil;
-    private NotificationUtil notificationUtil;
+    @Inject
+    public Handler handler;
+    @Inject
+    public SharedPrefUtil sharedPrefUtil;
+    @Inject
+    public NotificationUtil notificationUtil;
+    @Inject
+    public ContentProviderUtil contentProviderUtil;
 
     public BroadcastReceiverForSender(WifiP2pManager wifiP2pManager
             , WifiP2pManager.Channel channel
-            , ConnectionsAndUris connectionsAndUris
-            , Handler handler
-            , SharedPrefUtil sharedPrefUtil
-            , NotificationUtil notificationUtil) {
+            , ConnectionsAndUris connectionsAndUris) {
         this.wifiP2pManager = wifiP2pManager;
         this.channel = channel;
         this.connectionsAndUris = connectionsAndUris;
-        this.handler = handler;
-        this.sharedPrefUtil = sharedPrefUtil;
-        this.notificationUtil = notificationUtil;
     }
 
     @Override
     public void onReceive(final Context context, Intent intent) {
+        ((AndroidApplication)context.getApplicationContext()).getDaggerInjector().inject(this);
         final String action = intent.getAction();
         if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
             //fetch the group info
@@ -96,7 +100,7 @@ public class BroadcastReceiverForSender extends BroadcastReceiver {
                                             Log.d(BroadcastReceiverForSender.class.getSimpleName(), "Passphrase : " + passPhrase);
 
                                             //Starting the server.
-                                            Server server = new Server(serverSocket, port, wifiP2pManager, channel, sharedPrefUtil, connectionsAndUris, handler);
+                                            Server server = new Server(serverSocket, port, wifiP2pManager, channel, connectionsAndUris, context);
                                             handler.post(server);
 
                                             context.unregisterReceiver(BroadcastReceiverForSender.this);

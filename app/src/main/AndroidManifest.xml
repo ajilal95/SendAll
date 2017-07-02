@@ -27,7 +27,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.activity.PesonalInteractionView"
+            android:name=".ui.activity.PersonalInteractionView"
             android:label="@string/title_activity_pesonal_interaction_view"
             android:parentActivityName=".ui.activity.Home"
             android:theme="@style/AppTheme.NoActionBar">

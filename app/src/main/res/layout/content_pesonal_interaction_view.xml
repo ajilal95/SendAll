@@ -9,7 +9,7 @@
     android:paddingLeft="@dimen/pers_inter_items_parent_vert_margin"
     android:paddingRight="@dimen/pers_inter_items_parent_vert_margin"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context=".ui.activity.PesonalInteractionView"
+    tools:context=".ui.activity.PersonalInteractionView"
     tools:showIn="@layout/activity_pesonal_interaction_view">
 
     <android.support.v7.widget.RecyclerView

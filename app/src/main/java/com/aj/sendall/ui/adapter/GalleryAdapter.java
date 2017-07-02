@@ -36,7 +36,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     private List<FileInfoDTO> allFileInfoDTOs;
     private List<FileInfoDTO> filteredFileInfoDTOs;
 
-    private Set<Uri> selectedItemUris;
+    private Set<FileInfoDTO> selectedItems;
 
     private ItemSelectableView viewParent;
 
@@ -119,7 +119,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     }
 
     public void initAdapter(){
-        selectedItemUris = new HashSet<>();
+        selectedItems = new HashSet<>();
         allFileInfoDTOs = getGalleryItemsList();
     }
 
@@ -173,8 +173,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         return selectString;
     }
 
-    public Set<Uri> getSelectedItemUris(){
-        return selectedItemUris;
+    public Set<FileInfoDTO> getSelectedItems(){
+        return selectedItems;
     }
 
     @Override
@@ -232,10 +232,10 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                     ((FileInfoDTO)v.getTag()).isSelected = !((FileInfoDTO)v.getTag()).isSelected;
                     CommonUiUtils.setViewSelectedAppearanceRoundEdged(v, ((FileInfoDTO)v.getTag()).isSelected);
                     if(((FileInfoDTO)v.getTag()).isSelected){
-                        selectedItemUris.add(((FileInfoDTO)v.getTag()).uri);
+                        selectedItems.add((FileInfoDTO)v.getTag());
                         viewParent.incrementTotalNoOfSelections();
                     } else {
-                        selectedItemUris.remove(((FileInfoDTO)v.getTag()).uri);
+                        selectedItems.remove(((FileInfoDTO)v.getTag()).uri);
                         viewParent.decrementTotalNoOfSelections();
                     }
                 }

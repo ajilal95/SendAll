@@ -10,5 +10,5 @@ import java.util.Set;
 
 public class ConnectionsAndUris {
     public Set<ConnectionViewData> connections;
-    public Set<Uri> mediaUris;
+    public Set<FileInfoDTO> fileInfoDTOs;
 }

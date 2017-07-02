@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import com.aj.sendall.R;
 import com.aj.sendall.application.AndroidApplication;
+import com.aj.sendall.db.dto.FileInfoDTO;
 import com.aj.sendall.ui.activity.SelectReceiversActivity;
 import com.aj.sendall.ui.adapter.GalleryAdapter;
 import com.aj.sendall.ui.consts.MediaConsts;
@@ -128,9 +129,9 @@ public class GalleryFragment extends Fragment implements ItemSelectableView, Ite
         fltBtnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Set<Uri> selectedItems = new HashSet<>();
+                Set<FileInfoDTO> selectedItems = new HashSet<>();
                 for(RecyclerView recyclerView : getRecyclerViews()){
-                    selectedItems.addAll(((GalleryAdapter)recyclerView.getAdapter()).getSelectedItemUris());
+                    selectedItems.addAll(((GalleryAdapter)recyclerView.getAdapter()).getSelectedItems());
                 }
                 FileSendingService.SendOperationResult result = fileSendingService.send_items(selectedItems);
                 if(result.equals(FileSendingService.SendOperationResult.SENDING)){

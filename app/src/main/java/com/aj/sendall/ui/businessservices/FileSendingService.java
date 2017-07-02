@@ -4,6 +4,7 @@ import android.net.Uri;
 
 import com.aj.sendall.db.dto.ConnectionViewData;
 import com.aj.sendall.db.dto.ConnectionsAndUris;
+import com.aj.sendall.db.dto.FileInfoDTO;
 import com.aj.sendall.network.utils.LocalWifiManager;
 
 import java.util.Set;
@@ -35,7 +36,7 @@ public final class FileSendingService {
 
     public SendOperationResult send_to(Set<ConnectionViewData> receiverSet){
         getConnectionsAndUris().connections = receiverSet;
-        if(getConnectionsAndUris().mediaUris == null || getConnectionsAndUris().mediaUris.isEmpty()){
+        if(getConnectionsAndUris().fileInfoDTOs == null || getConnectionsAndUris().fileInfoDTOs.isEmpty()){
             return SendOperationResult.URI_EMPTY;
         } else {
             send();
@@ -44,8 +45,8 @@ public final class FileSendingService {
         }
     }
 
-    public SendOperationResult send_items(Set<Uri> mediaUris){
-        getConnectionsAndUris().mediaUris = mediaUris;
+    public SendOperationResult send_items(Set<FileInfoDTO> mediaUris){
+        getConnectionsAndUris().fileInfoDTOs = mediaUris;
         if(getConnectionsAndUris().connections == null || getConnectionsAndUris().connections.isEmpty()){
             return SendOperationResult.RECEIVER_EMPTY;
         } else {

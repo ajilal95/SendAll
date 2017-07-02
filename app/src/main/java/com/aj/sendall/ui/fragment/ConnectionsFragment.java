@@ -16,7 +16,7 @@ import android.widget.Toast;
 
 import com.aj.sendall.R;
 import com.aj.sendall.application.AndroidApplication;
-import com.aj.sendall.ui.activity.PesonalInteractionView;
+import com.aj.sendall.ui.activity.PersonalInteractionView;
 import com.aj.sendall.ui.activity.SelectMediaActivity;
 import com.aj.sendall.ui.adapter.ConnectionAdapter;
 import com.aj.sendall.ui.consts.ConnectionsConstants;
@@ -115,7 +115,7 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
     private class ListViewItemClickListenerForPurposeView implements AdapterView.OnItemClickListener{
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            Intent personalInteractionView = new Intent(parentActivity, PesonalInteractionView.class);
+            Intent personalInteractionView = new Intent(parentActivity, PersonalInteractionView.class);
             personalInteractionView.putExtra("id", ((ConnectionViewData)view.getTag()).profileId);
             personalInteractionView.putExtra("title", ((ConnectionViewData)view.getTag()).profileName);
             parentActivity.startActivity(personalInteractionView);
