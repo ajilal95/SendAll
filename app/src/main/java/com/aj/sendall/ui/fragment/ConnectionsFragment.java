@@ -16,6 +16,8 @@ import android.widget.Toast;
 
 import com.aj.sendall.R;
 import com.aj.sendall.application.AndroidApplication;
+import com.aj.sendall.ui.activity.Connector;
+import com.aj.sendall.ui.activity.Home;
 import com.aj.sendall.ui.activity.PersonalInteractionView;
 import com.aj.sendall.ui.activity.SelectMediaActivity;
 import com.aj.sendall.ui.adapter.ConnectionAdapter;
@@ -164,8 +166,8 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
     private class FltBtnClickListenerForAdd implements View.OnClickListener{
         @Override
         public void onClick(View view) {
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show();
+            Intent connectorIntent = new Intent(parentActivity, Connector.class);
+            parentActivity.startActivity(connectorIntent);
         }
     }
 
@@ -184,6 +186,9 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
                 parentActivity.startActivity(fileSelectIntent);
             } else if(FileSendingService.SendOperationResult.SENDING.equals(result)){
                 Toast.makeText(parentActivity, "Sending..", Toast.LENGTH_SHORT).show();
+                if(!(parentActivity instanceof Home)){
+                    parentActivity.finish();
+                }
             }
         }
     }

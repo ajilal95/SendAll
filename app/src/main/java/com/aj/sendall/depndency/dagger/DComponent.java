@@ -4,6 +4,7 @@ import com.aj.sendall.network.broadcastreceiver.BroadcastReceiverForSender;
 import com.aj.sendall.network.broadcastreceiver.WifiStatusBroadcastReceiver;
 import com.aj.sendall.network.runnable.Server;
 import com.aj.sendall.network.services.ToggleReceiverService;
+import com.aj.sendall.ui.activity.Connector;
 import com.aj.sendall.ui.activity.Home;
 import com.aj.sendall.ui.activity.PersonalInteractionView;
 import com.aj.sendall.ui.fragment.ConnectionsFragment;
@@ -28,4 +29,5 @@ public interface DComponent {
     void inject(WifiStatusBroadcastReceiver wifiStatusBroadcastReceiver);
     void inject(BroadcastReceiverForSender broadcastReceiverForSender);
     void inject(Server server);
+    void inject(Connector connector);
 }
