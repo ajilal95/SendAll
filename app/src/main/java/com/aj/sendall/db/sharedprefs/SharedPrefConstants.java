@@ -11,6 +11,7 @@ public class SharedPrefConstants {
     public static final int CURR_STATUS_IDLE = 0;
     public static final int CURR_STATUS_RECEIVABLE = 1;
     public static final int CURR_STATUS_SENDING = 2;
+    public static final int CURR_STATUS_CEATING_CONNECTION = 3;
 
     static final String IS_AUTOSCAN_ON_WIFI_ENABLED =  "is_autoscan_on_wifi_enable";
 

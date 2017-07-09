@@ -4,12 +4,12 @@ import android.content.Context;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Handler;
 
-import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.db.contentprovidutil.ContentProviderUtil;
 import com.aj.sendall.db.dto.ConnectionViewData;
 import com.aj.sendall.db.dto.ConnectionsAndUris;
 import com.aj.sendall.db.dto.FileInfoDTO;
 import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
+import com.aj.sendall.network.utils.LocalWifiManager;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -19,38 +19,27 @@ import java.net.Socket;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.inject.Inject;
-
 /**
  * Created by ajilal on 28/6/17.
  */
 
-public class Server implements Runnable{
+public class FileTransferServer implements Runnable{
     private ServerSocket serverSocket;
     private int port;
-    private WifiP2pManager wifiP2pManager;
-    private WifiP2pManager.Channel channel;
     private ConnectionsAndUris connectionsAndUris;
 
-    @Inject
-    public SharedPrefUtil sharedPrefUtil;
-    @Inject
-    public Handler handler;
-    @Inject
-    public ContentProviderUtil contentProviderUtil;
+    private SharedPrefUtil sharedPrefUtil;
+    private Handler handler;
 
-    public Server(ServerSocket serverSocket
+    public FileTransferServer(ServerSocket serverSocket
                     , int port
-                    , WifiP2pManager wifiP2pManager
-                    , WifiP2pManager.Channel channel
-                    , ConnectionsAndUris connectionsAndUris
-                    , Context context){
+                    , LocalWifiManager localWifiManager
+                    , ConnectionsAndUris connectionsAndUris){
         this.serverSocket = serverSocket;
         this.port = port;
-        this.wifiP2pManager = wifiP2pManager;
-        this.channel = channel;
         this.connectionsAndUris = connectionsAndUris;
-        ((AndroidApplication)context.getApplicationContext()).getDaggerInjector().inject(this);
+        this.handler = localWifiManager.handler;
+        this.sharedPrefUtil = localWifiManager.sharedPrefUtil;
     }
 
     @Override
@@ -93,7 +82,7 @@ public class Server implements Runnable{
                     if (verifyAndRemoveConnectionBasedOnUID(uid, connectionsSet)) {
                         //connection is verified
                         activeSocketsReference.add(socket);
-                        handler.post(new Sender(socket, fileInfoDTOs, dis));
+                        handler.post(new FileSender(socket, fileInfoDTOs, dis));
                     }
                 } catch (IOException ioe) {
                     ioe.printStackTrace();

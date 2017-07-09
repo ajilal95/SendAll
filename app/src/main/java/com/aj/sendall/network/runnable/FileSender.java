@@ -16,13 +16,13 @@ import java.util.Set;
  * Created by ajilal on 2/7/17.
  */
 
-public class Sender implements Runnable {
+public class FileSender implements Runnable {
     private Socket socket;
     private Set<FileInfoDTO> fileInfoDTOs;
     private DataInputStream dis;
     private DataOutputStream dos;
 
-    public Sender(Socket socket, Set<FileInfoDTO> fileInfoDTOs, DataInputStream dis){
+    public FileSender(Socket socket, Set<FileInfoDTO> fileInfoDTOs, DataInputStream dis){
         this.socket = socket;
         this.fileInfoDTOs = fileInfoDTOs;
         this.dis = dis;

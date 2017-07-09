@@ -8,8 +8,8 @@ import android.net.wifi.p2p.WifiP2pManager;
 import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
+import com.aj.sendall.network.services.ToggleReceiverService;
 import com.aj.sendall.network.utils.LocalWifiManager;
-import com.aj.sendall.network.utils.NetworkUtil;
 import com.aj.sendall.notification.util.NotificationUtil;
 
 import javax.inject.Inject;
@@ -17,12 +17,8 @@ import javax.inject.Inject;
 public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
     @Inject
     public LocalWifiManager localWifiManager;
-    @Inject
     public NotificationUtil notificationUtil;
-    @Inject
     public SharedPrefUtil sharedPrefUtil;
-    @Inject
-    public NetworkUtil networkUtil;
 
     public WifiStatusBroadcastReceiver() {
     }
@@ -31,6 +27,8 @@ public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if(localWifiManager == null){
             ((AndroidApplication)context.getApplicationContext()).getDaggerInjector().inject(this);
+            notificationUtil = localWifiManager.notificationUtil;
+            sharedPrefUtil = localWifiManager.sharedPrefUtil;
         }
         String action = intent.getAction();
 
@@ -49,7 +47,7 @@ public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
 
         if(WifiP2pManager.WIFI_P2P_STATE_ENABLED == state) {
             if(sharedPrefUtil.isAutoScanOnWifiEnabled()) {
-                networkUtil.startP2pServiceDiscovery();
+                ToggleReceiverService.startP2pServiceDiscovery(localWifiManager);
             }
             notificationUtil.showToggleReceivingNotification();
         } else {
@@ -57,7 +55,7 @@ public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
             if(currentAppStatus == SharedPrefConstants.CURR_STATUS_SENDING){
                 stopSending();
             } else if(currentAppStatus == SharedPrefConstants.CURR_STATUS_RECEIVABLE) {
-                networkUtil.stopP2pServiceDiscovery();
+                localWifiManager.stopP2pServiceDiscovery();
             }
         }
     }

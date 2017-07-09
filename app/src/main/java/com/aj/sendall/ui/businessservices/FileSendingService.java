@@ -1,10 +1,10 @@
 package com.aj.sendall.ui.businessservices;
 
-import android.net.Uri;
-
 import com.aj.sendall.db.dto.ConnectionViewData;
 import com.aj.sendall.db.dto.ConnectionsAndUris;
 import com.aj.sendall.db.dto.FileInfoDTO;
+import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
+import com.aj.sendall.network.broadcastreceiver.FileTransferGrpCreatnLstnr;
 import com.aj.sendall.network.utils.LocalWifiManager;
 
 import java.util.Set;
@@ -57,7 +57,8 @@ public final class FileSendingService {
     }
 
     private void send(){
-        localWifiManager.createGroupAndAdvertise(connectionsAndUris);
+        FileTransferGrpCreatnLstnr fileTransferGrpCreatnLstnr = new FileTransferGrpCreatnLstnr(localWifiManager, connectionsAndUris);
+        localWifiManager.createGroupAndAdvertise(fileTransferGrpCreatnLstnr, SharedPrefConstants.CURR_STATUS_SENDING);
     }
 
 //    private static void addCurrentToSendQueue(){
