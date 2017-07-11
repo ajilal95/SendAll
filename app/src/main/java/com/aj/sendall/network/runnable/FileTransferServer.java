@@ -1,15 +1,12 @@
 package com.aj.sendall.network.runnable;
 
-import android.content.Context;
-import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Handler;
 
-import com.aj.sendall.db.contentprovidutil.ContentProviderUtil;
 import com.aj.sendall.db.dto.ConnectionViewData;
 import com.aj.sendall.db.dto.ConnectionsAndUris;
 import com.aj.sendall.db.dto.FileInfoDTO;
 import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
-import com.aj.sendall.network.utils.LocalWifiManager;
+import com.aj.sendall.application.AppManager;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -33,13 +30,13 @@ public class FileTransferServer implements Runnable{
 
     public FileTransferServer(ServerSocket serverSocket
                     , int port
-                    , LocalWifiManager localWifiManager
+                    , AppManager appManager
                     , ConnectionsAndUris connectionsAndUris){
         this.serverSocket = serverSocket;
         this.port = port;
         this.connectionsAndUris = connectionsAndUris;
-        this.handler = localWifiManager.handler;
-        this.sharedPrefUtil = localWifiManager.sharedPrefUtil;
+        this.handler = appManager.handler;
+        this.sharedPrefUtil = appManager.sharedPrefUtil;
     }
 
     @Override

@@ -12,22 +12,34 @@ import android.widget.ProgressBar;
 import com.aj.sendall.R;
 import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.db.dto.ConnectionViewData;
-import com.aj.sendall.network.utils.LocalWifiManager;
+import com.aj.sendall.application.AppManager;
+import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
+import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
+import com.aj.sendall.network.broadcastreceiver.NewConnCreationGrpCreatnLstnr;
+import com.aj.sendall.network.runnable.NewConnCreationSender;
+import com.aj.sendall.network.runnable.NewConnCreationServer;
+import com.aj.sendall.network.utils.Constants;
 import com.aj.sendall.ui.adapter.ConnectorAdapter;
+import com.aj.sendall.ui.interfaces.Updatable;
 
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 import javax.inject.Inject;
 
-public class Connector extends AppCompatActivity {
+public class Connector extends AppCompatActivity implements Updatable {
     private RecyclerView availableConns;
     private LinearLayout transBgLayout;
     private ProgressBar pBarLoadingConns;
     private LinearLayout buttonLayout;
     private ImageView imgBtnInitConn;
     private ImageView imgBtnScanConn;
+    private Updatable connCreatorServer;
+    private Map<String, UpdateEvent> usernameToUpdateEvent = new HashMap<>();
+    private Action selectedAction;
     @Inject
-    LocalWifiManager localWifiManager;
+    AppManager appManager;
 
     private ConnectorAdapter connectorAdapter;
     private LinkedList<ConnectionViewData> connectionViewDatas;
@@ -53,7 +65,7 @@ public class Connector extends AppCompatActivity {
 
     private void initViews(){
         availableConns.setLayoutManager(new LinearLayoutManager(this));
-        connectorAdapter = new ConnectorAdapter(this, new ClickListenerForConnectorItem());
+        connectorAdapter = new ConnectorAdapter(this);
         availableConns.setAdapter(connectorAdapter);
 
         pBarLoadingConns.setAlpha(0);
@@ -63,13 +75,18 @@ public class Connector extends AppCompatActivity {
         imgBtnInitConn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                animateViewsOnButtonClicked(v);
+                NewConnCreationGrpCreatnLstnr listener = new NewConnCreationGrpCreatnLstnr(appManager, Connector.this);
+                if(appManager.createGroupAndAdvertise(listener, SharedPrefConstants.CURR_STATUS_CEATING_CONNECTION)){
+                    selectedAction = Action.CREATE;
+                    animateViewsOnButtonClicked(v);
+                }
             }
         });
 
         imgBtnScanConn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                selectedAction = Action.JOIN;
                 animateViewsOnButtonClicked(v);
             }
         });
@@ -100,13 +117,38 @@ public class Connector extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+
+        UpdateEvent closeEvent = new UpdateEvent();
+        closeEvent.source = this.getClass();
+        closeEvent.data.put(Constants.ACTION, Constants.CLOSE_SOCKET);
+
+        //Close the server
+        connCreatorServer.update(closeEvent);
+
+        //Close all open Sockets
+        for(UpdateEvent eventFromSender : usernameToUpdateEvent.values()){
+            Updatable sender = (Updatable) eventFromSender.data.get(NewConnCreationSender.UPDATE_CONST_SENDER);
+            if(sender != null){
+                sender.update(closeEvent);
+            }
+        }
+
         finish();
     }
 
-    private class ClickListenerForConnectorItem implements View.OnClickListener{
-        @Override
-        public void onClick(View v) {
-
+    @Override
+    public void update(UpdateEvent updateEvent) {
+        if(NewConnCreationServer.class.equals(updateEvent.source)){
+            connCreatorServer = (Updatable) updateEvent.data.get(NewConnCreationServer.UPDATE_CONST_SERVER);
+        } else if(NewConnCreationSender.class.equals(updateEvent.source)){
+            String username = (String) updateEvent.data.get(SharedPrefConstants.USER_NAME);
+            usernameToUpdateEvent.put(username, updateEvent);
+        } else if(ConnectorAdapter.class.equals(updateEvent.source)){
+            String selectedConnection = (String) updateEvent.data.get(ConnectorAdapter.UPDATE_CONST_SELECTED_USERNAME);
         }
+    }
+
+    private enum Action{
+        CREATE, JOIN
     }
 }

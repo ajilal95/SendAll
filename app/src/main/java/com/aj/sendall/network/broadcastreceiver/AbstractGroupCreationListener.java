@@ -6,17 +6,17 @@ import android.content.Intent;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
 
-import com.aj.sendall.network.utils.LocalWifiManager;
+import com.aj.sendall.application.AppManager;
 
 /**
  * Created by ajilal on 9/7/17.
  */
 
 public abstract class AbstractGroupCreationListener extends BroadcastReceiver {
-    protected LocalWifiManager localWifiManager;
+    protected AppManager appManager;
 
-    public AbstractGroupCreationListener(LocalWifiManager localWifiManager){
-        this.localWifiManager = localWifiManager;
+    public AbstractGroupCreationListener(AppManager appManager){
+        this.appManager = appManager;
     }
 
     @Override
@@ -24,7 +24,7 @@ public abstract class AbstractGroupCreationListener extends BroadcastReceiver {
         final String action = intent.getAction();
         if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
             //fetch the group info
-            localWifiManager.wifiP2pManager.requestGroupInfo(localWifiManager.channel, new WifiP2pManager.GroupInfoListener() {
+            appManager.wifiP2pManager.requestGroupInfo(appManager.channel, new WifiP2pManager.GroupInfoListener() {
                 @Override
                 public void onGroupInfoAvailable(final WifiP2pGroup group) {
                     if (group != null && group.isGroupOwner()) {

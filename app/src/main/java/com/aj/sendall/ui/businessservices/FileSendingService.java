@@ -5,7 +5,7 @@ import com.aj.sendall.db.dto.ConnectionsAndUris;
 import com.aj.sendall.db.dto.FileInfoDTO;
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.network.broadcastreceiver.FileTransferGrpCreatnLstnr;
-import com.aj.sendall.network.utils.LocalWifiManager;
+import com.aj.sendall.application.AppManager;
 
 import java.util.Set;
 
@@ -20,11 +20,11 @@ import javax.inject.Singleton;
 public final class FileSendingService {
     private  ConnectionsAndUris connectionsAndUris;
 
-    private LocalWifiManager localWifiManager;
+    private AppManager appManager;
 
     @Inject
-    public FileSendingService(LocalWifiManager localWifiManager){
-        this.localWifiManager = localWifiManager;
+    public FileSendingService(AppManager appManager){
+        this.appManager = appManager;
     }
 
     private ConnectionsAndUris getConnectionsAndUris(){
@@ -57,8 +57,8 @@ public final class FileSendingService {
     }
 
     private void send(){
-        FileTransferGrpCreatnLstnr fileTransferGrpCreatnLstnr = new FileTransferGrpCreatnLstnr(localWifiManager, connectionsAndUris);
-        localWifiManager.createGroupAndAdvertise(fileTransferGrpCreatnLstnr, SharedPrefConstants.CURR_STATUS_SENDING);
+        FileTransferGrpCreatnLstnr fileTransferGrpCreatnLstnr = new FileTransferGrpCreatnLstnr(appManager, connectionsAndUris);
+        appManager.createGroupAndAdvertise(fileTransferGrpCreatnLstnr, SharedPrefConstants.CURR_STATUS_SENDING);
     }
 
 //    private static void addCurrentToSendQueue(){

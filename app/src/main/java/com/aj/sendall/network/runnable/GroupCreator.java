@@ -6,7 +6,7 @@ import android.widget.Toast;
 
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
-import com.aj.sendall.network.utils.LocalWifiManager;
+import com.aj.sendall.application.AppManager;
 import com.aj.sendall.notification.util.NotificationUtil;
 
 /**
@@ -14,55 +14,55 @@ import com.aj.sendall.notification.util.NotificationUtil;
  */
 
 public class GroupCreator implements Runnable {
-    private LocalWifiManager localWifiManager;
+    private AppManager appManager;
     private NotificationUtil notificationUtil;
     private SharedPrefUtil sharedPrefUtil;
 
-    public GroupCreator(LocalWifiManager localWifiManager,
+    public GroupCreator(AppManager appManager,
                         NotificationUtil notificationUtil,
                         SharedPrefUtil sharedPrefUtil){
-        this.localWifiManager = localWifiManager;
+        this.appManager = appManager;
         this.notificationUtil = notificationUtil;
         this.sharedPrefUtil = sharedPrefUtil;
     }
 
     @Override
     public void run() {
-        localWifiManager.wifiP2pManager.requestGroupInfo(localWifiManager.channel, new WifiP2pManager.GroupInfoListener() {
+        appManager.wifiP2pManager.requestGroupInfo(appManager.channel, new WifiP2pManager.GroupInfoListener() {
             @Override
             public void onGroupInfoAvailable(WifiP2pGroup group) {
                 if(group != null){
                     //group exists. remove it
-                    localWifiManager.wifiP2pManager.removeGroup(localWifiManager.channel, new WifiP2pManager.ActionListener() {
+                    appManager.wifiP2pManager.removeGroup(appManager.channel, new WifiP2pManager.ActionListener() {
                         private int groupRemoveFailureCount = 0;
 
                         @Override
                         public void onSuccess() {
                             //Success.. Now create your group
-                            localWifiManager.wifiP2pManager.createGroup(localWifiManager.channel, new WifiP2pManager.ActionListener() {
+                            appManager.wifiP2pManager.createGroup(appManager.channel, new WifiP2pManager.ActionListener() {
                                 int groupCreationFailureCount = 0;
 
                                 @Override
                                 public void onSuccess() {
-                                    Toast.makeText(localWifiManager.context, "Success", Toast.LENGTH_LONG).show();
+                                    Toast.makeText(appManager.context, "Success", Toast.LENGTH_LONG).show();
                                 }
 
                                 @Override
                                 public void onFailure(int reason) {
                                     groupCreationFailureCount++;
-                                    Toast.makeText(localWifiManager.context, ""+ reason, Toast.LENGTH_LONG).show();
+                                    Toast.makeText(appManager.context, ""+ reason, Toast.LENGTH_LONG).show();
                                     if(WifiP2pManager.BUSY == reason && groupCreationFailureCount < 5) {
                                         final WifiP2pManager.ActionListener enclosingListener = this;
-                                        localWifiManager.handler.postDelayed(new Runnable() {
+                                        appManager.handler.postDelayed(new Runnable() {
                                             @Override
                                             public void run() {
-                                                localWifiManager.wifiP2pManager.createGroup(localWifiManager.channel, enclosingListener);
+                                                appManager.wifiP2pManager.createGroup(appManager.channel, enclosingListener);
                                             }
                                         }, 1000);
                                     } else {
                                         sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
                                         sharedPrefUtil.commit();
-                                        if(localWifiManager.isWifiEnabled()){
+                                        if(appManager.isWifiEnabled()){
                                             notificationUtil.showToggleReceivingNotification();
                                         }
                                     }
@@ -73,19 +73,19 @@ public class GroupCreator implements Runnable {
                         @Override
                         public void onFailure(int reason) {
                             groupRemoveFailureCount++;
-                            Toast.makeText(localWifiManager.context, ""+ reason, Toast.LENGTH_LONG).show();
+                            Toast.makeText(appManager.context, ""+ reason, Toast.LENGTH_LONG).show();
                             if(WifiP2pManager.BUSY == reason && groupRemoveFailureCount < 5) {
                                 final WifiP2pManager.ActionListener enclosingListener = this;
-                                localWifiManager.handler.postDelayed(new Runnable() {
+                                appManager.handler.postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
-                                        localWifiManager.wifiP2pManager.removeGroup(localWifiManager.channel, enclosingListener);
+                                        appManager.wifiP2pManager.removeGroup(appManager.channel, enclosingListener);
                                     }
                                 }, 5000);
                             } else {
                                 sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
                                 sharedPrefUtil.commit();
-                                if(localWifiManager.isWifiEnabled()){
+                                if(appManager.isWifiEnabled()){
                                     notificationUtil.showToggleReceivingNotification();
                                 }
                             }
@@ -93,30 +93,30 @@ public class GroupCreator implements Runnable {
                     });
                 } else {
                     //No group exists. create the group
-                    localWifiManager.wifiP2pManager.createGroup(localWifiManager.channel, new WifiP2pManager.ActionListener() {
+                    appManager.wifiP2pManager.createGroup(appManager.channel, new WifiP2pManager.ActionListener() {
                         int groupCreationFailureCount = 0;
 
                         @Override
                         public void onSuccess() {
-                            Toast.makeText(localWifiManager.context, "Success", Toast.LENGTH_LONG).show();
+                            Toast.makeText(appManager.context, "Success", Toast.LENGTH_LONG).show();
                         }
 
                         @Override
                         public void onFailure(int reason) {
                             groupCreationFailureCount++;
-                            Toast.makeText(localWifiManager.context, ""+ reason, Toast.LENGTH_LONG).show();
+                            Toast.makeText(appManager.context, ""+ reason, Toast.LENGTH_LONG).show();
                             if(WifiP2pManager.BUSY == reason && groupCreationFailureCount < 5) {
                                 final WifiP2pManager.ActionListener enclosingListener = this;
-                                localWifiManager.handler.postDelayed(new Runnable() {
+                                appManager.handler.postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
-                                        localWifiManager.wifiP2pManager.createGroup(localWifiManager.channel, enclosingListener);
+                                        appManager.wifiP2pManager.createGroup(appManager.channel, enclosingListener);
                                     }
                                 }, 1000);
                             } else {
                                 sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
                                 sharedPrefUtil.commit();
-                                if(localWifiManager.isWifiEnabled()){
+                                if(appManager.isWifiEnabled()){
                                     notificationUtil.showToggleReceivingNotification();
                                 }
                             }

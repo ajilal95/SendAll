@@ -9,14 +9,14 @@ import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
 import com.aj.sendall.network.services.ToggleReceiverService;
-import com.aj.sendall.network.utils.LocalWifiManager;
+import com.aj.sendall.application.AppManager;
 import com.aj.sendall.notification.util.NotificationUtil;
 
 import javax.inject.Inject;
 
 public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
     @Inject
-    public LocalWifiManager localWifiManager;
+    public AppManager appManager;
     public NotificationUtil notificationUtil;
     public SharedPrefUtil sharedPrefUtil;
 
@@ -25,10 +25,10 @@ public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if(localWifiManager == null){
+        if(appManager == null){
             ((AndroidApplication)context.getApplicationContext()).getDaggerInjector().inject(this);
-            notificationUtil = localWifiManager.notificationUtil;
-            sharedPrefUtil = localWifiManager.sharedPrefUtil;
+            notificationUtil = appManager.notificationUtil;
+            sharedPrefUtil = appManager.sharedPrefUtil;
         }
         String action = intent.getAction();
 
@@ -42,12 +42,12 @@ public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
     }
 
     private void onWifiStateChanged(int state){
-        localWifiManager.setWifiP2pState(state);
+        appManager.setWifiP2pState(state);
         int currentAppStatus = sharedPrefUtil.getCurrentAppStatus();
 
         if(WifiP2pManager.WIFI_P2P_STATE_ENABLED == state) {
             if(sharedPrefUtil.isAutoScanOnWifiEnabled()) {
-                ToggleReceiverService.startP2pServiceDiscovery(localWifiManager);
+                ToggleReceiverService.startP2pServiceDiscovery(appManager);
             }
             notificationUtil.showToggleReceivingNotification();
         } else {
@@ -55,7 +55,7 @@ public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
             if(currentAppStatus == SharedPrefConstants.CURR_STATUS_SENDING){
                 stopSending();
             } else if(currentAppStatus == SharedPrefConstants.CURR_STATUS_RECEIVABLE) {
-                localWifiManager.stopP2pServiceDiscovery();
+                appManager.stopP2pServiceDiscovery();
             }
         }
     }

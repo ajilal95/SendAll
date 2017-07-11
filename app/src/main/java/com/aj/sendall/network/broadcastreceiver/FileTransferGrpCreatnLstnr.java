@@ -15,7 +15,7 @@ import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
 import com.aj.sendall.network.runnable.FileTransferServer;
 import com.aj.sendall.network.utils.Constants;
-import com.aj.sendall.network.utils.LocalWifiManager;
+import com.aj.sendall.application.AppManager;
 import com.aj.sendall.notification.util.NotificationUtil;
 
 import java.io.IOException;
@@ -40,16 +40,16 @@ public class FileTransferGrpCreatnLstnr extends AbstractGroupCreationListener {
     @Inject
     public ContentProviderUtil contentProviderUtil;
 
-    public FileTransferGrpCreatnLstnr(LocalWifiManager localWifiManager,
+    public FileTransferGrpCreatnLstnr(AppManager appManager,
                                       ConnectionsAndUris connectionsAndUris) {
-        super(localWifiManager);
+        super(appManager);
         this.connectionsAndUris = connectionsAndUris;
     }
 
     @Override
     protected void onGroupInfoAvailable(final Context context, final String networkName, final String passPhrase) {
         ((AndroidApplication)context.getApplicationContext()).getDaggerInjector().inject(this);
-        localWifiManager.wifiP2pManager.clearLocalServices(localWifiManager.channel, new WifiP2pManager.ActionListener() {
+        appManager.wifiP2pManager.clearLocalServices(appManager.channel, new WifiP2pManager.ActionListener() {
             private int clearServicesFailureCount = 0;//stop trying after 5 failures
 
             @Override
@@ -73,7 +73,7 @@ public class FileTransferGrpCreatnLstnr extends AbstractGroupCreationListener {
 
                     final WifiP2pDnsSdServiceInfo serviceInfo = WifiP2pDnsSdServiceInfo
                             .newInstance(Constants.P2P_SERVICE_INSTANCE_NAME, Constants.P2P_SERVICE_SERVICE_TYPE, record);
-                    localWifiManager.wifiP2pManager.addLocalService(localWifiManager.channel, serviceInfo, new WifiP2pManager.ActionListener() {
+                    appManager.wifiP2pManager.addLocalService(appManager.channel, serviceInfo, new WifiP2pManager.ActionListener() {
                         private int addServiceFailureCount = 0;
 
                         @Override
@@ -83,7 +83,7 @@ public class FileTransferGrpCreatnLstnr extends AbstractGroupCreationListener {
                             Log.d(FileTransferGrpCreatnLstnr.class.getSimpleName(), "Passphrase : " + passPhrase);
 
                             //Starting the server.
-                            FileTransferServer fileTransferServer = new FileTransferServer(serverSocket, port, localWifiManager, connectionsAndUris);
+                            FileTransferServer fileTransferServer = new FileTransferServer(serverSocket, port, appManager, connectionsAndUris);
                             handler.post(fileTransferServer);
                             notificationUtil.removeToggleNotification();
                         }
@@ -97,7 +97,7 @@ public class FileTransferGrpCreatnLstnr extends AbstractGroupCreationListener {
                                 handler.postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
-                                        localWifiManager.wifiP2pManager.addLocalService(localWifiManager.channel, serviceInfo, enclosingActionListener);
+                                        appManager.wifiP2pManager.addLocalService(appManager.channel, serviceInfo, enclosingActionListener);
                                     }
                                 }, waitTime);
                             } else {
@@ -125,7 +125,7 @@ public class FileTransferGrpCreatnLstnr extends AbstractGroupCreationListener {
                     handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            localWifiManager.wifiP2pManager.clearLocalServices(localWifiManager.channel, enclosingListener);
+                            appManager.wifiP2pManager.clearLocalServices(appManager.channel, enclosingListener);
                         }
                     }, waitTime);
                 } else {

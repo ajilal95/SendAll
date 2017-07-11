@@ -15,7 +15,8 @@ public class SharedPrefConstants {
 
     static final String IS_AUTOSCAN_ON_WIFI_ENABLED =  "is_autoscan_on_wifi_enable";
 
-    static final String THIS_DEVICE_ID = "this_device_id";
+    public static final String DEVICE_ID = "this_device_id";
+    public static final String USER_NAME = "user_name";
     static final String DEVICE_ID_PREFIX = "SENDALL";
     static final int THIS_DEVICE_ID_LENGTH = 10;
 }

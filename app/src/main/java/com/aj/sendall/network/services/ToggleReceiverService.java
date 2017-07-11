@@ -9,8 +9,8 @@ import android.util.Log;
 import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
+import com.aj.sendall.application.AppManager;
 import com.aj.sendall.network.utils.Constants;
-import com.aj.sendall.network.utils.LocalWifiManager;
 import com.aj.sendall.notification.util.NotificationUtil;
 
 import java.util.Map;
@@ -19,7 +19,7 @@ import javax.inject.Inject;
 
 public class ToggleReceiverService extends IntentService {
     @Inject
-    public LocalWifiManager localWifiManager;
+    public AppManager appManager;
     public NotificationUtil notificationUtil;
     public SharedPrefUtil sharedPrefUtil;
 
@@ -31,8 +31,8 @@ public class ToggleReceiverService extends IntentService {
     public void onCreate() {
         super.onCreate();
         ((AndroidApplication)getApplication()).getDaggerInjector().inject(this);
-        notificationUtil = localWifiManager.notificationUtil;
-        sharedPrefUtil = localWifiManager.sharedPrefUtil;
+        notificationUtil = appManager.notificationUtil;
+        sharedPrefUtil = appManager.sharedPrefUtil;
     }
 
     @Override
@@ -43,20 +43,20 @@ public class ToggleReceiverService extends IntentService {
         if(currentAppStatus == SharedPrefConstants.CURR_STATUS_IDLE){
             sharedPrefUtil.setAutoScanOnWifiEnabled(true);
             sharedPrefUtil.commit();
-            startP2pServiceDiscovery(localWifiManager);
+            startP2pServiceDiscovery(appManager);
             notificationUtil.showToggleReceivingNotification();
         } else if (currentAppStatus == SharedPrefConstants.CURR_STATUS_RECEIVABLE){
             sharedPrefUtil.setAutoScanOnWifiEnabled(false);
             sharedPrefUtil.commit();
-            stopP2pServiceDiscovery(localWifiManager);
+            stopP2pServiceDiscovery(appManager);
             // The notification update and status change are done
             // from the ActionListener of WifiP2pManager.stopServiceRequest()
         }
 
     }
 
-    public static void startP2pServiceDiscovery(LocalWifiManager localWifiManager){
-        SharedPrefUtil sharedPrefUtil = localWifiManager.sharedPrefUtil;
+    public static void startP2pServiceDiscovery(AppManager appManager){
+        SharedPrefUtil sharedPrefUtil = appManager.sharedPrefUtil;
 
         if(sharedPrefUtil.getCurrentAppStatus() == SharedPrefConstants.CURR_STATUS_IDLE) {
             sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_RECEIVABLE);
@@ -84,11 +84,11 @@ public class ToggleReceiverService extends IntentService {
                 }
             };
 
-            localWifiManager.startP2pServiceDiscovery(txtRecordListener, serviceResponseListener);
+            appManager.startP2pServiceDiscovery(txtRecordListener, serviceResponseListener);
         }
     }
 
-    public static void stopP2pServiceDiscovery(LocalWifiManager localWifiManager){
-        localWifiManager.stopP2pServiceDiscovery();
+    public static void stopP2pServiceDiscovery(AppManager appManager){
+        appManager.stopP2pServiceDiscovery();
     }
 }

@@ -1,5 +1,6 @@
 package com.aj.sendall.ui.adapter;
 
+import android.app.Activity;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -11,6 +12,7 @@ import android.widget.TextView;
 import com.aj.sendall.R;
 import com.aj.sendall.db.dto.ConnectionViewData;
 import com.aj.sendall.ui.activity.Connector;
+import com.aj.sendall.ui.interfaces.Updatable;
 import com.bumptech.glide.Glide;
 
 import java.util.LinkedHashMap;
@@ -22,13 +24,12 @@ import java.util.Map;
  */
 
 public class ConnectorAdapter extends RecyclerView.Adapter {
+    public static final String UPDATE_CONST_SELECTED_USERNAME = "username";
     private LinkedList<ConnectionViewData> connectionViewDatas;
-    private Context context;
-    private View.OnClickListener clickListenerForItem;
+    private Activity containerActivity;
 
-    public ConnectorAdapter(Context context, View.OnClickListener clickListenerForItem){
-        this.context = context;
-        this.clickListenerForItem = clickListenerForItem;
+    public ConnectorAdapter(Activity containerActivity){
+        this.containerActivity = containerActivity;
     }
 
     public void setData(LinkedList<ConnectionViewData> connectionViewDatas){
@@ -37,7 +38,7 @@ public class ConnectorAdapter extends RecyclerView.Adapter {
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = ((LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE))
+        View view = ((LayoutInflater)containerActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE))
                 .inflate(R.layout.contact_list_item, parent, false);
 
         return new ViewHolder(view);
@@ -49,10 +50,11 @@ public class ConnectorAdapter extends RecyclerView.Adapter {
 
         ViewHolder viewHolder = (ViewHolder) holder;
         viewHolder.profileName.setText(connectionViewData.profileName);
-        Glide.with(context)
+        Glide.with(containerActivity)
                 .load(connectionViewData.profilePicPath)
                 .centerCrop()
                 .override(96,96)
+                .error(R.mipmap.default_profile)
                 .into(viewHolder.profilePic);
         viewHolder.itemView.setTag(connectionViewData);
     }
@@ -72,7 +74,16 @@ public class ConnectorAdapter extends RecyclerView.Adapter {
             profilePic = (ImageView) view.findViewById(R.id.img_vw_profile_pic);
             profileName = (TextView) view.findViewById(R.id.txt_vw_profile_name);
 
-            view.setOnClickListener(clickListenerForItem);
+            view.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Updatable.UpdateEvent event = new Updatable.UpdateEvent();
+                    event.source = ConnectorAdapter.class;
+                    event.data.put(UPDATE_CONST_SELECTED_USERNAME, profileName.getText().toString());
+
+                    ((Connector)containerActivity).update(event);
+                }
+            });
         }
     }
 

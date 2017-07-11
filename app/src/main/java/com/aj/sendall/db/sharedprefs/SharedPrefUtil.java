@@ -69,15 +69,27 @@ public class SharedPrefUtil {
         getEditor().putBoolean(SharedPrefConstants.IS_AUTOSCAN_ON_WIFI_ENABLED, isAutoScan);
     }
 
-    public String getThisDeviceId(Context context){
-        String thisDeviceId = getSharedPrefs().getString(SharedPrefConstants.THIS_DEVICE_ID, null);
+    public String getUserName() throws IllegalStateException{
+        String username = getSharedPrefs().getString(SharedPrefConstants.USER_NAME, null);
+        if(username == null){
+            throw new IllegalStateException("Username unavailable");
+        }
+        return username;
+    }
+
+    public void setUserName(String username){
+        getEditor().putString(SharedPrefConstants.USER_NAME, username);
+    }
+
+    public String getThisDeviceId(){
+        String thisDeviceId = getSharedPrefs().getString(SharedPrefConstants.DEVICE_ID, null);
         if(thisDeviceId == null){
-            thisDeviceId = createIdForThisDevice(context);
+            thisDeviceId = createIdForThisDevice();
         }
         return thisDeviceId;
     }
 
-    private String createIdForThisDevice(Context context){
+    private String createIdForThisDevice(){
         //creating a random string
         char[] candidate =  new char[]{ 'A', 'B', 'C', 'D', 'E', 'F', 'G',
                                         'H', 'I', 'J', 'K', 'L', 'M', 'N',
@@ -91,7 +103,7 @@ public class SharedPrefUtil {
             idRandomize.append(candidate[random.nextInt(37)]);
         }
         String thisDeviceId = SharedPrefConstants.DEVICE_ID_PREFIX + idRandomize.toString();
-        getEditor().putString(SharedPrefConstants.THIS_DEVICE_ID, thisDeviceId);
+        getEditor().putString(SharedPrefConstants.DEVICE_ID, thisDeviceId);
         commit();
         return thisDeviceId;
     }

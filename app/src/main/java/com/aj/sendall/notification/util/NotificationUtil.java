@@ -10,7 +10,6 @@ import com.aj.sendall.R;
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
 import com.aj.sendall.network.services.ToggleReceiverService;
-import com.aj.sendall.network.utils.LocalWifiManager;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

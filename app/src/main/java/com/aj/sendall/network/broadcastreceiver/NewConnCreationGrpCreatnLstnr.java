@@ -6,12 +6,11 @@ import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
-import com.aj.sendall.network.runnable.FileTransferServer;
 import com.aj.sendall.network.runnable.NewConnCreationServer;
+import com.aj.sendall.application.AppManager;
 import com.aj.sendall.network.utils.Constants;
-import com.aj.sendall.network.utils.LocalWifiManager;
+import com.aj.sendall.ui.interfaces.Updatable;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -23,14 +22,16 @@ import java.util.Map;
  */
 
 public class NewConnCreationGrpCreatnLstnr extends AbstractGroupCreationListener {
+    private Updatable updatableActivity;
 
-    public NewConnCreationGrpCreatnLstnr(LocalWifiManager localWifiManager){
-        super(localWifiManager);
+    public NewConnCreationGrpCreatnLstnr(AppManager appManager, Updatable updatableActivity){
+        super(appManager);
+        this.updatableActivity = updatableActivity;
     }
 
     @Override
     protected void onGroupInfoAvailable(final Context context, final String networkName, final String passPhrase) {
-        localWifiManager.wifiP2pManager.clearLocalServices(localWifiManager.channel, new WifiP2pManager.ActionListener() {
+        appManager.wifiP2pManager.clearLocalServices(appManager.channel, new WifiP2pManager.ActionListener() {
             private int clearServicesFailureCount = 0;//stop trying after 5 failures
 
             @Override
@@ -50,7 +51,7 @@ public class NewConnCreationGrpCreatnLstnr extends AbstractGroupCreationListener
 
                     final WifiP2pDnsSdServiceInfo serviceInfo = WifiP2pDnsSdServiceInfo
                             .newInstance(Constants.P2P_SERVICE_INSTANCE_NAME, Constants.P2P_SERVICE_SERVICE_TYPE, record);
-                    localWifiManager.wifiP2pManager.addLocalService(localWifiManager.channel, serviceInfo, new WifiP2pManager.ActionListener() {
+                    appManager.wifiP2pManager.addLocalService(appManager.channel, serviceInfo, new WifiP2pManager.ActionListener() {
                         private int addServiceFailureCount = 0;
 
                         @Override
@@ -60,9 +61,9 @@ public class NewConnCreationGrpCreatnLstnr extends AbstractGroupCreationListener
                             Log.d(FileTransferGrpCreatnLstnr.class.getSimpleName(), "Passphrase : " + passPhrase);
 
                             //Starting the server.
-                            NewConnCreationServer newConnCreationServer = new NewConnCreationServer(serverSocket, port,  localWifiManager);
-                            localWifiManager.handler.post(newConnCreationServer);
-                            localWifiManager.notificationUtil.removeToggleNotification();
+                            NewConnCreationServer newConnCreationServer = new NewConnCreationServer(serverSocket, port, appManager, updatableActivity);
+                            appManager.handler.post(newConnCreationServer);
+                            appManager.notificationUtil.removeToggleNotification();
                         }
 
                         @Override
@@ -71,23 +72,23 @@ public class NewConnCreationGrpCreatnLstnr extends AbstractGroupCreationListener
                             if (addServiceFailureCount < 5 && WifiP2pManager.BUSY == reason) {
                                 int waitTime = addServiceFailureCount * 1000;
                                 final WifiP2pManager.ActionListener enclosingActionListener = this;
-                                localWifiManager.handler.postDelayed(new Runnable() {
+                                appManager.handler.postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
-                                        localWifiManager.wifiP2pManager.addLocalService(localWifiManager.channel, serviceInfo, enclosingActionListener);
+                                        appManager.wifiP2pManager.addLocalService(appManager.channel, serviceInfo, enclosingActionListener);
                                     }
                                 }, waitTime);
                             } else {
-                                localWifiManager.sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
-                                localWifiManager.sharedPrefUtil.commit();
+                                appManager.sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
+                                appManager.sharedPrefUtil.commit();
                                 Toast.makeText(context, "Sorry!! Failed", Toast.LENGTH_SHORT).show();
                             }
                         }
                     });
                 } catch (IOException ioe){
                     ioe.printStackTrace();
-                    localWifiManager.sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
-                    localWifiManager.sharedPrefUtil.commit();
+                    appManager.sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
+                    appManager.sharedPrefUtil.commit();
                     Toast.makeText(context, "Sorry!! Failed", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -99,15 +100,15 @@ public class NewConnCreationGrpCreatnLstnr extends AbstractGroupCreationListener
                     int waitTime = clearServicesFailureCount * 1000;
                     final WifiP2pManager.ActionListener enclosingListener = this;
                     //Wait and resend the request
-                    localWifiManager.handler.postDelayed(new Runnable() {
+                    appManager.handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            localWifiManager.wifiP2pManager.clearLocalServices(localWifiManager.channel, enclosingListener);
+                            appManager.wifiP2pManager.clearLocalServices(appManager.channel, enclosingListener);
                         }
                     }, waitTime);
                 } else {
-                    localWifiManager.sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
-                    localWifiManager.sharedPrefUtil.commit();
+                    appManager.sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
+                    appManager.sharedPrefUtil.commit();
                     Toast.makeText(context, "Sorry!! Failed", Toast.LENGTH_SHORT).show();
                 }
             }

@@ -17,8 +17,7 @@ import android.widget.SearchView;
 
 import com.aj.sendall.R;
 import com.aj.sendall.application.AndroidApplication;
-import com.aj.sendall.network.utils.LocalWifiManager;
-import com.aj.sendall.notification.util.NotificationUtil;
+import com.aj.sendall.application.AppManager;
 import com.aj.sendall.ui.consts.ConnectionsConstants;
 import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.ui.fragment.ConnectionsFragment;
@@ -28,7 +27,7 @@ import javax.inject.Inject;
 
 public class Home extends AppCompatActivity {
     @Inject
-    public LocalWifiManager localWifiManager;
+    public AppManager appManager;
 
     private ViewPager mViewPager;
     private TabLayout tabLayout;
