@@ -29,7 +29,7 @@ import javax.inject.Singleton;
 @Singleton
 public class AppManager implements Serializable{
     public Context context;
-    private DBUtil dbUtil;
+    public DBUtil dbUtil;
     private boolean initialised = false;
     public WifiManager wifiManager;
     public WifiP2pManager wifiP2pManager;
@@ -106,80 +106,119 @@ public class AppManager implements Serializable{
         }
     }
 
-    public void startP2pServiceDiscovery(WifiP2pManager.DnsSdTxtRecordListener textListener, final WifiP2pManager.DnsSdServiceResponseListener serviceResponseListener){
-        wifiP2pManager.setDnsSdResponseListeners(channel, serviceResponseListener, textListener);
-
-        final WifiP2pDnsSdServiceRequest serviceRequest = WifiP2pDnsSdServiceRequest.newInstance();
-        wifiP2pManager.addServiceRequest(channel, serviceRequest, new WifiP2pManager.ActionListener() {
-            int failureCount = 0;
+    public void startP2pServiceDiscovery(final WifiP2pManager.DnsSdTxtRecordListener textListener, final WifiP2pManager.DnsSdServiceResponseListener serviceResponseListener){
+        enableWifi(true);
+        handler.postDelayed(new Runnable() {
             @Override
-            public void onSuccess() {
-                Log.d(AppManager.class.getSimpleName(), "Added service request");
-                if(isWifiEnabled()) {
-                    notificationUtil.showToggleReceivingNotification();
-                }
-            }
-
-            @Override
-            public void onFailure(int reason) {
-                Log.d(AppManager.class.getSimpleName(), "Adding Service request failed");
-                failureCount++;
-                if(isWifiEnabled() && WifiP2pManager.BUSY == reason && failureCount < 5) {
-                    //retry after 2 seconds
-                    final WifiP2pManager.ActionListener thisListener = this;
-                    handler.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            wifiP2pManager.addServiceRequest(channel, serviceRequest, thisListener);
-                        }
-                    }, 2000);
-                } else {
-                    Log.d(AppManager.class.getSimpleName(), "Removed service request");
-                    Toast.makeText(context, "Scanning failed", Toast.LENGTH_SHORT).show();
-                    sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
-                    sharedPrefUtil.commit();
-                    if(isWifiEnabled()) {
-                        notificationUtil.showToggleReceivingNotification();
+            public void run() {
+                wifiP2pManager.clearLocalServices(channel, new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        clearedLocalServices();
                     }
-                }
-            }
-        });
 
-        wifiP2pManager.discoverServices(channel, new WifiP2pManager.ActionListener() {
-            int failureCount = 0;
-
-            @Override
-            public void onSuccess() {
-                Log.d(AppManager.class.getSimpleName(), "Started service discovery");
-                if(isWifiEnabled()) {
-                    notificationUtil.showToggleReceivingNotification();
-                }
-            }
-
-            @Override
-            public void onFailure(int reason) {
-                Log.d(AppManager.class.getSimpleName(), "Failed starting service discovery");
-                failureCount++;
-                if(isWifiEnabled() && WifiP2pManager.BUSY == reason && failureCount < 5) {
-                    //retry after 2 seconds
-                    final WifiP2pManager.ActionListener thisListener = this;
-                    handler.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            wifiP2pManager.discoverServices(channel, thisListener);
-                        }
-                    }, 2000);
-                } else {
-                    Log.d(AppManager.class.getSimpleName(), "Aborted service discovery");
-                    Toast.makeText(context, "Scanning failed", Toast.LENGTH_SHORT).show();
-                    sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
-                    sharedPrefUtil.commit();
-                    if(isWifiEnabled()) {
-                        notificationUtil.showToggleReceivingNotification();
+                    @Override
+                    public void onFailure(int reason) {
+                        clearedLocalServices();
                     }
-                }
+
+                    private void clearedLocalServices(){
+                        wifiP2pManager.clearServiceRequests(channel, new WifiP2pManager.ActionListener() {
+                            @Override
+                            public void onSuccess() {
+                                clearedServiceRequests();
+                            }
+
+                            @Override
+                            public void onFailure(int reason) {
+                                clearedServiceRequests();
+                            }
+
+                            private void clearedServiceRequests(){
+                                wifiP2pManager.setDnsSdResponseListeners(channel, serviceResponseListener, textListener);
+
+                                final WifiP2pDnsSdServiceRequest serviceRequest = WifiP2pDnsSdServiceRequest.newInstance();
+                                wifiP2pManager.addServiceRequest(channel, serviceRequest, new WifiP2pManager.ActionListener() {
+                                    int failureCount = 0;
+                                    @Override
+                                    public void onSuccess() {
+                                        Log.d(AppManager.class.getSimpleName(), "Added service request");
+                                        if(isWifiEnabled()) {
+                                            notificationUtil.showToggleReceivingNotification();
+                                        }
+                                        serviceRequestAdded();
+                                    }
+
+                                    @Override
+                                    public void onFailure(int reason) {
+                                        Log.d(AppManager.class.getSimpleName(), "Adding Service request failed");
+                                        failureCount++;
+                                        if(isWifiEnabled() && WifiP2pManager.BUSY == reason && failureCount < 5) {
+                                            //retry after 2 seconds
+                                            final WifiP2pManager.ActionListener thisListener = this;
+                                            handler.postDelayed(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    wifiP2pManager.addServiceRequest(channel, serviceRequest, thisListener);
+                                                }
+                                            }, 2000);
+                                        } else {
+                                            Log.d(AppManager.class.getSimpleName(), "Removed service request");
+                                            Toast.makeText(context, "Scanning failed", Toast.LENGTH_SHORT).show();
+                                            sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
+                                            sharedPrefUtil.commit();
+                                            if(isWifiEnabled()) {
+                                                notificationUtil.showToggleReceivingNotification();
+                                            }
+                                            serviceRequestAdded();
+                                        }
+                                    }
+
+                                    private void serviceRequestAdded(){
+                                        wifiP2pManager.discoverServices(channel, new WifiP2pManager.ActionListener() {
+                                            int failureCount = 0;
+
+                                            @Override
+                                            public void onSuccess() {
+                                                Log.d(AppManager.class.getSimpleName(), "Started service discovery");
+                                                if(isWifiEnabled()) {
+                                                    notificationUtil.showToggleReceivingNotification();
+                                                }
+                                            }
+
+                                            @Override
+                                            public void onFailure(int reason) {
+                                                Log.d(AppManager.class.getSimpleName(), "Failed starting service discovery");
+                                                failureCount++;
+                                                if(isWifiEnabled() && WifiP2pManager.BUSY == reason && failureCount < 5) {
+                                                    //retry after 2 seconds
+                                                    final WifiP2pManager.ActionListener thisListener = this;
+                                                    handler.postDelayed(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            wifiP2pManager.discoverServices(channel, thisListener);
+                                                        }
+                                                    }, 2000);
+                                                } else {
+                                                    Log.d(AppManager.class.getSimpleName(), "Aborted service discovery");
+                                                    Toast.makeText(context, "Scanning failed", Toast.LENGTH_SHORT).show();
+                                                    sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
+                                                    sharedPrefUtil.commit();
+                                                    if(isWifiEnabled()) {
+                                                        notificationUtil.showToggleReceivingNotification();
+                                                    }
+                                                }
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
             }
-        });
+        }, 1000);
+
     }
 
     public void stopP2pServiceDiscovery(){
@@ -218,5 +257,61 @@ public class AppManager implements Serializable{
                 }
             }
         });
+    }
+
+    public void stopAllWifiOps(){
+        final boolean wasWifiEnabled = isWifiEnabled();
+        enableWifi(true);
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                wifiP2pManager.clearLocalServices(channel, new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        removedLocalServices();
+                    }
+
+                    @Override
+                    public void onFailure(int reason) {
+                        removedLocalServices();
+                    }
+
+                    private void removedLocalServices(){
+                        wifiP2pManager.clearServiceRequests(channel, new WifiP2pManager.ActionListener() {
+                            @Override
+                            public void onSuccess() {
+                                clearedServiceRequests();
+                            }
+
+                            @Override
+                            public void onFailure(int reason) {
+                                clearedServiceRequests();
+                            }
+
+                            private void clearedServiceRequests(){
+                                wifiP2pManager.removeGroup(channel, new WifiP2pManager.ActionListener() {
+                                    @Override
+                                    public void onSuccess() {
+                                        groupRemoved();
+                                    }
+
+                                    @Override
+                                    public void onFailure(int reason) {
+                                        groupRemoved();
+                                    }
+
+                                    private void groupRemoved(){
+                                        if(!wasWifiEnabled){
+                                            enableWifi(false);
+                                        }
+                                        sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        }, 1000);
     }
 }

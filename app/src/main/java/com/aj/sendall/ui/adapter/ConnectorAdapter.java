@@ -24,7 +24,7 @@ import java.util.Map;
  */
 
 public class ConnectorAdapter extends RecyclerView.Adapter {
-    public static final String UPDATE_CONST_SELECTED_USERNAME = "username";
+    public static final String UPDATE_CONST_SELECTED_CONN = "conn";
     private LinkedList<ConnectionViewData> connectionViewDatas;
     private Activity containerActivity;
 
@@ -79,7 +79,7 @@ public class ConnectorAdapter extends RecyclerView.Adapter {
                 public void onClick(View v) {
                     Updatable.UpdateEvent event = new Updatable.UpdateEvent();
                     event.source = ConnectorAdapter.class;
-                    event.data.put(UPDATE_CONST_SELECTED_USERNAME, profileName.getText().toString());
+                    event.data.put(UPDATE_CONST_SELECTED_CONN, itemView.getTag());
 
                     ((Connector)containerActivity).update(event);
                 }

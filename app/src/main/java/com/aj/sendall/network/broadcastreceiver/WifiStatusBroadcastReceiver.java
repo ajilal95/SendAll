@@ -52,16 +52,11 @@ public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
             notificationUtil.showToggleReceivingNotification();
         } else {
             notificationUtil.removeToggleNotification();
-            if(currentAppStatus == SharedPrefConstants.CURR_STATUS_SENDING){
-                stopSending();
-            } else if(currentAppStatus == SharedPrefConstants.CURR_STATUS_RECEIVABLE) {
-                appManager.stopP2pServiceDiscovery();
+            if(currentAppStatus == SharedPrefConstants.CURR_STATUS_SENDING
+                    || currentAppStatus == SharedPrefConstants.CURR_STATUS_RECEIVABLE
+                    || currentAppStatus == SharedPrefConstants.CURR_STATUS_CEATING_CONNECTION){
+                appManager.stopAllWifiOps();
             }
         }
-    }
-
-    private void stopSending(){
-        sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
-        sharedPrefUtil.commit();
     }
 }

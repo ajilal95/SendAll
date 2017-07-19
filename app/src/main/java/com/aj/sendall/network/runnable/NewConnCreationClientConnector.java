@@ -15,7 +15,7 @@ import java.net.Socket;
  * Created by ajilal on 10/7/17.
  */
 
-public class NewConnCreationSender implements Runnable, Updatable {
+public class NewConnCreationClientConnector implements Runnable, Updatable {
     public static final String UPDATE_CONST_SENDER = "sender";
     private Socket socket;
     private DataInputStream dataInputStream;
@@ -23,7 +23,7 @@ public class NewConnCreationSender implements Runnable, Updatable {
     private Updatable updatableActivity;
     private SharedPrefUtil sharedPrefUtil;
 
-    NewConnCreationSender(Socket socket, Updatable updatableActivity, SharedPrefUtil sharedPrefUtil){
+    NewConnCreationClientConnector(Socket socket, Updatable updatableActivity, SharedPrefUtil sharedPrefUtil){
         this.socket = socket;
         this.updatableActivity = updatableActivity;
         this.sharedPrefUtil = sharedPrefUtil;

@@ -51,7 +51,7 @@ public class NewConnCreationServer implements Runnable, Updatable {
         while (!serverSocket.isClosed()) {
             try {
                 Socket socket = serverSocket.accept();
-                handler.post(new NewConnCreationSender(socket, updatableActivity, sharedPrefUtil));
+                handler.post(new NewConnCreationClientConnector(socket, updatableActivity, sharedPrefUtil));
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             }

@@ -20,9 +20,11 @@ public class Constants {
     public static final String ADV_VALUE_PURPOSE_CONNECTION_CREATION = "6";
 
     //Constants for communication between updatable components
-    public static final String ACTION = "0";
+    public static final String ACTION = "7";
 
-    public static final String ACCEPT_CONN = "1";
-    public static final String CLOSE_SOCKET = "2";
+    public static final String ACCEPT_CONN = "8";
+    public static final String CLOSE_SOCKET = "9";
+
+    public static final String ADV_KEY_USERNAME = "10";
 
 }

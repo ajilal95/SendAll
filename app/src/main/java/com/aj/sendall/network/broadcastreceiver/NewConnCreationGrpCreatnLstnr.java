@@ -37,9 +37,11 @@ public class NewConnCreationGrpCreatnLstnr extends AbstractGroupCreationListener
             @Override
             public void onSuccess() {
                 try {
+                    String thisUserName = appManager.sharedPrefUtil.getUserName();
                     final Map<String, String> record = new HashMap<>();
                     record.put(Constants.ADV_KEY_NETWORK_NAME, networkName);
                     record.put(Constants.ADV_KEY_NETWORK_PASSPHRASE, passPhrase);
+                    record.put(Constants.ADV_KEY_USERNAME, thisUserName);
                     record.put(Constants.ADV_KEY_GROUP_PURPOSE, Constants.ADV_VALUE_PURPOSE_CONNECTION_CREATION);
 
                     //Creating the server socket and the port
