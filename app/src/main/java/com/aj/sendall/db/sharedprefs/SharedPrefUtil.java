@@ -72,9 +72,10 @@ public class SharedPrefUtil {
     public String getUserName() throws IllegalStateException{
         String username = getSharedPrefs().getString(SharedPrefConstants.USER_NAME, null);
         if(username == null){
-            throw new IllegalStateException("Username unavailable");
+            return getThisDeviceId();
+        } else {
+            return username;
         }
-        return username;
     }
 
     public void setUserName(String username){

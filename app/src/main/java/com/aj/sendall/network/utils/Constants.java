@@ -24,7 +24,9 @@ public class Constants {
 
     public static final String ACCEPT_CONN = "8";
     public static final String CLOSE_SOCKET = "9";
+    public static final String CONN_FAILED = "10";
+    public static final String SUCCESS = "11";
 
-    public static final String ADV_KEY_USERNAME = "10";
+    public static final String ADV_KEY_USERNAME = "12";
 
 }

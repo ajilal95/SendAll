@@ -25,9 +25,8 @@ public class Connections {
 
     @NotNull
     private String SSID;
-
-    @NotNull
-    private String password;
+    private String profPicPath;
+    private java.util.Date lastContaced;
 
     /** Used to resolve relations */
     @Generated
@@ -51,11 +50,12 @@ public class Connections {
     }
 
     @Generated
-    public Connections(Long connectionId, String connectionName, String SSID, String password) {
+    public Connections(Long connectionId, String connectionName, String SSID, String profPicPath, java.util.Date lastContaced) {
         this.connectionId = connectionId;
         this.connectionName = connectionName;
         this.SSID = SSID;
-        this.password = password;
+        this.profPicPath = profPicPath;
+        this.lastContaced = lastContaced;
     }
 
     /** called by internal mechanisms, do not call yourself. */
@@ -93,14 +93,20 @@ public class Connections {
         this.SSID = SSID;
     }
 
-    @NotNull
-    public String getPassword() {
-        return password;
+    public String getProfPicPath() {
+        return profPicPath;
     }
 
-    /** Not-null value; ensure this value is available before it is saved to the database. */
-    public void setPassword(@NotNull String password) {
-        this.password = password;
+    public void setProfPicPath(String profPicPath) {
+        this.profPicPath = profPicPath;
+    }
+
+    public java.util.Date getLastContaced() {
+        return lastContaced;
+    }
+
+    public void setLastContaced(java.util.Date lastContaced) {
+        this.lastContaced = lastContaced;
     }
 
     /** To-many relationship, resolved on first access (and after reset). Changes to to-many relations are not persisted, make changes to the target entity. */

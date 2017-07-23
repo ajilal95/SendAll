@@ -65,11 +65,7 @@ public class DBUtil {
         return (matchedConnection != null && !matchedConnection.isEmpty());
     }
 
-    public void saveConnectionViewData(ConnectionViewData conn){
-        Connections connections = new Connections();
-        connections.setConnectionName(conn.profileName);
-        connections.setSSID(conn.uniqueId);
-
-        daoSession.getConnectionsDao().save(connections);
+    public void saveConnection(Connections conn){
+        daoSession.getConnectionsDao().save(conn);
     }
 }

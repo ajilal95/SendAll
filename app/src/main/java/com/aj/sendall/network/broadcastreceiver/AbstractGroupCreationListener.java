@@ -14,6 +14,7 @@ import com.aj.sendall.application.AppManager;
 
 public abstract class AbstractGroupCreationListener extends BroadcastReceiver {
     protected AppManager appManager;
+    protected AppManager.BroadcastReceiverAutoUnregister unregister;
 
     public AbstractGroupCreationListener(AppManager appManager){
         this.appManager = appManager;
@@ -30,12 +31,20 @@ public abstract class AbstractGroupCreationListener extends BroadcastReceiver {
                     if (group != null && group.isGroupOwner()) {
                         //This Receiver is used only for getting the group info.
                         //So unregister now
-                        context.unregisterReceiver(AbstractGroupCreationListener.this);
+                        if(unregister != null){
+                            unregister.unregNow();
+                        } else {
+                            context.unregisterReceiver(AbstractGroupCreationListener.this);
+                        }
                         AbstractGroupCreationListener.this.onGroupInfoAvailable(context, group.getNetworkName(), group.getPassphrase());
                     }
                 }
             });
         }
+    }
+
+    public void setUnregister(AppManager.BroadcastReceiverAutoUnregister unregister){
+        this.unregister = unregister;
     }
 
     protected abstract void onGroupInfoAvailable(Context context, String networkName, String passPhrase);

@@ -12,8 +12,8 @@ import org.greenrobot.greendao.database.DatabaseStatement;
 import org.greenrobot.greendao.query.Query;
 import org.greenrobot.greendao.query.QueryBuilder;
 
-import com.aj.sendall.db.converters.FileStatusToIntConverter;
-import com.aj.sendall.db.enums.FileStatus;
+import com.aj.sendall.dal.converters.FileStatusToIntConverter;
+import com.aj.sendall.dal.enums.FileStatus;
 
 import com.aj.sendall.db.model.PersonalInteraction;
 
@@ -31,9 +31,9 @@ public class PersonalInteractionDao extends AbstractDao<PersonalInteraction, Lon
      */
     public static class Properties {
         public final static Property PersonalInteractionId = new Property(0, Long.class, "personalInteractionId", true, "PERSONAL_INTERACTION_ID");
-        public final static Property ConnectionId = new Property(1, Long.class, "connectionId", false, "CONNECTION_ID");
+        public final static Property ConnectionId = new Property(1, long.class, "connectionId", false, "CONNECTION_ID");
         public final static Property FileUri = new Property(2, String.class, "fileUri", false, "FILE_URI");
-        public final static Property MediaType = new Property(3, Integer.class, "mediaType", false, "MEDIA_TYPE");
+        public final static Property MediaType = new Property(3, int.class, "mediaType", false, "MEDIA_TYPE");
         public final static Property FileStatus = new Property(4, Integer.class, "fileStatus", false, "FILE_STATUS");
         public final static Property ModifiedTime = new Property(5, java.util.Date.class, "modifiedTime", false, "MODIFIED_TIME");
         public final static Property FileName = new Property(6, String.class, "fileName", false, "FILE_NAME");
@@ -56,12 +56,12 @@ public class PersonalInteractionDao extends AbstractDao<PersonalInteraction, Lon
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"PERSONAL_INTERACTION\" (" + //
                 "\"PERSONAL_INTERACTION_ID\" INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: personalInteractionId
-                "\"CONNECTION_ID\" INTEGER," + // 1: connectionId
-                "\"FILE_URI\" TEXT," + // 2: fileUri
-                "\"MEDIA_TYPE\" INTEGER," + // 3: mediaType
+                "\"CONNECTION_ID\" INTEGER NOT NULL ," + // 1: connectionId
+                "\"FILE_URI\" TEXT NOT NULL ," + // 2: fileUri
+                "\"MEDIA_TYPE\" INTEGER NOT NULL ," + // 3: mediaType
                 "\"FILE_STATUS\" INTEGER," + // 4: fileStatus
-                "\"MODIFIED_TIME\" INTEGER," + // 5: modifiedTime
-                "\"FILE_NAME\" TEXT," + // 6: fileName
+                "\"MODIFIED_TIME\" INTEGER NOT NULL ," + // 5: modifiedTime
+                "\"FILE_NAME\" TEXT NOT NULL ," + // 6: fileName
                 "\"FILE_SIZE\" TEXT);"); // 7: fileSize
     }
 
@@ -79,36 +79,16 @@ public class PersonalInteractionDao extends AbstractDao<PersonalInteraction, Lon
         if (personalInteractionId != null) {
             stmt.bindLong(1, personalInteractionId);
         }
- 
-        Long connectionId = entity.getConnectionId();
-        if (connectionId != null) {
-            stmt.bindLong(2, connectionId);
-        }
- 
-        String fileUri = entity.getFileUri();
-        if (fileUri != null) {
-            stmt.bindString(3, fileUri);
-        }
- 
-        Integer mediaType = entity.getMediaType();
-        if (mediaType != null) {
-            stmt.bindLong(4, mediaType);
-        }
+        stmt.bindLong(2, entity.getConnectionId());
+        stmt.bindString(3, entity.getFileUri());
+        stmt.bindLong(4, entity.getMediaType());
  
         FileStatus fileStatus = entity.getFileStatus();
         if (fileStatus != null) {
             stmt.bindLong(5, fileStatusConverter.convertToDatabaseValue(fileStatus));
         }
- 
-        java.util.Date modifiedTime = entity.getModifiedTime();
-        if (modifiedTime != null) {
-            stmt.bindLong(6, modifiedTime.getTime());
-        }
- 
-        String fileName = entity.getFileName();
-        if (fileName != null) {
-            stmt.bindString(7, fileName);
-        }
+        stmt.bindLong(6, entity.getModifiedTime().getTime());
+        stmt.bindString(7, entity.getFileName());
  
         String fileSize = entity.getFileSize();
         if (fileSize != null) {
@@ -124,36 +104,16 @@ public class PersonalInteractionDao extends AbstractDao<PersonalInteraction, Lon
         if (personalInteractionId != null) {
             stmt.bindLong(1, personalInteractionId);
         }
- 
-        Long connectionId = entity.getConnectionId();
-        if (connectionId != null) {
-            stmt.bindLong(2, connectionId);
-        }
- 
-        String fileUri = entity.getFileUri();
-        if (fileUri != null) {
-            stmt.bindString(3, fileUri);
-        }
- 
-        Integer mediaType = entity.getMediaType();
-        if (mediaType != null) {
-            stmt.bindLong(4, mediaType);
-        }
+        stmt.bindLong(2, entity.getConnectionId());
+        stmt.bindString(3, entity.getFileUri());
+        stmt.bindLong(4, entity.getMediaType());
  
         FileStatus fileStatus = entity.getFileStatus();
         if (fileStatus != null) {
             stmt.bindLong(5, fileStatusConverter.convertToDatabaseValue(fileStatus));
         }
- 
-        java.util.Date modifiedTime = entity.getModifiedTime();
-        if (modifiedTime != null) {
-            stmt.bindLong(6, modifiedTime.getTime());
-        }
- 
-        String fileName = entity.getFileName();
-        if (fileName != null) {
-            stmt.bindString(7, fileName);
-        }
+        stmt.bindLong(6, entity.getModifiedTime().getTime());
+        stmt.bindString(7, entity.getFileName());
  
         String fileSize = entity.getFileSize();
         if (fileSize != null) {
@@ -170,12 +130,12 @@ public class PersonalInteractionDao extends AbstractDao<PersonalInteraction, Lon
     public PersonalInteraction readEntity(Cursor cursor, int offset) {
         PersonalInteraction entity = new PersonalInteraction( //
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // personalInteractionId
-            cursor.isNull(offset + 1) ? null : cursor.getLong(offset + 1), // connectionId
-            cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // fileUri
-            cursor.isNull(offset + 3) ? null : cursor.getInt(offset + 3), // mediaType
+            cursor.getLong(offset + 1), // connectionId
+            cursor.getString(offset + 2), // fileUri
+            cursor.getInt(offset + 3), // mediaType
             cursor.isNull(offset + 4) ? null : fileStatusConverter.convertToEntityProperty(cursor.getInt(offset + 4)), // fileStatus
-            cursor.isNull(offset + 5) ? null : new java.util.Date(cursor.getLong(offset + 5)), // modifiedTime
-            cursor.isNull(offset + 6) ? null : cursor.getString(offset + 6), // fileName
+            new java.util.Date(cursor.getLong(offset + 5)), // modifiedTime
+            cursor.getString(offset + 6), // fileName
             cursor.isNull(offset + 7) ? null : cursor.getString(offset + 7) // fileSize
         );
         return entity;
@@ -184,12 +144,12 @@ public class PersonalInteractionDao extends AbstractDao<PersonalInteraction, Lon
     @Override
     public void readEntity(Cursor cursor, PersonalInteraction entity, int offset) {
         entity.setPersonalInteractionId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
-        entity.setConnectionId(cursor.isNull(offset + 1) ? null : cursor.getLong(offset + 1));
-        entity.setFileUri(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
-        entity.setMediaType(cursor.isNull(offset + 3) ? null : cursor.getInt(offset + 3));
+        entity.setConnectionId(cursor.getLong(offset + 1));
+        entity.setFileUri(cursor.getString(offset + 2));
+        entity.setMediaType(cursor.getInt(offset + 3));
         entity.setFileStatus(cursor.isNull(offset + 4) ? null : fileStatusConverter.convertToEntityProperty(cursor.getInt(offset + 4)));
-        entity.setModifiedTime(cursor.isNull(offset + 5) ? null : new java.util.Date(cursor.getLong(offset + 5)));
-        entity.setFileName(cursor.isNull(offset + 6) ? null : cursor.getString(offset + 6));
+        entity.setModifiedTime(new java.util.Date(cursor.getLong(offset + 5)));
+        entity.setFileName(cursor.getString(offset + 6));
         entity.setFileSize(cursor.isNull(offset + 7) ? null : cursor.getString(offset + 7));
      }
     
@@ -219,7 +179,7 @@ public class PersonalInteractionDao extends AbstractDao<PersonalInteraction, Lon
     }
     
     /** Internal query to resolve the "personalInters" to-many relationship of Connections. */
-    public List<PersonalInteraction> _queryConnections_PersonalInters(Long connectionId) {
+    public List<PersonalInteraction> _queryConnections_PersonalInters(long connectionId) {
         synchronized (this) {
             if (connections_PersonalIntersQuery == null) {
                 QueryBuilder<PersonalInteraction> queryBuilder = queryBuilder();

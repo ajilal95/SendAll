@@ -55,7 +55,7 @@ public class ToggleReceiverService extends IntentService {
 
     }
 
-    public void startP2pServiceDiscovery(AppManager appManager){
+    public static void startP2pServiceDiscovery(AppManager appManager){
         SharedPrefUtil sharedPrefUtil = appManager.sharedPrefUtil;
 
         if(sharedPrefUtil.getCurrentAppStatus() == SharedPrefConstants.CURR_STATUS_IDLE) {
@@ -88,7 +88,7 @@ public class ToggleReceiverService extends IntentService {
         }
     }
 
-    public void stopP2pServiceDiscovery(AppManager appManager){
+    public static void stopP2pServiceDiscovery(AppManager appManager){
         appManager.stopP2pServiceDiscovery();
     }
 }

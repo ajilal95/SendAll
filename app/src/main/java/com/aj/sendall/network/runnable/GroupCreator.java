@@ -104,15 +104,17 @@ public class GroupCreator implements Runnable {
                         @Override
                         public void onFailure(int reason) {
                             groupCreationFailureCount++;
-                            Toast.makeText(appManager.context, ""+ reason, Toast.LENGTH_LONG).show();
-                            if(WifiP2pManager.BUSY == reason && groupCreationFailureCount < 5) {
+                            if(groupCreationFailureCount == 1) {
+                                Toast.makeText(appManager.context, "Please turn on wifi", Toast.LENGTH_LONG).show();
+                            }
+                            if(WifiP2pManager.BUSY == reason && groupCreationFailureCount <= 5) {
                                 final WifiP2pManager.ActionListener enclosingListener = this;
                                 appManager.handler.postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
                                         appManager.wifiP2pManager.createGroup(appManager.channel, enclosingListener);
                                     }
-                                }, 1000);
+                                }, groupCreationFailureCount * 1000);
                             } else {
                                 sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
                                 sharedPrefUtil.commit();

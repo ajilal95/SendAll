@@ -2,6 +2,7 @@ package com.aj.sendall.ui.activity;
 
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -22,6 +23,8 @@ import com.aj.sendall.network.broadcastreceiver.NewConnCreationGrpCreatnLstnr;
 import com.aj.sendall.network.runnable.NewConnCreationClient;
 import com.aj.sendall.network.runnable.NewConnCreationClientConnector;
 import com.aj.sendall.network.runnable.NewConnCreationServer;
+import com.aj.sendall.network.services.ConnCreationClientService;
+import com.aj.sendall.network.services.ConnCreationServerService;
 import com.aj.sendall.network.utils.Constants;
 import com.aj.sendall.ui.adapter.ConnectorAdapter;
 import com.aj.sendall.ui.interfaces.Updatable;
@@ -36,6 +39,8 @@ import javax.inject.Inject;
 
 public class Connector extends AppCompatActivity implements Updatable {
     public static final String THIS = Connector.class.getSimpleName();
+    //this variable is needed for conn creator group listener service
+    public static Connector currentInstance;
     private RecyclerView availableConns;
     private LinearLayout transBgLayout;
     private ProgressBar pBarLoadingConns;
@@ -43,9 +48,9 @@ public class Connector extends AppCompatActivity implements Updatable {
     private ImageView imgBtnInitConn;
     private ImageView imgBtnScanConn;
     private Updatable connCreatorServer;
-    private Map<String, NewConnCreationClientConnector> usernameToConnSender = new HashMap<>();
-    private Map<String, Map<String, String>> userNameToConnectionData = new HashMap<>();
-    private List<NewConnCreationClient> clientList = new ArrayList<>();
+    private Map<String, NewConnCreationClientConnector> usernameToConnSender;
+    private Map<String, Map<String, String>> userNameToConnectionData;
+    private List<NewConnCreationClient> clientList;
     private Action selectedAction;
     @Inject
     AppManager appManager;
@@ -58,6 +63,15 @@ public class Connector extends AppCompatActivity implements Updatable {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_connector);
         ((AndroidApplication)getApplication()).getDaggerInjector().inject(this);
+
+        currentInstance = this;
+
+        appManager.notificationUtil.removeToggleNotification();
+
+        usernameToConnSender = new HashMap<>();
+        userNameToConnectionData = new HashMap<>();
+        clientList = new ArrayList<>();
+
         findViews();
         initViews();
         setListeners();
@@ -85,10 +99,9 @@ public class Connector extends AppCompatActivity implements Updatable {
             @Override
             public void onClick(View v) {
                 NewConnCreationGrpCreatnLstnr listener = new NewConnCreationGrpCreatnLstnr(appManager, Connector.this);
-                if(appManager.createGroupAndAdvertise(listener, SharedPrefConstants.CURR_STATUS_CEATING_CONNECTION)){
-                    selectedAction = Action.CREATE;
-                    animateViewsOnButtonClicked(v);
-                }
+                appManager.createGroupAndAdvertise(listener, SharedPrefConstants.CURR_STATUS_CEATING_CONNECTION);
+                selectedAction = Action.CREATE;
+                animateViewsOnButtonClicked(v);
             }
         });
 
@@ -128,25 +141,27 @@ public class Connector extends AppCompatActivity implements Updatable {
     protected void onPause() {
         super.onPause();
 
-        UpdateEvent closeEvent = new UpdateEvent();
-        closeEvent.source = this.getClass();
-        closeEvent.data.put(Constants.ACTION, Constants.CLOSE_SOCKET);
+        currentInstance = null;
 
         if(Action.CREATE.equals(selectedAction)) {
-            //Close the server
-            connCreatorServer.update(closeEvent);
-
-            //Close all open Sockets
-            for (NewConnCreationClientConnector sender : usernameToConnSender.values()) {
-                sender.update(closeEvent);
-            }
+            ConnCreationServerService.stop(this.getApplicationContext());
         } else if(Action.JOIN.equals(selectedAction)){
+            UpdateEvent closeEvent = new UpdateEvent();
+            closeEvent.source = this.getClass();
+            closeEvent.data.put(Constants.ACTION, Constants.CLOSE_SOCKET);
             for(NewConnCreationClient client : clientList){
                 client.update(closeEvent);
             }
         }
-
+        appManager.stopAllWifiOps();
+        appManager.notificationUtil.showToggleReceivingNotification();
         finish();
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        appManager.notificationUtil.removeToggleNotification();
     }
 
     @Override
@@ -176,14 +191,25 @@ public class Connector extends AppCompatActivity implements Updatable {
                     event.source = this.getClass();
                     event.data.put(Constants.ACTION, Constants.ACCEPT_CONN);
                     sender.update(updateEvent);
+                    transBgLayout.setVisibility(View.VISIBLE);
                 }
             } else if(Action.JOIN.equals(selectedAction)){
                 Map<String, String> connData = userNameToConnectionData.get(conn.profileName);
                 if(connData != null) {
                     String SSID = connData.get(Constants.ADV_KEY_NETWORK_NAME);
                     String pass = connData.get(Constants.ADV_KEY_NETWORK_PASSPHRASE);
-                    NewConnCreationClient client = new NewConnCreationClient(SSID, pass, this, appManager);
-                    appManager.handler.post(client);
+                    String portString = connData.get(Constants.ADV_KEY_SERVER_PORT);
+                    int port = -1;
+                    if(portString != null && !portString.isEmpty()){
+                        try{
+                            port = Integer.valueOf(portString);
+                        }catch (Exception e){
+                        }
+                    }
+                    NewConnCreationClient client = new NewConnCreationClient(SSID, pass, port, this, appManager);
+                    clientList.add(client);
+                    transBgLayout.setVisibility(View.VISIBLE);
+                    ConnCreationClientService.start(this.getApplicationContext(), client);
                 }
             }
         }
@@ -200,6 +226,7 @@ public class Connector extends AppCompatActivity implements Updatable {
                 public void onDnsSdTxtRecordAvailable(String fullDomainName, Map<String, String> txtRecordMap, WifiP2pDevice srcDevice) {
                 if(Constants.P2P_SERVICE_FULL_DOMAIN_NAME.equals(fullDomainName)) {
                     if(Constants.ADV_VALUE_PURPOSE_CONNECTION_CREATION.equals(txtRecordMap.get(Constants.ADV_KEY_GROUP_PURPOSE))){
+                        transBgLayout.setVisibility(View.GONE);
                         String userName = txtRecordMap.get(Constants.ADV_KEY_USERNAME);
                         if(!userNameToConnectionData.containsKey(userName)) {
                             userNameToConnectionData.put(userName, txtRecordMap);

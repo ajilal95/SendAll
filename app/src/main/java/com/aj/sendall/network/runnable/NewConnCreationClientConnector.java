@@ -34,15 +34,13 @@ public class NewConnCreationClientConnector implements Runnable, Updatable {
             dataInputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
             dataOutputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 
-            String username = dataInputStream.readUTF();
-            String idOfOtherDevice = dataInputStream.readUTF();
+            String otherUserName = dataInputStream.readUTF();
+            String otherDeviceId = dataInputStream.readUTF();
 
             UpdateEvent event = new UpdateEvent();
-
             event.source = this.getClass();
-
-            event.data.put(SharedPrefConstants.USER_NAME, username);
-            event.data.put(SharedPrefConstants.DEVICE_ID, idOfOtherDevice);
+            event.data.put(SharedPrefConstants.USER_NAME, otherUserName);
+            event.data.put(SharedPrefConstants.DEVICE_ID, otherDeviceId);
             event.data.put(UPDATE_CONST_SENDER, this);
             updatableActivity.update(event);
         } catch(Exception e){

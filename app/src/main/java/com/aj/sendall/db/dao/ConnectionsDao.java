@@ -27,7 +27,8 @@ public class ConnectionsDao extends AbstractDao<Connections, Long> {
         public final static Property ConnectionId = new Property(0, Long.class, "connectionId", true, "CONNECTION_ID");
         public final static Property ConnectionName = new Property(1, String.class, "connectionName", false, "CONNECTION_NAME");
         public final static Property SSID = new Property(2, String.class, "SSID", false, "SSID");
-        public final static Property Password = new Property(3, String.class, "password", false, "PASSWORD");
+        public final static Property ProfPicPath = new Property(3, String.class, "profPicPath", false, "PROF_PIC_PATH");
+        public final static Property LastContaced = new Property(4, java.util.Date.class, "lastContaced", false, "LAST_CONTACED");
     }
 
     private DaoSession daoSession;
@@ -49,7 +50,8 @@ public class ConnectionsDao extends AbstractDao<Connections, Long> {
                 "\"CONNECTION_ID\" INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: connectionId
                 "\"CONNECTION_NAME\" TEXT NOT NULL ," + // 1: connectionName
                 "\"SSID\" TEXT NOT NULL ," + // 2: SSID
-                "\"PASSWORD\" TEXT NOT NULL );"); // 3: password
+                "\"PROF_PIC_PATH\" TEXT," + // 3: profPicPath
+                "\"LAST_CONTACED\" INTEGER);"); // 4: lastContaced
     }
 
     /** Drops the underlying database table. */
@@ -68,7 +70,16 @@ public class ConnectionsDao extends AbstractDao<Connections, Long> {
         }
         stmt.bindString(2, entity.getConnectionName());
         stmt.bindString(3, entity.getSSID());
-        stmt.bindString(4, entity.getPassword());
+ 
+        String profPicPath = entity.getProfPicPath();
+        if (profPicPath != null) {
+            stmt.bindString(4, profPicPath);
+        }
+ 
+        java.util.Date lastContaced = entity.getLastContaced();
+        if (lastContaced != null) {
+            stmt.bindLong(5, lastContaced.getTime());
+        }
     }
 
     @Override
@@ -81,7 +92,16 @@ public class ConnectionsDao extends AbstractDao<Connections, Long> {
         }
         stmt.bindString(2, entity.getConnectionName());
         stmt.bindString(3, entity.getSSID());
-        stmt.bindString(4, entity.getPassword());
+ 
+        String profPicPath = entity.getProfPicPath();
+        if (profPicPath != null) {
+            stmt.bindString(4, profPicPath);
+        }
+ 
+        java.util.Date lastContaced = entity.getLastContaced();
+        if (lastContaced != null) {
+            stmt.bindLong(5, lastContaced.getTime());
+        }
     }
 
     @Override
@@ -101,7 +121,8 @@ public class ConnectionsDao extends AbstractDao<Connections, Long> {
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // connectionId
             cursor.getString(offset + 1), // connectionName
             cursor.getString(offset + 2), // SSID
-            cursor.getString(offset + 3) // password
+            cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // profPicPath
+            cursor.isNull(offset + 4) ? null : new java.util.Date(cursor.getLong(offset + 4)) // lastContaced
         );
         return entity;
     }
@@ -111,7 +132,8 @@ public class ConnectionsDao extends AbstractDao<Connections, Long> {
         entity.setConnectionId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
         entity.setConnectionName(cursor.getString(offset + 1));
         entity.setSSID(cursor.getString(offset + 2));
-        entity.setPassword(cursor.getString(offset + 3));
+        entity.setProfPicPath(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
+        entity.setLastContaced(cursor.isNull(offset + 4) ? null : new java.util.Date(cursor.getLong(offset + 4)));
      }
     
     @Override

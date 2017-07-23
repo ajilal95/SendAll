@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
@@ -60,7 +61,17 @@
             </intent-filter>
         </receiver>
 
-        <activity android:name=".ui.activity.Connector"></activity>
+        <activity android:name=".ui.activity.Connector" />
+
+        <service
+            android:name=".network.services.ConnCreationServerService"
+            android:exported="false" />
+        <service
+            android:name=".network.services.AfterGrpCreatedForNewConnService"
+            android:exported="false" />
+        <service
+            android:name=".network.services.ConnCreationClientService"
+            android:exported="false"></service>
     </application>
 
 </manifest>

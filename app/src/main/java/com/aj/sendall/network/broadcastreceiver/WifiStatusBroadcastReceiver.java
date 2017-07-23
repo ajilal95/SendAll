@@ -44,19 +44,26 @@ public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
     private void onWifiStateChanged(int state){
         appManager.setWifiP2pState(state);
         int currentAppStatus = sharedPrefUtil.getCurrentAppStatus();
-
-        if(WifiP2pManager.WIFI_P2P_STATE_ENABLED == state) {
-            if(sharedPrefUtil.isAutoScanOnWifiEnabled()) {
-                ToggleReceiverService.startP2pServiceDiscovery(appManager);
+        if(SharedPrefConstants.CURR_STATUS_STOPPING_ALL != currentAppStatus) {
+            if (WifiP2pManager.WIFI_P2P_STATE_ENABLED == state) {
+                if(SharedPrefConstants.CURR_STATUS_IDLE == currentAppStatus) {
+                    if (sharedPrefUtil.isAutoScanOnWifiEnabled()) {
+                        ToggleReceiverService.startP2pServiceDiscovery(appManager);
+                    }
+                    notificationUtil.showToggleReceivingNotification();
+                }
+            } else {
+                notificationUtil.removeToggleNotification();
+                if (currentAppStatus == SharedPrefConstants.CURR_STATUS_SENDING
+                        || currentAppStatus == SharedPrefConstants.CURR_STATUS_RECEIVABLE
+                        || currentAppStatus == SharedPrefConstants.CURR_STATUS_CEATING_CONNECTION) {
+                    appManager.stopAllWifiOps();
+                }
             }
-            notificationUtil.showToggleReceivingNotification();
         } else {
-            notificationUtil.removeToggleNotification();
-            if(currentAppStatus == SharedPrefConstants.CURR_STATUS_SENDING
-                    || currentAppStatus == SharedPrefConstants.CURR_STATUS_RECEIVABLE
-                    || currentAppStatus == SharedPrefConstants.CURR_STATUS_CEATING_CONNECTION){
-                appManager.stopAllWifiOps();
-            }
+            sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
+            sharedPrefUtil.commit();
+            notificationUtil.showToggleReceivingNotification();
         }
     }
 }

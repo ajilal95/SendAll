@@ -4,6 +4,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.WifiManager;
 import android.support.v4.app.NotificationCompat;
 
 import com.aj.sendall.R;
@@ -30,6 +31,11 @@ public class NotificationUtil {
     }
 
     public void showToggleReceivingNotification(){
+        if(!((WifiManager) context.getSystemService(Context.WIFI_SERVICE)).isWifiEnabled()){
+            removeToggleNotification();
+            return;
+        }
+
         int currentAppStatus = sharedPrefUtil.getCurrentAppStatus();
 
         //Do not show the notification of enable scanning while the application is sending

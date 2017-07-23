@@ -1,11 +1,14 @@
 package com.aj.sendall.application;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.net.wifi.WifiManager;
+import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.os.Handler;
+import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -21,10 +24,6 @@ import java.io.Serializable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
-/**
- * Created by ajilal on 25/5/17.
- */
 
 @Singleton
 public class AppManager implements Serializable{
@@ -67,6 +66,9 @@ public class AppManager implements Serializable{
                 }
             });
             initialised = true;
+
+            enableWifi(false);
+            wifiP2pState = WifiP2pManager.WIFI_P2P_STATE_DISABLED;
         }
     }
 
@@ -75,7 +77,10 @@ public class AppManager implements Serializable{
     }
 
     public void enableWifi(boolean enable){
-        wifiManager.setWifiEnabled(enable);
+        boolean success = wifiManager.setWifiEnabled(enable);
+        if(enable && !success){
+            Toast.makeText(context, "Please turn on wifi", Toast.LENGTH_SHORT).show();
+        }
     }
 
     /*Method to set current wifi status from wifi broadcast receiver*/
@@ -84,7 +89,7 @@ public class AppManager implements Serializable{
     }
 
 
-    public boolean createGroupAndAdvertise(AbstractGroupCreationListener broadcastReceiver, int newAppStatus){
+    public boolean createGroupAndAdvertise(final AbstractGroupCreationListener broadcastReceiver, int newAppStatus){
         //first of all, change the app status
         int appStatus = sharedPrefUtil.getCurrentAppStatus();
         if(appStatus == SharedPrefConstants.CURR_STATUS_IDLE) {
@@ -97,12 +102,54 @@ public class AppManager implements Serializable{
             intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
             context.registerReceiver(broadcastReceiver, intentFilter);
 
+            BroadcastReceiverAutoUnregister unregBR = new BroadcastReceiverAutoUnregister(context, broadcastReceiver, 30000);
+            broadcastReceiver.setUnregister(unregBR);
             //Delay for the BroadcastReceiver to start
-            handler.postDelayed(new GroupCreator(this, notificationUtil, sharedPrefUtil), 500);
+            handler.postDelayed(new GroupCreator(this, notificationUtil, sharedPrefUtil), 2000);
+            //automatic unregister of the receiver after 30 seconds
+            handler.post(unregBR);
             return true;
         } else {
             Toast.makeText(context, "Please wait for the current operation to finish", Toast.LENGTH_SHORT).show();
             return false;
+        }
+    }
+
+    public class BroadcastReceiverAutoUnregister implements Runnable{
+        private Object syncObj = new Object();
+        private boolean unregistered = false;
+        private Context context;
+        private BroadcastReceiver broadcastReceiver;
+        private long lifetime;
+
+        public BroadcastReceiverAutoUnregister(Context context, BroadcastReceiver broadcastReceiver, long lifetime){
+            this.context = context;
+            this.broadcastReceiver = broadcastReceiver;
+            this.lifetime = lifetime;
+        }
+
+        @Override
+        public void run() {
+            synchronized (syncObj) {
+                if (!unregistered) {
+                    unregistered = true;
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            context.unregisterReceiver(broadcastReceiver);
+                        }
+                    }, lifetime);
+                }
+            }
+        }
+
+        public void unregNow(){
+            synchronized (syncObj) {
+                if (!unregistered) {
+                    unregistered = true;
+                    context.unregisterReceiver(broadcastReceiver);
+                }
+            }
         }
     }
 
@@ -260,7 +307,8 @@ public class AppManager implements Serializable{
     }
 
     public void stopAllWifiOps(){
-        final boolean wasWifiEnabled = isWifiEnabled();
+        sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_STOPPING_ALL);
+        sharedPrefUtil.commit();
         enableWifi(true);
         handler.postDelayed(new Runnable() {
             @Override
@@ -301,10 +349,14 @@ public class AppManager implements Serializable{
                                     }
 
                                     private void groupRemoved(){
-                                        if(!wasWifiEnabled){
+                                        if(isWifiEnabled()) {
+                                            sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_STOPPING_ALL);
+                                            sharedPrefUtil.commit();
                                             enableWifi(false);
+                                        } else {
+                                            sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
+                                            sharedPrefUtil.commit();
                                         }
-                                        sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
                                     }
                                 });
                             }
