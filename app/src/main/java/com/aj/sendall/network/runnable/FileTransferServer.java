@@ -35,7 +35,7 @@ public class FileTransferServer implements Runnable{
         this.serverSocket = serverSocket;
         this.port = port;
         this.connectionsAndUris = connectionsAndUris;
-        this.handler = appManager.handler;
+        this.handler = new Handler();
         this.sharedPrefUtil = appManager.sharedPrefUtil;
     }
 

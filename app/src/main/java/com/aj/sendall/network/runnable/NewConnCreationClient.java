@@ -1,8 +1,6 @@
 package com.aj.sendall.network.runnable;
 
 import android.net.wifi.WifiConfiguration;
-import android.net.wifi.p2p.WifiP2pGroup;
-import android.net.wifi.p2p.WifiP2pManager;
 
 import com.aj.sendall.application.AppManager;
 import com.aj.sendall.db.model.Connections;
@@ -18,12 +16,9 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Date;
 
-/**
- * Created by ajilal on 20/7/17.
- */
 
 public class NewConnCreationClient implements Runnable, Updatable {
-    private static final String GRP_OWNER_IP = "192.168.49.1";
+    private String grpOwnerIp = "192.168.49.1";
     private int port;
     private String SSID;
     private String passPhrase;
@@ -36,30 +31,25 @@ public class NewConnCreationClient implements Runnable, Updatable {
         this.passPhrase = passPhrase;
         this.activity = activity;
         this.appManager = appManager;
+        this.port = serverPort;
     }
 
     @Override
     public void run() {
         if(connectToWifi()){
-            appManager.wifiP2pManager.requestGroupInfo(appManager.channel, new WifiP2pManager.GroupInfoListener() {
-                @Override
-                public void onGroupInfoAvailable(WifiP2pGroup group) {
-                    if(!group.isGroupOwner()){
-                        tryToOpenSocket();
-                        communicate();
-                    }
-                }
-            });
+            tryToOpenSocket();
+            communicate();
         }
     }
 
     private void tryToOpenSocket(){
         try {
-            socket = new Socket(GRP_OWNER_IP, port);
+            socket = new Socket(grpOwnerIp, port);
         } catch (Exception e){
+            e.printStackTrace();
             UpdateEvent event = new UpdateEvent();
             event.source = this.getClass();
-            event.data.put(Constants.ACTION, Constants.CONN_FAILED);
+            event.data.put(Constants.ACTION, Constants.FAILED);
             activity.update(event);
         }
     }
@@ -78,6 +68,7 @@ public class NewConnCreationClient implements Runnable, Updatable {
 
                 dos.writeUTF(thisUserName);
                 dos.writeUTF(thisDeviceId);
+                dos.flush();
 
                 String otherUserName = dis.readUTF();
                 String otherDeviceId = dis.readUTF();
@@ -88,6 +79,11 @@ public class NewConnCreationClient implements Runnable, Updatable {
                 conn.setLastContaced(new Date());
 
                 appManager.dbUtil.saveConnection(conn);
+
+                UpdateEvent event = new UpdateEvent();
+                event.source = this.getClass();
+                event.data.put(Constants.ACTION, Constants.SUCCESS);
+                activity.update(event);
             }catch (Exception e){
                 e.printStackTrace();
             }

@@ -23,14 +23,8 @@ public final class ConnectionsActivityService {
     public ConnectionsActivityService(DBUtil dbUtil){
         this.dbUtil = dbUtil;
     }
+
     public List<ConnectionViewData> getAllConnections(){
-        ConnectionViewData dummy = new ConnectionViewData();
-        dummy.uniqueId = "anda";
-        dummy.isSelected = false;
-        dummy.profileId = 0;
-        dummy.profileName = "Dummy";
-        List<ConnectionViewData> list = new ArrayList<>();
-        list.add(dummy);
-        return /*dbUtil.getAllConnectionViewData();*/list;
+        return dbUtil.getAllConnectionViewData();
     }
 }

@@ -33,7 +33,6 @@ public class AppManager implements Serializable{
     public WifiManager wifiManager;
     public WifiP2pManager wifiP2pManager;
     public WifiP2pManager.Channel channel;
-    public Handler handler;
     public SharedPrefUtil sharedPrefUtil;
     private int wifiP2pState;
     public NotificationUtil notificationUtil;
@@ -42,13 +41,11 @@ public class AppManager implements Serializable{
     @Inject
     public AppManager(Context context,
                       DBUtil dbUtil,
-                      Handler groupHandler,
                       SharedPrefUtil sharedPrefUtil,
                       NotificationUtil notificationUtil,
                       ContentProviderUtil contentProviderUtil){
         this.context = context;
         this.dbUtil = dbUtil;
-        this.handler = groupHandler;
         this.sharedPrefUtil = sharedPrefUtil;
         this.notificationUtil = notificationUtil;
         this.contentProviderUtil = contentProviderUtil;
@@ -96,6 +93,8 @@ public class AppManager implements Serializable{
             sharedPrefUtil.setCurrentAppStatus(newAppStatus);
             sharedPrefUtil.commit();
             enableWifi(true);
+
+            Handler handler = new Handler();
 
             //Start the receiver to receive the group data
             IntentFilter intentFilter = new IntentFilter();
@@ -155,6 +154,7 @@ public class AppManager implements Serializable{
 
     public void startP2pServiceDiscovery(final WifiP2pManager.DnsSdTxtRecordListener textListener, final WifiP2pManager.DnsSdServiceResponseListener serviceResponseListener){
         enableWifi(true);
+        final Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -248,7 +248,7 @@ public class AppManager implements Serializable{
                                                     }, 2000);
                                                 } else {
                                                     Log.d(AppManager.class.getSimpleName(), "Aborted service discovery");
-                                                    Toast.makeText(context, "Scanning failed", Toast.LENGTH_SHORT).show();
+                                                    Toast.makeText(context, "Something's not right. Please turn on wifi", Toast.LENGTH_SHORT).show();
                                                     sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
                                                     sharedPrefUtil.commit();
                                                     if(isWifiEnabled()) {
@@ -270,6 +270,7 @@ public class AppManager implements Serializable{
 
     public void stopP2pServiceDiscovery(){
         wifiP2pManager.clearServiceRequests(channel, new WifiP2pManager.ActionListener() {
+            Handler handler = new Handler();
             int failureCount = 0;
             @Override
             public void onSuccess() {
@@ -307,6 +308,7 @@ public class AppManager implements Serializable{
     }
 
     public void stopAllWifiOps(){
+        final Handler handler = new Handler();
         sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_STOPPING_ALL);
         sharedPrefUtil.commit();
         enableWifi(true);

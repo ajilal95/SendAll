@@ -1,10 +1,13 @@
 package com.aj.sendall.network.broadcastreceiver;
 
 import android.content.Context;
-import android.content.Intent;
 import com.aj.sendall.application.AppManager;
-import com.aj.sendall.network.services.AfterGrpCreatedForNewConnService;
+import com.aj.sendall.network.services.ConnCreationServerService;
 import com.aj.sendall.ui.interfaces.Updatable;
+
+import java.net.InetAddress;
+import java.util.HashMap;
+import java.util.Map;
 
 public class NewConnCreationGrpCreatnLstnr extends AbstractGroupCreationListener {
     private Updatable updatableActivity;
@@ -15,11 +18,15 @@ public class NewConnCreationGrpCreatnLstnr extends AbstractGroupCreationListener
     }
 
     @Override
-    protected void onGroupInfoAvailable(final Context context, final String networkName, final String passPhrase) {
-        Intent intent = new Intent(context, AfterGrpCreatedForNewConnService.class);
-        intent.putExtra(AfterGrpCreatedForNewConnService.NET, networkName);
-        intent.putExtra(AfterGrpCreatedForNewConnService.PASS, passPhrase);
-        context.startService(intent);
+    protected void onGroupInfoAvailable(final Context context, final String networkName, final String passPhrase, InetAddress grpOwnerAdd) {
+        String grpOwnerIp = grpOwnerAdd.getHostAddress();
+        Map<String, String> recToAdv = new HashMap<>();
+        recToAdv.put(ConnCreationServerService.NET, networkName);
+        recToAdv.put(ConnCreationServerService.PASS, passPhrase);
+        recToAdv.put(ConnCreationServerService.GRP_OWN_ADD, grpOwnerIp);
+
+        ConnCreationServerService.connectorActivity = updatableActivity;
+        ConnCreationServerService.start(context, recToAdv);
     }
 }
 

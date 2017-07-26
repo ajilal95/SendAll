@@ -1,6 +1,7 @@
 package com.aj.sendall.application;
 
 import android.app.Application;
+import android.content.Intent;
 
 import com.aj.sendall.depndency.dagger.DComponent;
 import com.aj.sendall.depndency.dagger.DModule;

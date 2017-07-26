@@ -19,6 +19,7 @@ import com.aj.sendall.application.AppManager;
 import com.aj.sendall.notification.util.NotificationUtil;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,7 +48,7 @@ public class FileTransferGrpCreatnLstnr extends AbstractGroupCreationListener {
     }
 
     @Override
-    protected void onGroupInfoAvailable(final Context context, final String networkName, final String passPhrase) {
+    protected void onGroupInfoAvailable(final Context context, final String networkName, final String passPhrase, InetAddress grpOwnerAdd) {
         ((AndroidApplication)context.getApplicationContext()).getDaggerInjector().inject(this);
         appManager.wifiP2pManager.clearLocalServices(appManager.channel, new WifiP2pManager.ActionListener() {
             private int clearServicesFailureCount = 0;//stop trying after 5 failures

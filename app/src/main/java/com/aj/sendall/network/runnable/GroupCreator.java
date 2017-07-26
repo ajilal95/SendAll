@@ -2,6 +2,7 @@ package com.aj.sendall.network.runnable;
 
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.Handler;
 import android.widget.Toast;
 
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
@@ -14,6 +15,7 @@ import com.aj.sendall.notification.util.NotificationUtil;
  */
 
 public class GroupCreator implements Runnable {
+    private Handler handler;
     private AppManager appManager;
     private NotificationUtil notificationUtil;
     private SharedPrefUtil sharedPrefUtil;
@@ -24,6 +26,7 @@ public class GroupCreator implements Runnable {
         this.appManager = appManager;
         this.notificationUtil = notificationUtil;
         this.sharedPrefUtil = sharedPrefUtil;
+        this.handler = new Handler();
     }
 
     @Override
@@ -44,7 +47,7 @@ public class GroupCreator implements Runnable {
 
                                 @Override
                                 public void onSuccess() {
-                                    Toast.makeText(appManager.context, "Success", Toast.LENGTH_LONG).show();
+                                    Toast.makeText(appManager.context, "Try to connect now!", Toast.LENGTH_LONG).show();
                                 }
 
                                 @Override
@@ -53,7 +56,7 @@ public class GroupCreator implements Runnable {
                                     Toast.makeText(appManager.context, ""+ reason, Toast.LENGTH_LONG).show();
                                     if(WifiP2pManager.BUSY == reason && groupCreationFailureCount < 5) {
                                         final WifiP2pManager.ActionListener enclosingListener = this;
-                                        appManager.handler.postDelayed(new Runnable() {
+                                        handler.postDelayed(new Runnable() {
                                             @Override
                                             public void run() {
                                                 appManager.wifiP2pManager.createGroup(appManager.channel, enclosingListener);
@@ -73,10 +76,12 @@ public class GroupCreator implements Runnable {
                         @Override
                         public void onFailure(int reason) {
                             groupRemoveFailureCount++;
-                            Toast.makeText(appManager.context, ""+ reason, Toast.LENGTH_LONG).show();
+                            if(groupRemoveFailureCount == 1) {
+                                Toast.makeText(appManager.context, "Please turn on wifi", Toast.LENGTH_LONG).show();
+                            }
                             if(WifiP2pManager.BUSY == reason && groupRemoveFailureCount < 5) {
                                 final WifiP2pManager.ActionListener enclosingListener = this;
-                                appManager.handler.postDelayed(new Runnable() {
+                                handler.postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
                                         appManager.wifiP2pManager.removeGroup(appManager.channel, enclosingListener);
@@ -109,7 +114,7 @@ public class GroupCreator implements Runnable {
                             }
                             if(WifiP2pManager.BUSY == reason && groupCreationFailureCount <= 5) {
                                 final WifiP2pManager.ActionListener enclosingListener = this;
-                                appManager.handler.postDelayed(new Runnable() {
+                                handler.postDelayed(new Runnable() {
                                     @Override
                                     public void run() {
                                         appManager.wifiP2pManager.createGroup(appManager.channel, enclosingListener);

@@ -67,11 +67,8 @@
             android:name=".network.services.ConnCreationServerService"
             android:exported="false" />
         <service
-            android:name=".network.services.AfterGrpCreatedForNewConnService"
-            android:exported="false" />
-        <service
             android:name=".network.services.ConnCreationClientService"
-            android:exported="false"></service>
+            android:exported="false" />
     </application>
 
 </manifest>

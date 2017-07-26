@@ -3,6 +3,7 @@ package com.aj.sendall.network.services;
 import android.app.IntentService;
 import android.content.Intent;
 import android.content.Context;
+import android.os.AsyncTask;
 
 import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.application.AppManager;
@@ -43,7 +44,7 @@ public class ConnCreationClientService extends IntentService {
         if (intent != null) {
             final String action = intent.getAction();
             if (ACTION_START_NEW.equals(action)) {
-                appManager.handler.post(client);
+                client.run();
             }
         }
     }

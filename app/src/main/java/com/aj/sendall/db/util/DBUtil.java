@@ -40,7 +40,7 @@ public class DBUtil {
     }
 
     public List<ConnectionViewData> getAllConnectionViewData(){
-        List<Connections> connections =  daoSession.getConnectionsDao().loadAll();
+        List<Connections> connections =  daoSession.getConnectionsDao().queryBuilder().orderDesc(ConnectionsDao.Properties.LastContaced).list();
         return new OnDemandConverterList<Connections, ConnectionViewData>(connections, new OnDemandConverterList.EntityConverter<Connections, ConnectionViewData>() {
             @Override
             public ConnectionViewData convert(Connections fromEntity) {

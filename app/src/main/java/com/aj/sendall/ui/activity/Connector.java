@@ -1,5 +1,6 @@
 package com.aj.sendall.ui.activity;
 
+import android.content.Intent;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.support.design.widget.Snackbar;
@@ -38,16 +39,12 @@ import java.util.Map;
 import javax.inject.Inject;
 
 public class Connector extends AppCompatActivity implements Updatable {
-    public static final String THIS = Connector.class.getSimpleName();
-    //this variable is needed for conn creator group listener service
-    public static Connector currentInstance;
     private RecyclerView availableConns;
     private LinearLayout transBgLayout;
     private ProgressBar pBarLoadingConns;
     private LinearLayout buttonLayout;
     private ImageView imgBtnInitConn;
     private ImageView imgBtnScanConn;
-    private Updatable connCreatorServer;
     private Map<String, NewConnCreationClientConnector> usernameToConnSender;
     private Map<String, Map<String, String>> userNameToConnectionData;
     private List<NewConnCreationClient> clientList;
@@ -63,8 +60,6 @@ public class Connector extends AppCompatActivity implements Updatable {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_connector);
         ((AndroidApplication)getApplication()).getDaggerInjector().inject(this);
-
-        currentInstance = this;
 
         appManager.notificationUtil.removeToggleNotification();
 
@@ -141,10 +136,8 @@ public class Connector extends AppCompatActivity implements Updatable {
     protected void onPause() {
         super.onPause();
 
-        currentInstance = null;
-
         if(Action.CREATE.equals(selectedAction)) {
-            ConnCreationServerService.stop(this.getApplicationContext());
+            ConnCreationServerService.stop(this);
         } else if(Action.JOIN.equals(selectedAction)){
             UpdateEvent closeEvent = new UpdateEvent();
             closeEvent.source = this.getClass();
@@ -167,19 +160,24 @@ public class Connector extends AppCompatActivity implements Updatable {
     @Override
     public void update(UpdateEvent updateEvent) {
         if(NewConnCreationServer.class.equals(updateEvent.source)){
-            connCreatorServer = (Updatable) updateEvent.data.get(NewConnCreationServer.UPDATE_CONST_SERVER);
+            Toast.makeText(this, "Server started",Toast.LENGTH_SHORT).show();
         } else if(NewConnCreationClientConnector.class.equals(updateEvent.source)){
-            String username = (String) updateEvent.data.get(SharedPrefConstants.USER_NAME);
-            if(usernameToConnSender.containsKey(username)) {
-                //A new connection request arrived. add it to the ui
-                usernameToConnSender.put(username, (NewConnCreationClientConnector) updateEvent.data.get(NewConnCreationClientConnector.UPDATE_CONST_SENDER));
-                ConnectionViewData newConn = new ConnectionViewData();
-                newConn.profileName = username;
-                newConn.uniqueId = (String) updateEvent.data.get(SharedPrefConstants.DEVICE_ID);
-                connectionViewDatas.add(newConn);
-                //update the UI
-                connectorAdapter.setData(connectionViewDatas);
-                availableConns.setAdapter(connectorAdapter);
+            if(Constants.ACCEPT_CONN.equals(updateEvent.data.get(Constants.ACTION))) {
+                String username = (String) updateEvent.data.get(SharedPrefConstants.USER_NAME);
+                if (usernameToConnSender.containsKey(username)) {
+                    transBgLayout.setVisibility(View.GONE);
+                    //A new connection request arrived. add it to the ui
+                    usernameToConnSender.put(username, (NewConnCreationClientConnector) updateEvent.data.get(NewConnCreationClientConnector.UPDATE_CONST_SENDER));
+                    ConnectionViewData newConn = new ConnectionViewData();
+                    newConn.profileName = username;
+                    newConn.uniqueId = (String) updateEvent.data.get(SharedPrefConstants.DEVICE_ID);
+                    connectionViewDatas.add(newConn);
+                    //update the UI
+                    connectorAdapter.setData(connectionViewDatas);
+                    availableConns.setAdapter(connectorAdapter);
+                }
+            } else if(Constants.SUCCESS.equals(updateEvent.data.get(Constants.ACTION))){
+                goHome();
             }
 
         } else if(ConnectorAdapter.class.equals(updateEvent.source)){
@@ -209,8 +207,17 @@ public class Connector extends AppCompatActivity implements Updatable {
                     NewConnCreationClient client = new NewConnCreationClient(SSID, pass, port, this, appManager);
                     clientList.add(client);
                     transBgLayout.setVisibility(View.VISIBLE);
-                    ConnCreationClientService.start(this.getApplicationContext(), client);
+                    ConnCreationClientService.start(this, client);
                 }
+            }
+        } else if(NewConnCreationClient.class.equals(updateEvent.source)){
+            if(Constants.SUCCESS.equals(updateEvent.data.get(Constants.ACTION))){
+                goHome();
+            } else if(Constants.FAILED.equals(updateEvent.data.get(Constants.ACTION))){
+                connectionViewDatas.clear();
+                connectorAdapter.setData(connectionViewDatas);
+                availableConns.setAdapter(connectorAdapter);
+                transBgLayout.setVisibility(View.GONE);
             }
         }
     }
@@ -251,6 +258,22 @@ public class Connector extends AppCompatActivity implements Updatable {
         } else {
             Toast.makeText(this, "Wait for current operation to finish", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void goHome(){
+        if(Action.CREATE.equals(selectedAction)) {
+            ConnCreationServerService.stop(this);
+        } else if(Action.JOIN.equals(selectedAction)){
+            UpdateEvent closeEvent = new UpdateEvent();
+            closeEvent.source = this.getClass();
+            closeEvent.data.put(Constants.ACTION, Constants.CLOSE_SOCKET);
+            for(NewConnCreationClient client : clientList){
+                client.update(closeEvent);
+            }
+        }
+        appManager.stopAllWifiOps();
+        appManager.notificationUtil.showToggleReceivingNotification();
+        finish();
     }
 
     private enum Action{
