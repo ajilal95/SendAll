@@ -2,6 +2,8 @@ package com.aj.sendall.network.runnable;
 
 import android.os.Handler;
 
+import com.aj.sendall.network.runnable.abstr.AbstractClientConnector;
+import com.aj.sendall.network.runnable.abstr.AbstractServer;
 import com.aj.sendall.network.utils.Constants;
 import com.aj.sendall.application.AppManager;
 import com.aj.sendall.ui.interfaces.Updatable;
@@ -19,6 +21,11 @@ public class NewConnCreationServer extends AbstractServer {
     public void preRun() {
         //Auto close the socket after 45 seconds
         new Handler().postDelayed(super.closeServer, 45000);
+
+        UpdateEvent event = new UpdateEvent();
+        event.source = this.getClass();
+        event.data.put(Constants.ACTION, Constants.ACCEPT_CONN);
+        updatableActivity.update(event);
     }
 
     @Override

@@ -1,7 +1,6 @@
-package com.aj.sendall.network.runnable;
+package com.aj.sendall.network.runnable.abstr;
 
 import com.aj.sendall.application.AppManager;
-import com.aj.sendall.network.broadcastreceiver.AbstractGroupCreationListener;
 import com.aj.sendall.ui.interfaces.Updatable;
 
 import java.io.BufferedInputStream;
@@ -10,9 +9,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
 
-/**
- * Created by ajilal on 26/7/17.
- */
 
 abstract public class AbstractClientConnector implements Runnable, Updatable {
     private Socket socket;
@@ -33,15 +29,16 @@ abstract public class AbstractClientConnector implements Runnable, Updatable {
             dataInputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
             dataOutputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 
-            subRun();
+            postRun();
         } catch (Exception e){
             e.printStackTrace();
         }
     }
 
-    abstract protected void subRun();
+    abstract protected void postRun();
+    abstract protected void acceptConnComm();
 
-    public void closeSocket(){
+    protected void closeSocket(){
         try {
             dataInputStream.close();
             dataOutputStream.close();

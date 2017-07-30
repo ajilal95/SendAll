@@ -5,8 +5,9 @@ import android.content.Intent;
 
 import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.application.AppManager;
-import com.aj.sendall.network.runnable.AbstractServer;
+import com.aj.sendall.network.runnable.abstr.AbstractServer;
 import com.aj.sendall.network.runnable.NewConnCreationServer;
+import com.aj.sendall.network.services.abstr.AbstractServerService;
 import com.aj.sendall.network.utils.Constants;
 import com.aj.sendall.ui.interfaces.Updatable;
 
@@ -15,7 +16,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-public class ConnCreationServerService extends AbstractServerService {
+public class NewConnCreationServerService extends AbstractServerService {
     public static final String NET = "net";
     public static final String PASS = "pass";
     public static final String GRP_OWN_ADD = "GRP_OWN_ADD";
@@ -29,7 +30,7 @@ public class ConnCreationServerService extends AbstractServerService {
 
     private static NewConnCreationServer currServer = null;
 
-    public ConnCreationServerService() {
+    public NewConnCreationServerService() {
         super("ConnCreationServerService");
     }
 

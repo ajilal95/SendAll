@@ -1,4 +1,4 @@
-package com.aj.sendall.network.services;
+package com.aj.sendall.network.services.abstr;
 
 import android.app.IntentService;
 import android.content.Context;
@@ -11,7 +11,8 @@ import android.widget.Toast;
 
 import com.aj.sendall.application.AppManager;
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
-import com.aj.sendall.network.runnable.AbstractServer;
+import com.aj.sendall.network.runnable.abstr.AbstractServer;
+import com.aj.sendall.network.services.NewConnCreationServerService;
 import com.aj.sendall.network.utils.Constants;
 import com.aj.sendall.ui.interfaces.Updatable;
 
@@ -51,6 +52,7 @@ public abstract class AbstractServerService extends IntentService {
                         serverSocket = new ServerSocket(0);
                         createServerToStaticVariable(serverSocket, appManager);
                         port = serverSocket.getLocalPort();
+
                         handler = new Handler();
 
                         String[] keys = intent.getStringArrayExtra(INTENT_EXTRA_KEYS);
@@ -86,7 +88,6 @@ public abstract class AbstractServerService extends IntentService {
 
     private void startServerAction(){
         try{
-            new Handler().postDelayed(ScanPeersToKeepAdvActive.getInstance(appManager), 5000);
             handler.post(getServerFromAStaticVariable());
             appManager.notificationUtil.removeToggleNotification();
             appManager.wifiP2pManager.clearLocalServices(appManager.channel, new WifiP2pManager.ActionListener() {
@@ -150,11 +151,10 @@ public abstract class AbstractServerService extends IntentService {
     }
 
     private void stopCurrentServer() {
-        ScanPeersToKeepAdvActive.setInactive();
         if(getServerFromAStaticVariable() != null){
             appManager.wifiP2pManager.clearLocalServices(appManager.channel, null);
             Updatable.UpdateEvent event = new Updatable.UpdateEvent();
-            event.source = ConnCreationServerService.class;
+            event.source = NewConnCreationServerService.class;
             event.data.put(Constants.ACTION, Constants.CLOSE_SOCKET);
             getServerFromAStaticVariable().update(event);
             if(serverSocket != null && !serverSocket.isClosed()){
@@ -172,7 +172,7 @@ public abstract class AbstractServerService extends IntentService {
         String[] keys = new String[recordToAdv.keySet().size()];
         recordToAdv.keySet().toArray(keys);
 
-        Intent intent = new Intent(context, ConnCreationServerService.class);
+        Intent intent = new Intent(context, NewConnCreationServerService.class);
         intent.putExtra(INTENT_EXTRA_KEYS, keys);
         for(String key : keys){
             intent.putExtra(key, recordToAdv.get(key));
@@ -182,52 +182,8 @@ public abstract class AbstractServerService extends IntentService {
     }
 
     public static void stop(Context context) {
-        Intent intent = new Intent(context, ConnCreationServerService.class);
+        Intent intent = new Intent(context, NewConnCreationServerService.class);
         intent.setAction(ACTION_STOP);
         context.startService(intent);
-    }
-}
-
-class ScanPeersToKeepAdvActive implements Runnable{
-    private Handler handler = new Handler();
-    private int wakeCount = 6;
-    private boolean active = true;
-    private AppManager appManager;
-
-    private static ScanPeersToKeepAdvActive newObj = null;
-
-    static ScanPeersToKeepAdvActive getInstance(AppManager appManager){
-        if (newObj == null) {
-            newObj = new ScanPeersToKeepAdvActive(appManager);
-            newObj.wakeCount = 6;
-            newObj.active = true;
-        }
-        return newObj;
-    }
-
-    private ScanPeersToKeepAdvActive(AppManager appManager){
-        this.appManager = appManager;
-    }
-
-    public void run(){
-        if(active) {
-            wakeCount--;
-            if (wakeCount >= 0) {
-                appManager.wifiP2pManager.discoverPeers(appManager.channel, null);
-                handler.postDelayed(this, 5000);
-            } else {
-                newObj = null;
-                active = false;
-            }
-        } else {
-            wakeCount = -1;
-        }
-    }
-
-    static void setInactive(){
-        if(newObj != null){
-            newObj.active = false;
-            newObj = null;
-        }
     }
 }

@@ -1,4 +1,4 @@
-package com.aj.sendall.network.runnable;
+package com.aj.sendall.network.runnable.abstr;
 
 import android.os.Handler;
 
@@ -16,10 +16,10 @@ abstract public class AbstractServer implements Runnable, Updatable {
     private Set<AbstractClientConnector> clientConnectors = new HashSet<>();
     private final ServerSocket serverSocket;
     protected AppManager appManager;
-    Updatable updatableActivity;
-    CloseServer closeServer = new CloseServer();
+    protected Updatable updatableActivity;
+    protected CloseServer closeServer = new CloseServer();
 
-    AbstractServer(ServerSocket serverSocket, AppManager appManager, Updatable updatableActivity){
+    protected AbstractServer(ServerSocket serverSocket, AppManager appManager, Updatable updatableActivity){
         this.serverSocket = serverSocket;
         this.updatableActivity = updatableActivity;
         this.appManager = appManager;
@@ -27,14 +27,14 @@ abstract public class AbstractServer implements Runnable, Updatable {
 
     @Override
     public void run() {
-        preRun();
         if(serverSocket != null) {
             while (!serverSocket.isClosed()) {
                 try {
+                    preRun();
                     Socket socket = serverSocket.accept();
                     AbstractClientConnector clientConnector = getClientConnector(socket, appManager, updatableActivity);
                     clientConnectors.add(clientConnector);
-                    new Handler().post(clientConnector);
+                    new Thread(clientConnector).start();
                 } catch (IOException ioe) {
                     ioe.printStackTrace();
                 }
@@ -44,7 +44,7 @@ abstract public class AbstractServer implements Runnable, Updatable {
 
     abstract protected void preRun();
 
-    void closeServer() {
+    protected void closeServer() {
         UpdateEvent updateEvent = new UpdateEvent();
         updateEvent.source = this.getClass();
         updateEvent.data.put(Constants.ACTION, Constants.CLOSE_SOCKET);
@@ -68,7 +68,7 @@ abstract public class AbstractServer implements Runnable, Updatable {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-        }
+            }
         }
     }
 }

@@ -64,10 +64,10 @@
         <activity android:name=".ui.activity.Connector" />
 
         <service
-            android:name=".network.services.ConnCreationServerService"
+            android:name=".network.services.NewConnCreationServerService"
             android:exported="false" />
         <service
-            android:name=".network.services.ConnCreationClientService"
+            android:name=".network.services.NewConnCreationClientService"
             android:exported="false" />
     </application>
 

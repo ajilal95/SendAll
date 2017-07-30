@@ -1,9 +1,8 @@
 package com.aj.sendall.ui.activity;
 
-import android.content.Intent;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
-import android.support.design.widget.Snackbar;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -12,7 +11,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import com.aj.sendall.R;
 import com.aj.sendall.application.AndroidApplication;
@@ -24,8 +22,8 @@ import com.aj.sendall.network.broadcastreceiver.NewConnCreationGrpCreatnLstnr;
 import com.aj.sendall.network.runnable.NewConnCreationClient;
 import com.aj.sendall.network.runnable.NewConnCreationClientConnector;
 import com.aj.sendall.network.runnable.NewConnCreationServer;
-import com.aj.sendall.network.services.ConnCreationClientService;
-import com.aj.sendall.network.services.ConnCreationServerService;
+import com.aj.sendall.network.services.NewConnCreationClientService;
+import com.aj.sendall.network.services.NewConnCreationServerService;
 import com.aj.sendall.network.utils.Constants;
 import com.aj.sendall.ui.adapter.ConnectorAdapter;
 import com.aj.sendall.ui.interfaces.Updatable;
@@ -49,11 +47,11 @@ public class Connector extends AppCompatActivity implements Updatable {
     private Map<String, Map<String, String>> userNameToConnectionData;
     private List<NewConnCreationClient> clientList;
     private Action selectedAction;
+    private UpdateUIForAction updateUIForAction;
     @Inject
     AppManager appManager;
 
     private ConnectorAdapter connectorAdapter;
-    private LinkedList<ConnectionViewData> connectionViewDatas = new LinkedList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,6 +91,13 @@ public class Connector extends AppCompatActivity implements Updatable {
         imgBtnInitConn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(updateUIForAction != null){
+                    updateUIForAction.setInactive();
+                }
+                updateUIForAction = new UpdateUIForAction();
+
+                new Handler().postDelayed(updateUIForAction, 2000);
+
                 NewConnCreationGrpCreatnLstnr listener = new NewConnCreationGrpCreatnLstnr(appManager, Connector.this);
                 appManager.createGroupAndAdvertise(listener, SharedPrefConstants.CURR_STATUS_CEATING_CONNECTION);
                 selectedAction = Action.CREATE;
@@ -103,6 +108,13 @@ public class Connector extends AppCompatActivity implements Updatable {
         imgBtnScanConn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(updateUIForAction != null){
+                    updateUIForAction.setInactive();
+                }
+                updateUIForAction = new UpdateUIForAction();
+
+                new Handler().postDelayed(updateUIForAction, 2000);
+
                 selectedAction = Action.JOIN;
                 startP2pServiceDiscovery(appManager);
                 animateViewsOnButtonClicked(v);
@@ -137,7 +149,7 @@ public class Connector extends AppCompatActivity implements Updatable {
         super.onPause();
 
         if(Action.CREATE.equals(selectedAction)) {
-            ConnCreationServerService.stop(this);
+            NewConnCreationServerService.stop(this);
         } else if(Action.JOIN.equals(selectedAction)){
             UpdateEvent closeEvent = new UpdateEvent();
             closeEvent.source = this.getClass();
@@ -145,6 +157,10 @@ public class Connector extends AppCompatActivity implements Updatable {
             for(NewConnCreationClient client : clientList){
                 client.update(closeEvent);
             }
+        }
+
+        if(updateUIForAction != null){
+            updateUIForAction.setInactive();
         }
         appManager.stopAllWifiOps();
         appManager.notificationUtil.showToggleReceivingNotification();
@@ -160,22 +176,18 @@ public class Connector extends AppCompatActivity implements Updatable {
     @Override
     public void update(UpdateEvent updateEvent) {
         if(NewConnCreationServer.class.equals(updateEvent.source)){
-            Toast.makeText(this, "Server started",Toast.LENGTH_SHORT).show();
+            if(Constants.ACCEPT_CONN.equals(updateEvent.data.get(Constants.ACTION))) {
+                appManager.showShortToast(this, "Connect now..");
+            }
         } else if(NewConnCreationClientConnector.class.equals(updateEvent.source)){
             if(Constants.ACCEPT_CONN.equals(updateEvent.data.get(Constants.ACTION))) {
                 String username = (String) updateEvent.data.get(SharedPrefConstants.USER_NAME);
-                if (usernameToConnSender.containsKey(username)) {
-                    transBgLayout.setVisibility(View.GONE);
-                    //A new connection request arrived. add it to the ui
-                    usernameToConnSender.put(username, (NewConnCreationClientConnector) updateEvent.data.get(NewConnCreationClientConnector.UPDATE_CONST_SENDER));
-                    ConnectionViewData newConn = new ConnectionViewData();
-                    newConn.profileName = username;
-                    newConn.uniqueId = (String) updateEvent.data.get(SharedPrefConstants.DEVICE_ID);
-                    connectionViewDatas.add(newConn);
-                    //update the UI
-                    connectorAdapter.setData(connectionViewDatas);
-                    availableConns.setAdapter(connectorAdapter);
-                }
+                //A new connection request arrived. add it to the ui
+                usernameToConnSender.put(username, (NewConnCreationClientConnector) updateEvent.data.get(NewConnCreationClientConnector.UPDATE_CONST_SENDER));
+                ConnectionViewData newConn = new ConnectionViewData();
+                newConn.profileName = username;
+                newConn.uniqueId = (String) updateEvent.data.get(SharedPrefConstants.DEVICE_ID);
+                updateUIForAction.addNew(newConn);
             } else if(Constants.SUCCESS.equals(updateEvent.data.get(Constants.ACTION))){
                 goHome();
             }
@@ -183,15 +195,16 @@ public class Connector extends AppCompatActivity implements Updatable {
         } else if(ConnectorAdapter.class.equals(updateEvent.source)){
             ConnectionViewData conn = (ConnectionViewData) updateEvent.data.get(ConnectorAdapter.UPDATE_CONST_SELECTED_CONN);
             if(Action.CREATE.equals(selectedAction)){
-                NewConnCreationClientConnector sender = usernameToConnSender.get(conn.profileName);
-                if(sender != null){
+                appManager.stopP2pServiceAdv();
+                NewConnCreationClientConnector clientConn = usernameToConnSender.get(conn.profileName);
+                if(clientConn != null){
                     UpdateEvent event = new UpdateEvent();
                     event.source = this.getClass();
                     event.data.put(Constants.ACTION, Constants.ACCEPT_CONN);
-                    sender.update(updateEvent);
-                    transBgLayout.setVisibility(View.VISIBLE);
+                    clientConn.update(event);
                 }
             } else if(Action.JOIN.equals(selectedAction)){
+                appManager.stopP2pServiceDiscovery();
                 Map<String, String> connData = userNameToConnectionData.get(conn.profileName);
                 if(connData != null) {
                     String SSID = connData.get(Constants.ADV_KEY_NETWORK_NAME);
@@ -202,22 +215,23 @@ public class Connector extends AppCompatActivity implements Updatable {
                         try{
                             port = Integer.valueOf(portString);
                         }catch (Exception e){
+                            e.printStackTrace();
                         }
                     }
                     NewConnCreationClient client = new NewConnCreationClient(SSID, pass, port, this, appManager);
                     clientList.add(client);
                     transBgLayout.setVisibility(View.VISIBLE);
-                    ConnCreationClientService.start(this, client);
+                    NewConnCreationClientService.start(this, client);
                 }
             }
         } else if(NewConnCreationClient.class.equals(updateEvent.source)){
             if(Constants.SUCCESS.equals(updateEvent.data.get(Constants.ACTION))){
                 goHome();
             } else if(Constants.FAILED.equals(updateEvent.data.get(Constants.ACTION))){
-                connectionViewDatas.clear();
-                connectorAdapter.setData(connectionViewDatas);
+                updateUIForAction.clear();
                 availableConns.setAdapter(connectorAdapter);
                 transBgLayout.setVisibility(View.GONE);
+                appManager.showShortToast(this, "Connection failed. Please try again..");
             }
         }
     }
@@ -234,14 +248,21 @@ public class Connector extends AppCompatActivity implements Updatable {
                 if(Constants.P2P_SERVICE_FULL_DOMAIN_NAME.equals(fullDomainName)) {
                     if(Constants.ADV_VALUE_PURPOSE_CONNECTION_CREATION.equals(txtRecordMap.get(Constants.ADV_KEY_GROUP_PURPOSE))){
                         transBgLayout.setVisibility(View.GONE);
-                        String userName = txtRecordMap.get(Constants.ADV_KEY_USERNAME);
-                        if(!userNameToConnectionData.containsKey(userName)) {
-                            userNameToConnectionData.put(userName, txtRecordMap);
-                            ConnectionViewData conn = new ConnectionViewData();
-                            conn.profileName = userName;
-                            connectionViewDatas.add(conn);
-                            connectorAdapter.setData(connectionViewDatas);
-                            availableConns.setAdapter(connectorAdapter);
+                        String newUserName = txtRecordMap.get(Constants.ADV_KEY_USERNAME);
+                        String newPort = txtRecordMap.get(Constants.ADV_KEY_SERVER_PORT);
+                        if(newUserName != null && newPort != null) {
+                            String oldPort = null;
+                            Map<String, String> existingRecord = userNameToConnectionData.get(newUserName);
+                            if (existingRecord != null) {
+                                oldPort = existingRecord.get(Constants.ADV_KEY_SERVER_PORT);
+                            }
+
+                            if (oldPort == null || !newPort.equals(oldPort)) {
+                                userNameToConnectionData.put(newUserName, txtRecordMap);
+                                ConnectionViewData newConn = new ConnectionViewData();
+                                newConn.profileName = newUserName;
+                                updateUIForAction.addNew(newConn);
+                            }
                         }
                     }
                 }
@@ -256,13 +277,13 @@ public class Connector extends AppCompatActivity implements Updatable {
 
             appManager.startP2pServiceDiscovery(txtRecordListener, serviceResponseListener);
         } else {
-            Toast.makeText(this, "Wait for current operation to finish", Toast.LENGTH_SHORT).show();
+            appManager.showShortToast(this, "Wait for current operation to finish");
         }
     }
 
     private void goHome(){
         if(Action.CREATE.equals(selectedAction)) {
-            ConnCreationServerService.stop(this);
+            NewConnCreationServerService.stop(this);
         } else if(Action.JOIN.equals(selectedAction)){
             UpdateEvent closeEvent = new UpdateEvent();
             closeEvent.source = this.getClass();
@@ -278,5 +299,79 @@ public class Connector extends AppCompatActivity implements Updatable {
 
     private enum Action{
         CREATE, JOIN
+    }
+
+    /*The server is run on a separeate thread. That thread cannot update ui. So
+    * update the ui with this runnable*/
+    private class UpdateUIForAction implements Runnable{
+        private boolean active = true;
+        private final LinkedList<ConnectionViewData> connectionViewDatas;
+        private boolean changed = false;
+
+        public UpdateUIForAction(){
+            connectionViewDatas = new LinkedList<>();
+            connectorAdapter.setData(connectionViewDatas);
+        }
+
+        public void run(){
+            if(active){
+                synchronized (connectionViewDatas) {
+                    if(changed) {
+                        transBgLayout.setVisibility(View.VISIBLE);
+
+                        connectorAdapter.setData(connectionViewDatas);
+                        availableConns.setAdapter(connectorAdapter);
+                        if (!connectionViewDatas.isEmpty()) {
+                            transBgLayout.setVisibility(View.GONE);
+                        }
+                        changed = false;
+                    }
+                    new Handler().postDelayed(this, 4000);
+                }
+            }
+        }
+
+        private void setInactive(){
+            active = false;
+
+        }
+
+        public void addNew(ConnectionViewData conn){
+            synchronized (connectionViewDatas){
+                int posToIns = getIndex(conn);
+                if((connectionViewDatas.size() - 1) == posToIns){
+                    connectionViewDatas.add(conn);
+                    changed = true;
+                } else {
+                    connectionViewDatas.remove(posToIns);
+                    connectionViewDatas.add(posToIns, conn);
+                }
+                changed = true;
+            }
+        }
+
+        public void remove(ConnectionViewData conn){
+            synchronized (connectionViewDatas){
+                connectionViewDatas.remove(conn);
+            }
+        }
+
+        public void clear(){
+            synchronized (connectionViewDatas){
+                connectionViewDatas.clear();
+            }
+        }
+
+        private int getIndex(ConnectionViewData conn){
+            int matchIndex = -1;
+            for(ConnectionViewData cvd : connectionViewDatas){
+                matchIndex++;
+
+                if(cvd.profileName.equals(conn.profileName)){
+                    break;
+                }
+            }
+            return matchIndex;
+        }
     }
 }

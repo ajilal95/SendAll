@@ -2,8 +2,8 @@ package com.aj.sendall.depndency.dagger;
 
 import com.aj.sendall.network.broadcastreceiver.FileTransferGrpCreatnLstnr;
 import com.aj.sendall.network.broadcastreceiver.WifiStatusBroadcastReceiver;
-import com.aj.sendall.network.services.ConnCreationClientService;
-import com.aj.sendall.network.services.ConnCreationServerService;
+import com.aj.sendall.network.services.NewConnCreationClientService;
+import com.aj.sendall.network.services.NewConnCreationServerService;
 import com.aj.sendall.network.services.ToggleReceiverService;
 import com.aj.sendall.ui.activity.Connector;
 import com.aj.sendall.ui.activity.Home;
@@ -30,6 +30,6 @@ public interface DComponent {
     void inject(WifiStatusBroadcastReceiver wifiStatusBroadcastReceiver);
     void inject(FileTransferGrpCreatnLstnr fileTransferGrpCreatnLstnr);
     void inject(Connector connector);
-    void inject(ConnCreationClientService clientService);
-    void inject(ConnCreationServerService serverSevice);
+    void inject(NewConnCreationClientService clientService);
+    void inject(NewConnCreationServerService serverSevice);
 }

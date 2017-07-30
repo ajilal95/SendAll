@@ -4,11 +4,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.net.wifi.WifiManager;
-import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.os.Handler;
-import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -16,7 +14,7 @@ import com.aj.sendall.db.contentprovidutil.ContentProviderUtil;
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
 import com.aj.sendall.db.util.DBUtil;
-import com.aj.sendall.network.broadcastreceiver.AbstractGroupCreationListener;
+import com.aj.sendall.network.broadcastreceiver.abstr.AbstractGroupCreationListener;
 import com.aj.sendall.network.runnable.GroupCreator;
 import com.aj.sendall.notification.util.NotificationUtil;
 
@@ -37,6 +35,8 @@ public class AppManager implements Serializable{
     private int wifiP2pState;
     public NotificationUtil notificationUtil;
     public ContentProviderUtil contentProviderUtil;
+
+    private ServiceListenerRepeater serviceListenerRepeater = null;
 
     @Inject
     public AppManager(Context context,
@@ -153,7 +153,19 @@ public class AppManager implements Serializable{
     }
 
     public void startP2pServiceDiscovery(final WifiP2pManager.DnsSdTxtRecordListener textListener, final WifiP2pManager.DnsSdServiceResponseListener serviceResponseListener){
+        startP2pServiceDiscovery(textListener, serviceResponseListener, true);
+    }
+
+    private void startP2pServiceDiscovery(final WifiP2pManager.DnsSdTxtRecordListener textListener, final WifiP2pManager.DnsSdServiceResponseListener serviceResponseListener, boolean newRequest){
         enableWifi(true);
+        if(newRequest){
+            //this is a new request to start service discovery. So stop old repeater and start new repeater
+            if(this.serviceListenerRepeater != null){
+                this.serviceListenerRepeater.setInactive();
+            }
+            this.serviceListenerRepeater = new ServiceListenerRepeater(textListener, serviceResponseListener);
+        }
+
         final Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             @Override
@@ -231,6 +243,7 @@ public class AppManager implements Serializable{
                                                 if(isWifiEnabled()) {
                                                     notificationUtil.showToggleReceivingNotification();
                                                 }
+                                                new Handler().postDelayed(AppManager.this.serviceListenerRepeater, 2000);
                                             }
 
                                             @Override
@@ -269,17 +282,16 @@ public class AppManager implements Serializable{
     }
 
     public void stopP2pServiceDiscovery(){
+        //set the old repeaters if any
+        if(this.serviceListenerRepeater != null){
+            this.serviceListenerRepeater.setInactive();
+        }
+
         wifiP2pManager.clearServiceRequests(channel, new WifiP2pManager.ActionListener() {
             Handler handler = new Handler();
             int failureCount = 0;
             @Override
             public void onSuccess() {
-                Log.d(AppManager.class.getSimpleName(), "Stopped service discovery");
-                sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
-                sharedPrefUtil.commit();
-                if(isWifiEnabled()) {
-                    notificationUtil.showToggleReceivingNotification();
-                }
             }
 
             @Override
@@ -297,17 +309,44 @@ public class AppManager implements Serializable{
                     }, 500);
                 } else {
                     Log.d(AppManager.class.getSimpleName(), "Stopped service discovery");
-                    sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
-                    sharedPrefUtil.commit();
-                    if(isWifiEnabled()) {
-                        notificationUtil.showToggleReceivingNotification();
-                    }
+                }
+            }
+        });
+    }
+
+    public void stopP2pServiceAdv(){
+        wifiP2pManager.clearLocalServices(channel, new WifiP2pManager.ActionListener() {
+            Handler handler = new Handler();
+            int failureCount = 0;
+            @Override
+            public void onSuccess() {
+            }
+
+            @Override
+            public void onFailure(int reason) {
+                Log.d(AppManager.class.getSimpleName(), "Failed stopping service discovery");
+                failureCount++;
+                if(isWifiEnabled() && WifiP2pManager.BUSY == reason && failureCount < 2) {
+                    //retry after 0.5 seconds
+                    final WifiP2pManager.ActionListener thisListener = this;
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            wifiP2pManager.clearServiceRequests(channel, thisListener);
+                        }
+                    }, 500);
+                } else {
+                    Log.d(AppManager.class.getSimpleName(), "Stopped service discovery");
                 }
             }
         });
     }
 
     public void stopAllWifiOps(){
+        //Stop the request repeater if any{
+        if(serviceListenerRepeater != null){
+            serviceListenerRepeater.setInactive();
+        }
         final Handler handler = new Handler();
         sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_STOPPING_ALL);
         sharedPrefUtil.commit();
@@ -367,5 +406,44 @@ public class AppManager implements Serializable{
                 });
             }
         }, 1000);
+    }
+
+    private class ServiceListenerRepeater implements Runnable{
+        int requestCount = 20;
+        private WifiP2pManager.DnsSdTxtRecordListener textListener;
+        private WifiP2pManager.DnsSdServiceResponseListener serviceResponseListener;
+        private boolean active = true;
+
+        public ServiceListenerRepeater(WifiP2pManager.DnsSdTxtRecordListener textListener, WifiP2pManager.DnsSdServiceResponseListener serviceResponseListener){
+            this.textListener = textListener;
+            this.serviceResponseListener = serviceResponseListener;
+        }
+
+        @Override
+        public void run() {
+            if(active) {
+                requestCount--;
+                if (requestCount > 0) {
+                    startP2pServiceDiscovery(textListener, serviceResponseListener, false);
+                } else {
+                    stopP2pServiceDiscovery();
+                }
+            }
+        }
+
+        public void setInactive(){
+            active = false;
+        }
+    }
+
+    private void showToast(Context context, String toastString, int toastDura){
+        Toast.makeText(context, toastString, toastDura).show();
+    }
+
+    public void showShortToast(Context context, String toastString){
+        if(context == null){
+            context = this.context;
+        }
+        showToast(context, toastString, Toast.LENGTH_SHORT);
     }
 }

@@ -1,4 +1,4 @@
-package com.aj.sendall.network.broadcastreceiver;
+package com.aj.sendall.network.broadcastreceiver.abstr;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

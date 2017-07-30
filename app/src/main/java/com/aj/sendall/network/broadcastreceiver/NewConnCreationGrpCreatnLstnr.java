@@ -2,7 +2,8 @@ package com.aj.sendall.network.broadcastreceiver;
 
 import android.content.Context;
 import com.aj.sendall.application.AppManager;
-import com.aj.sendall.network.services.ConnCreationServerService;
+import com.aj.sendall.network.broadcastreceiver.abstr.AbstractGroupCreationListener;
+import com.aj.sendall.network.services.NewConnCreationServerService;
 import com.aj.sendall.ui.interfaces.Updatable;
 
 import java.net.InetAddress;
@@ -21,12 +22,12 @@ public class NewConnCreationGrpCreatnLstnr extends AbstractGroupCreationListener
     protected void onGroupInfoAvailable(final Context context, final String networkName, final String passPhrase, InetAddress grpOwnerAdd) {
         String grpOwnerIp = grpOwnerAdd.getHostAddress();
         Map<String, String> recToAdv = new HashMap<>();
-        recToAdv.put(ConnCreationServerService.NET, networkName);
-        recToAdv.put(ConnCreationServerService.PASS, passPhrase);
-        recToAdv.put(ConnCreationServerService.GRP_OWN_ADD, grpOwnerIp);
+        recToAdv.put(NewConnCreationServerService.NET, networkName);
+        recToAdv.put(NewConnCreationServerService.PASS, passPhrase);
+        recToAdv.put(NewConnCreationServerService.GRP_OWN_ADD, grpOwnerIp);
 
-        ConnCreationServerService.connectorActivity = updatableActivity;
-        ConnCreationServerService.start(context, recToAdv);
+        NewConnCreationServerService.connectorActivity = updatableActivity;
+        NewConnCreationServerService.start(context, recToAdv);
     }
 }
 
