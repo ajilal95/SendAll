@@ -2,7 +2,6 @@ package com.aj.sendall.ui.fragment;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
@@ -19,10 +18,10 @@ import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.db.dto.FileInfoDTO;
 import com.aj.sendall.ui.activity.SelectReceiversActivity;
 import com.aj.sendall.ui.adapter.GalleryAdapter;
+import com.aj.sendall.ui.businessservices.FileSendingService;
 import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.ui.interfaces.ItemFilterableView;
 import com.aj.sendall.ui.interfaces.ItemSelectableView;
-import com.aj.sendall.ui.businessservices.FileSendingService;
 import com.aj.sendall.ui.utils.CommonUiUtils;
 
 import java.util.HashSet;

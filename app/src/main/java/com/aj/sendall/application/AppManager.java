@@ -2,11 +2,13 @@ package com.aj.sendall.application;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.IntentFilter;
+import android.net.wifi.ScanResult;
+import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -14,11 +16,15 @@ import com.aj.sendall.db.contentprovidutil.ContentProviderUtil;
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
 import com.aj.sendall.db.util.DBUtil;
-import com.aj.sendall.network.broadcastreceiver.abstr.AbstractGroupCreationListener;
-import com.aj.sendall.network.runnable.GroupCreator;
 import com.aj.sendall.notification.util.NotificationUtil;
 
 import java.io.Serializable;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -86,32 +92,38 @@ public class AppManager implements Serializable{
     }
 
 
-    public boolean createGroupAndAdvertise(final AbstractGroupCreationListener broadcastReceiver, int newAppStatus){
+    public boolean initConnection(int newAppStatus){
         //first of all, change the app status
         int appStatus = sharedPrefUtil.getCurrentAppStatus();
         if(appStatus == SharedPrefConstants.CURR_STATUS_IDLE) {
             sharedPrefUtil.setCurrentAppStatus(newAppStatus);
             sharedPrefUtil.commit();
-            enableWifi(true);
+            enableWifi(false);
 
-            Handler handler = new Handler();
+            WifiConfiguration wifiConfiguration = getWifiConfiguration(sharedPrefUtil.getThisDeviceId() + '_' + sharedPrefUtil.getUserName(), sharedPrefUtil.getDefaultWifiPass());
 
-            //Start the receiver to receive the group data
-            IntentFilter intentFilter = new IntentFilter();
-            intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
-            context.registerReceiver(broadcastReceiver, intentFilter);
+            WifiApControl wifiApControl = WifiApControl.getInstance(context);
+            wifiApControl.setEnabled(wifiConfiguration, true);
 
-            BroadcastReceiverAutoUnregister unregBR = new BroadcastReceiverAutoUnregister(context, broadcastReceiver, 30000);
-            broadcastReceiver.setUnregister(unregBR);
-            //Delay for the BroadcastReceiver to start
-            handler.postDelayed(new GroupCreator(this, notificationUtil, sharedPrefUtil), 2000);
-            //automatic unregister of the receiver after 30 seconds
-            handler.post(unregBR);
             return true;
         } else {
             Toast.makeText(context, "Please wait for the current operation to finish", Toast.LENGTH_SHORT).show();
             return false;
         }
+    }
+
+    @NonNull
+    public WifiConfiguration getWifiConfiguration(String ssid, String pass) {
+        WifiConfiguration wifiConfiguration = new WifiConfiguration();
+        wifiConfiguration.SSID = ssid;
+        wifiConfiguration.preSharedKey = pass;
+        wifiConfiguration.hiddenSSID = false;
+        wifiConfiguration.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+        wifiConfiguration.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+        wifiConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+        wifiConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+        wifiConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+        return wifiConfiguration;
     }
 
     public class BroadcastReceiverAutoUnregister implements Runnable{
@@ -150,6 +162,20 @@ public class AppManager implements Serializable{
                 }
             }
         }
+    }
+
+    public Map<String, String> getAllActiveSendallNets(){
+//        wifiManager.startScan();
+        Map<String, String> ssidToPass = new HashMap<>();
+        List<ScanResult> scanResults = wifiManager.getScanResults();
+        if(scanResults != null){
+            for(ScanResult scanResult : scanResults){
+                if(sharedPrefUtil.isOurNetwork(scanResult)){
+                    ssidToPass.put(scanResult.SSID, sharedPrefUtil.getDefaultWifiPass());
+                }
+            }
+        }
+        return ssidToPass;
     }
 
     public void startP2pServiceDiscovery(final WifiP2pManager.DnsSdTxtRecordListener textListener, final WifiP2pManager.DnsSdServiceResponseListener serviceResponseListener){
@@ -414,7 +440,7 @@ public class AppManager implements Serializable{
         private WifiP2pManager.DnsSdServiceResponseListener serviceResponseListener;
         private boolean active = true;
 
-        public ServiceListenerRepeater(WifiP2pManager.DnsSdTxtRecordListener textListener, WifiP2pManager.DnsSdServiceResponseListener serviceResponseListener){
+        ServiceListenerRepeater(WifiP2pManager.DnsSdTxtRecordListener textListener, WifiP2pManager.DnsSdServiceResponseListener serviceResponseListener){
             this.textListener = textListener;
             this.serviceResponseListener = serviceResponseListener;
         }
@@ -436,14 +462,70 @@ public class AppManager implements Serializable{
         }
     }
 
-    private void showToast(Context context, String toastString, int toastDura){
-        Toast.makeText(context, toastString, toastDura).show();
+    public InetAddress connectAndGetAddressOf(String SSID, String PASS) {
+        WifiConfiguration wifiConfiguration = getWifiConfiguration(SSID, PASS);
+        if (wifiConfiguration != null){
+            int res = wifiManager.addNetwork(wifiConfiguration);
+            wifiManager.disconnect();
+            wifiManager.enableNetwork(res, true);
+            wifiManager.reconnect();
+            int serverAddress = wifiManager.getDhcpInfo().serverAddress;
+            return intToInetAddress(serverAddress);
+        }
+        return null;
     }
 
-    public void showShortToast(Context context, String toastString){
-        if(context == null){
-            context = this.context;
+    private InetAddress intToInetAddress(int hostAddress) {
+        byte[] addressBytes = {(byte) (0xff & hostAddress),
+                (byte) (0xff & (hostAddress >> 8)),
+                (byte) (0xff & (hostAddress >> 16)),
+                (byte) (0xff & (hostAddress >> 24))};
+
+        try {
+            return InetAddress.getByAddress(addressBytes);
+        } catch (UnknownHostException e) {
+            return null;
         }
-        showToast(context, toastString, Toast.LENGTH_SHORT);
+    }
+
+    private WifiConfiguration getWifiConfig(String SSID, String PASS){
+        Collection<ScanResult> scanResults = wifiManager.getScanResults();
+        if(scanResults != null){
+            for(ScanResult res : scanResults){
+                if(res.SSID.equals(SSID)){
+                    return getWifiConfig(res, PASS);
+                }
+            }
+        }
+        return null;
+    }
+
+
+    private WifiConfiguration getWifiConfig(ScanResult scanRes, String PASS) {
+        WifiConfiguration conf = null;
+        try {
+
+            Log.i("rht", "Item clicked, SSID " + scanRes.SSID + " Security : " + scanRes.capabilities);
+
+            conf = new WifiConfiguration();
+            conf.SSID = "\"" + scanRes.SSID + "\"";
+            conf.status = WifiConfiguration.Status.ENABLED;
+            conf.priority = 40;
+
+            if (scanRes.capabilities.toUpperCase().contains("WEP")) {
+                conf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+                conf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
+                conf.wepKeys[0] = "\""+ PASS +"\"";
+
+            } else if (scanRes.capabilities.toUpperCase().contains("WPA")) {
+                conf.preSharedKey = "\"" + PASS + "\"";
+            } else {
+                conf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return conf;
     }
 }

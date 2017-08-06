@@ -1,8 +1,5 @@
 package com.aj.sendall.db.sharedprefs;
 
-/**
- * Created by ajilal on 18/5/17.
- */
 
 public class SharedPrefConstants {
     static final String SHARED_PREF_NAME = "com.aj.sendall.db.sharedprefs";
@@ -18,6 +15,9 @@ public class SharedPrefConstants {
 
     public static final String DEVICE_ID = "this_device_id";
     public static final String USER_NAME = "user_name";
-    static final String DEVICE_ID_PREFIX = "SENDALL";
+    public static final int USERNAME_MAX_LEN = 15;
+    static final String DEVICE_ID_PREFIX = "SNDAL";
+    static final String DEFAULT_HOTSPOT_PASS = "SENDALL123";
+    static final int DEF_SERVER_PORT = 10001;
     static final int THIS_DEVICE_ID_LENGTH = 10;
 }

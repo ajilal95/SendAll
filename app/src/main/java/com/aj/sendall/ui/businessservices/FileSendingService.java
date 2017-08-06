@@ -58,7 +58,7 @@ public final class FileSendingService {
 
     private void send(){
         FileTransferGrpCreatnLstnr fileTransferGrpCreatnLstnr = new FileTransferGrpCreatnLstnr(appManager, connectionsAndUris);
-        appManager.createGroupAndAdvertise(fileTransferGrpCreatnLstnr, SharedPrefConstants.CURR_STATUS_SENDING);
+        appManager.initConnection(SharedPrefConstants.CURR_STATUS_SENDING);
     }
 
 //    private static void addCurrentToSendQueue(){

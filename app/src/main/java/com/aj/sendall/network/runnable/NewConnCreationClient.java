@@ -1,7 +1,5 @@
 package com.aj.sendall.network.runnable;
 
-import android.net.wifi.WifiConfiguration;
-
 import com.aj.sendall.application.AppManager;
 import com.aj.sendall.db.model.Connections;
 import com.aj.sendall.network.runnable.abstr.AbstractClient;
@@ -44,13 +42,6 @@ public class NewConnCreationClient extends AbstractClient {
             }catch (Exception e){
                 e.printStackTrace();
             }
-        }
-    }
-
-    @Override
-    public void update(UpdateEvent updateEvent) {
-        if(Constants.CLOSE_SOCKET.equals(updateEvent.data.get(Constants.ACTION))){
-            closeSocket();
         }
     }
 }

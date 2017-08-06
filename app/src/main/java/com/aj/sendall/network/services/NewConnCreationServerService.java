@@ -5,8 +5,8 @@ import android.content.Intent;
 
 import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.application.AppManager;
-import com.aj.sendall.network.runnable.abstr.AbstractServer;
 import com.aj.sendall.network.runnable.NewConnCreationServer;
+import com.aj.sendall.network.runnable.abstr.AbstractServer;
 import com.aj.sendall.network.services.abstr.AbstractServerService;
 import com.aj.sendall.network.utils.Constants;
 import com.aj.sendall.ui.interfaces.Updatable;
@@ -17,16 +17,11 @@ import java.util.Map;
 import javax.inject.Inject;
 
 public class NewConnCreationServerService extends AbstractServerService {
-    public static final String NET = "net";
-    public static final String PASS = "pass";
-    public static final String GRP_OWN_ADD = "GRP_OWN_ADD";
 
     private static boolean serverRunning = false;
 
     @Inject
     public AppManager appManager;
-
-    public static Updatable connectorActivity;
 
     private static NewConnCreationServer currServer = null;
 
@@ -44,9 +39,6 @@ public class NewConnCreationServerService extends AbstractServerService {
 
     @Override
     protected Map<String, String> updateRecordToAdv(Map<String, String> mapToAdv, Intent intent){
-        mapToAdv.put(NET, intent.getStringExtra(NET));
-        mapToAdv.put(PASS, intent.getStringExtra(PASS));
-        mapToAdv.put(GRP_OWN_ADD, intent.getStringExtra(GRP_OWN_ADD));
         return mapToAdv;
     }
 
@@ -56,9 +48,10 @@ public class NewConnCreationServerService extends AbstractServerService {
     }
 
     @Override
-    protected boolean createServerToStaticVariable(ServerSocket serverSocket, AppManager appManager){
+    protected boolean createServerToStaticVariable(ServerSocket serverSocket, AppManager appManager, Updatable connectorActivity){
         if(currServer == null){
             currServer = new NewConnCreationServer(serverSocket, appManager, connectorActivity);
+            serverRunning = true;
             return true;
         } else {
             return false;
@@ -79,23 +72,6 @@ public class NewConnCreationServerService extends AbstractServerService {
     @Override
     public void afterStopped(){
         serverRunning = false;
-        connectorActivity = null;
         currServer = null;
-    }
-
-    @Override
-    protected boolean allowOperation(String action){
-        if(AbstractServerService.ACTION_START_NEW.equals(action)){
-            if(serverRunning){
-                return false;
-            } else {
-                serverRunning = true;
-                return true;
-            }
-        } else if(AbstractServerService.ACTION_STOP.equals(action)){
-            serverRunning = false;
-            return true;
-        }
-        return true;
     }
 }

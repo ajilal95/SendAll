@@ -1,7 +1,5 @@
 package com.aj.sendall.network.runnable.abstr;
 
-import android.os.Handler;
-
 import com.aj.sendall.application.AppManager;
 import com.aj.sendall.network.utils.Constants;
 import com.aj.sendall.ui.interfaces.Updatable;
@@ -42,6 +40,8 @@ abstract public class AbstractServer implements Runnable, Updatable {
         }
     }
 
+    abstract protected AbstractClientConnector getClientConnector(Socket socket, AppManager appManager, Updatable updatableActivity);
+
     abstract protected void preRun();
 
     protected void closeServer() {
@@ -57,8 +57,6 @@ abstract public class AbstractServer implements Runnable, Updatable {
         closeServer.run();
     }
 
-    abstract protected AbstractClientConnector getClientConnector(Socket socket, AppManager appManager, Updatable updatableActivity);
-
 
     private class CloseServer implements Runnable{
         public void run(){
@@ -68,6 +66,17 @@ abstract public class AbstractServer implements Runnable, Updatable {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+            }
+        }
+    }
+
+    @Override
+    public void update(UpdateEvent updateEvent) {
+        if(Constants.CLOSE_SOCKET.equals(updateEvent.data.get(Constants.ACTION))){
+            try {
+                closeServer();
+            }catch (Exception e){
+                e.printStackTrace();
             }
         }
     }

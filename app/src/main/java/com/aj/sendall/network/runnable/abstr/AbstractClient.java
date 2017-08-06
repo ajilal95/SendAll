@@ -1,7 +1,5 @@
 package com.aj.sendall.network.runnable.abstr;
 
-import android.net.wifi.WifiConfiguration;
-
 import com.aj.sendall.application.AppManager;
 import com.aj.sendall.network.utils.Constants;
 import com.aj.sendall.ui.interfaces.Updatable;
@@ -10,11 +8,9 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.net.InetAddress;
 import java.net.Socket;
 
-/**
- * Created by ajilal on 29/7/17.
- */
 
 public abstract class AbstractClient implements Runnable, Updatable {
     private int port;
@@ -36,15 +32,16 @@ public abstract class AbstractClient implements Runnable, Updatable {
 
     @Override
     public void run() {
-        if(connectToWifi()){
-            tryToOpenSocket();
+        InetAddress serverAdd = appManager.connectAndGetAddressOf(this.SSID, this.passPhrase);
+        if(serverAdd != null){
+            tryToOpenSocket(serverAdd);
             communicate();
         }
     }
 
-    private void tryToOpenSocket(){
+    private void tryToOpenSocket(InetAddress serverAdd){
         try {
-            socket = new Socket("192.168.49.1", port);
+            socket = new Socket(serverAdd, port);
             dataInputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
             dataOutputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
         } catch (Exception e){
@@ -58,11 +55,6 @@ public abstract class AbstractClient implements Runnable, Updatable {
 
     protected abstract void communicate();
 
-    protected void closeSocket(){
-        tryToCloseSocket();
-        socket = null;
-    }
-
     private void tryToCloseSocket(){
         if(socket != null){
             try {
@@ -73,15 +65,11 @@ public abstract class AbstractClient implements Runnable, Updatable {
         }
     }
 
-    private boolean connectToWifi() {
-        WifiConfiguration wifiConfiguration = new WifiConfiguration();
-        wifiConfiguration.SSID = "\"" + SSID + "\"";
-        wifiConfiguration.preSharedKey = "\"" + passPhrase + "\"";
-
-        int res = appManager.wifiManager.addNetwork(wifiConfiguration);
-
-        appManager.wifiManager.disconnect();
-        appManager.wifiManager.enableNetwork(res, true);
-        return appManager.wifiManager.reconnect();
+    @Override
+    public void update(UpdateEvent updateEvent) {
+        if(Constants.CLOSE_SOCKET.equals(updateEvent.data.get(Constants.ACTION))){
+            tryToCloseSocket();
+            socket = null;
+        }
     }
 }

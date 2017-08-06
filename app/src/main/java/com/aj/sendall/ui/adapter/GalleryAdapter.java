@@ -23,10 +23,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by ajilal on 25/4/17.
- */
-
 public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHolder>{
     private String baseUriString;
     private final int mediaType;
@@ -47,7 +43,9 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         setSortField(mediaType);
         setProjections(mediaType);
         setBaseContentUri(mediaType);
-        initAdapter();
+        allFileInfoDTOs = new ArrayList<>();
+        filteredFileInfoDTOs = new ArrayList<>();
+        //initAdapter();
     }
 
     private void setSortField(int mediaType) {
@@ -213,11 +211,11 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         return getFilteredFileInfoDTOs() != null ? getFilteredFileInfoDTOs().size() : 0;
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder{
+    class ViewHolder extends RecyclerView.ViewHolder{
         private ImageView imgVwThumbnail;
         private TextView txtVwFileName;
         private TextView txtVwFileSize;
-        public ViewHolder(View view){
+        ViewHolder(View view){
             super(view);
             imgVwThumbnail = (ImageView) view.findViewById(R.id.gallery_img_vw_thumbnail);
             txtVwFileName = (TextView) view.findViewById(R.id.gallery_txt_vw_filename);

@@ -166,7 +166,7 @@ public class Home extends AppCompatActivity {
             return galleryFragment;
         }
 
-        public void filter(String filterString, int tabPosition){
+        void filter(String filterString, int tabPosition){
             switch(tabPosition){
                 case 0 :
                     connectionsFilterString = filterString;
@@ -179,7 +179,7 @@ public class Home extends AppCompatActivity {
             }
         }
 
-        public String getFilterString(int tabPositions){
+        String getFilterString(int tabPositions){
             switch(tabPositions){
                 case 0 : return connectionsFilterString;
                 case 1 : return galleryFilterString;
