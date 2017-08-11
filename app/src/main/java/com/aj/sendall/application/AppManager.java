@@ -2,6 +2,7 @@ package com.aj.sendall.application;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.IntentFilter;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
@@ -16,7 +17,9 @@ import com.aj.sendall.db.contentprovidutil.ContentProviderUtil;
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
 import com.aj.sendall.db.util.DBUtil;
+import com.aj.sendall.network.broadcastreceiver.SendallNetWifiScanBroadcastReceiver;
 import com.aj.sendall.notification.util.NotificationUtil;
+import com.aj.sendall.ui.interfaces.Updatable;
 
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -31,6 +34,8 @@ import javax.inject.Singleton;
 
 @Singleton
 public class AppManager implements Serializable{
+    public static final String WAIT_FOR_CURRENT_OP_TOAST = "Wait for the current operation to finish";
+
     public Context context;
     public DBUtil dbUtil;
     private boolean initialised = false;
@@ -43,6 +48,8 @@ public class AppManager implements Serializable{
     public ContentProviderUtil contentProviderUtil;
 
     private ServiceListenerRepeater serviceListenerRepeater = null;
+    private SendallNetWifiScanBroadcastReceiver sendallNetWifiScanBroadcastReceiver = null;
+    private WifiApControl wifiApControl = null;
 
     @Inject
     public AppManager(Context context,
@@ -81,8 +88,15 @@ public class AppManager implements Serializable{
 
     public void enableWifi(boolean enable){
         boolean success = wifiManager.setWifiEnabled(enable);
-        if(enable && !success){
-            Toast.makeText(context, "Please turn on wifi", Toast.LENGTH_SHORT).show();
+        if(!success){
+            Toast.makeText(context, "Please turn " + (enable ? "on" : "off") +" wifi", Toast.LENGTH_SHORT).show();
+        } else {
+            //wait for the operation to take effect
+            if(enable){
+                while(!wifiManager.isWifiEnabled()){}
+            } else {
+                while(wifiManager.isWifiEnabled()){}
+            }
         }
     }
 
@@ -92,7 +106,7 @@ public class AppManager implements Serializable{
     }
 
 
-    public boolean initConnection(int newAppStatus){
+    public void initConnection(int newAppStatus){
         //first of all, change the app status
         int appStatus = sharedPrefUtil.getCurrentAppStatus();
         if(appStatus == SharedPrefConstants.CURR_STATUS_IDLE) {
@@ -100,29 +114,67 @@ public class AppManager implements Serializable{
             sharedPrefUtil.commit();
             enableWifi(false);
 
-            WifiConfiguration wifiConfiguration = getWifiConfiguration(sharedPrefUtil.getThisDeviceId() + '_' + sharedPrefUtil.getUserName(), sharedPrefUtil.getDefaultWifiPass());
+            WifiConfiguration wifiConfiguration = getWifiConfiguration(sharedPrefUtil.getThisDeviceId() + '_' + sharedPrefUtil.getUserName(), sharedPrefUtil.getDefaultWifiPass(), true);
 
-            WifiApControl wifiApControl = WifiApControl.getInstance(context);
+            stopHotspot();
+            wifiApControl = WifiApControl.getInstance(context);
             wifiApControl.setEnabled(wifiConfiguration, true);
-
-            return true;
         } else {
-            Toast.makeText(context, "Please wait for the current operation to finish", Toast.LENGTH_SHORT).show();
-            return false;
+            Toast.makeText(context, WAIT_FOR_CURRENT_OP_TOAST, Toast.LENGTH_SHORT).show();
         }
     }
 
+    public void stopHotspot(){
+        if(wifiApControl != null){
+            wifiApControl.disable();
+        }
+        wifiApControl = null;
+    }
+
+    public void startScanningWifi(Updatable updatable, int newAppStatus){
+        int appStatus = sharedPrefUtil.getCurrentAppStatus();
+        if(appStatus == SharedPrefConstants.CURR_STATUS_IDLE) {
+            sharedPrefUtil.setCurrentAppStatus(newAppStatus);
+            sharedPrefUtil.commit();
+            enableWifi(true);
+
+            stopWifiScanning();
+
+            sendallNetWifiScanBroadcastReceiver = new SendallNetWifiScanBroadcastReceiver(updatable, sharedPrefUtil);
+            IntentFilter intentFilter = new IntentFilter();
+            intentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
+            context.registerReceiver(sendallNetWifiScanBroadcastReceiver, intentFilter);
+            wifiManager.disconnect();
+            wifiManager.startScan();
+        } else {
+            Toast.makeText(context, WAIT_FOR_CURRENT_OP_TOAST, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void stopWifiScanning(){
+        if(sendallNetWifiScanBroadcastReceiver != null){
+            context.unregisterReceiver(sendallNetWifiScanBroadcastReceiver);
+        }
+        sendallNetWifiScanBroadcastReceiver = null;
+    }
+
+    public void stopHotspotAndScanning(){
+        stopWifiScanning();
+        stopHotspot();
+        enableWifi(false);
+
+        sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
+        sharedPrefUtil.commit();
+    }
+
     @NonNull
-    public WifiConfiguration getWifiConfiguration(String ssid, String pass) {
+    public WifiConfiguration getWifiConfiguration(String ssid, String pass, boolean create) {
         WifiConfiguration wifiConfiguration = new WifiConfiguration();
+        if(!create){
+            ssid = "\"" + ssid + "\"";
+        }
         wifiConfiguration.SSID = ssid;
-        wifiConfiguration.preSharedKey = pass;
-        wifiConfiguration.hiddenSSID = false;
-        wifiConfiguration.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-        wifiConfiguration.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
-        wifiConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
-        wifiConfiguration.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-        wifiConfiguration.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+        wifiConfiguration.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
         return wifiConfiguration;
     }
 
@@ -463,10 +515,15 @@ public class AppManager implements Serializable{
     }
 
     public InetAddress connectAndGetAddressOf(String SSID, String PASS) {
-        WifiConfiguration wifiConfiguration = getWifiConfiguration(SSID, PASS);
+        WifiConfiguration wifiConfiguration = getWifiConfiguration(SSID, PASS, false);
         if (wifiConfiguration != null){
             int res = wifiManager.addNetwork(wifiConfiguration);
             wifiManager.disconnect();
+            try {
+                Thread.sleep(3 * 1000);
+            } catch(Exception e){
+                e.printStackTrace();
+            }
             wifiManager.enableNetwork(res, true);
             wifiManager.reconnect();
             int serverAddress = wifiManager.getDhcpInfo().serverAddress;

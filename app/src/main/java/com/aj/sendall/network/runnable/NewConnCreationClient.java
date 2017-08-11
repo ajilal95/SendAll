@@ -35,11 +35,20 @@ public class NewConnCreationClient extends AbstractClient {
 
                 appManager.dbUtil.saveConnection(conn);
 
+                dataOutputStream.writeBoolean(true);//success
+                dataOutputStream.flush();
+
                 UpdateEvent event = new UpdateEvent();
                 event.source = this.getClass();
                 event.data.put(Constants.ACTION, Constants.SUCCESS);
                 updatableActivity.update(event);
             }catch (Exception e){
+                try {
+                    dataOutputStream.writeBoolean(false);//failure
+                    dataOutputStream.flush();
+                } catch(Exception ex){
+                    ex.printStackTrace();
+                }
                 e.printStackTrace();
             }
         }

@@ -54,15 +54,21 @@ public class NewConnCreationClientConnector extends AbstractClientConnector {
             dataOutputStream.writeUTF(thidDeviceId);
             dataOutputStream.flush();
 
-            Connections connection = new Connections();
-            connection.setConnectionName(otherUserName);
-            connection.setSSID(otherDeviceId);
-            connection.setLastContaced(new Date());
-            appManager.dbUtil.saveConnection(connection);
-
             UpdateEvent event = new UpdateEvent();
             event.source = this.getClass();
-            event.data.put(Constants.ACTION, Constants.SUCCESS);
+
+            boolean success = dataInputStream.readBoolean();
+            if(success) {
+                Connections connection = new Connections();
+                connection.setConnectionName(otherUserName);
+                connection.setSSID(otherDeviceId);
+                connection.setLastContaced(new Date());
+                appManager.dbUtil.saveConnection(connection);
+                event.data.put(Constants.ACTION, Constants.SUCCESS);
+            } else {
+                event.data.put(Constants.ACTION, Constants.FAILED);
+            }
+
             event.data.put(SharedPrefConstants.USER_NAME, otherUserName);
             updatableActivity.update(event);
         } catch (Exception e){

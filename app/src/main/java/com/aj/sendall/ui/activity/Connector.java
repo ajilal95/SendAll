@@ -1,5 +1,6 @@
 package com.aj.sendall.ui.activity;
 
+import android.net.wifi.ScanResult;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
@@ -16,6 +17,7 @@ import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.application.AppManager;
 import com.aj.sendall.db.dto.ConnectionViewData;
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
+import com.aj.sendall.network.broadcastreceiver.SendallNetWifiScanBroadcastReceiver;
 import com.aj.sendall.network.runnable.NewConnCreationClient;
 import com.aj.sendall.network.runnable.NewConnCreationClientConnector;
 import com.aj.sendall.network.runnable.NewConnCreationServer;
@@ -45,7 +47,7 @@ public class Connector extends AppCompatActivity implements Updatable {
     private List<NewConnCreationClient> clientList;
     private Action selectedAction;
     private UpdateUI updateUI;
-    private WifiScannerRunnable wifiScannerRunnable;
+//    private WifiScannerRunnable wifiScannerRunnable;
     @Inject
     AppManager appManager;
 
@@ -114,14 +116,15 @@ public class Connector extends AppCompatActivity implements Updatable {
 
                 new Handler().postDelayed(updateUI, 2000);
 
-                if(wifiScannerRunnable != null){
+                appManager.startScanningWifi(Connector.this, SharedPrefConstants.CURR_STATUS_RECEIVABLE);
+                /*if(wifiScannerRunnable != null){
                     wifiScannerRunnable.setInactive();
                 }
 
                 wifiScannerRunnable = new WifiScannerRunnable();
 
                 new Handler().post(wifiScannerRunnable);
-
+*/
                 selectedAction = Action.JOIN;
 //                startP2pServiceDiscovery(appManager);
                 animateViewsOnButtonClicked(v);
@@ -165,11 +168,12 @@ public class Connector extends AppCompatActivity implements Updatable {
             updateUI.setInactive();
         }
 
-        if(wifiScannerRunnable != null){
+        /*if(wifiScannerRunnable != null){
             wifiScannerRunnable.setInactive();
-        }
+        }*/
 
-        appManager.stopAllWifiOps();
+//        appManager.stopAllWifiOps();
+        appManager.stopHotspotAndScanning();
         appManager.notificationUtil.showToggleReceivingNotification();
         finish();
     }
@@ -199,7 +203,8 @@ public class Connector extends AppCompatActivity implements Updatable {
         } else if(ConnectorAdapter.class.equals(updateEvent.source)){
             ConnectionViewData conn = (ConnectionViewData) updateEvent.data.get(ConnectorAdapter.UPDATE_CONST_SELECTED_CONN);
             if(Action.CREATE.equals(selectedAction)){
-                appManager.stopP2pServiceAdv();
+//                appManager.stopP2pServiceAdv();
+                appManager.stopHotspot();
                 NewConnCreationClientConnector clientConn = usernameToConnSender.get(conn.profileName);
                 if(clientConn != null){
                     UpdateEvent event = new UpdateEvent();
@@ -221,6 +226,7 @@ public class Connector extends AppCompatActivity implements Updatable {
                             e.printStackTrace();
                         }
                     }*/
+                appManager.stopWifiScanning();
                 String SSID = conn.uniqueId;
                 String pass = appManager.sharedPrefUtil.getDefaultWifiPass();
                 int port = appManager.sharedPrefUtil.getDefServerPort();
@@ -235,6 +241,13 @@ public class Connector extends AppCompatActivity implements Updatable {
                 goHome();
             } else if(Constants.FAILED.equals(updateEvent.data.get(Constants.ACTION))){
                 Log.i(this.getClass().getSimpleName(), "Socket connection failed");
+            }
+        } else if(SendallNetWifiScanBroadcastReceiver.class.equals(updateEvent.source)){
+            List<ScanResult> scanResults = (List<ScanResult>) updateEvent.data.get(SendallNetWifiScanBroadcastReceiver.UPDATE_EXTRA_RESULT);
+            if(scanResults != null){
+                for(ScanResult scanResult : scanResults){
+                    updateUI.addNew(scanResult.SSID);
+                }
             }
         }
     }
@@ -304,7 +317,7 @@ public class Connector extends AppCompatActivity implements Updatable {
 
                 int posToIns = getIndex(SSID);
 
-                if((connectionViewDatas.size() - 1) == posToIns){
+                if(posToIns == -1){
                     connectionViewDatas.add(conn);
                 } else {
                     connectionViewDatas.remove(posToIns);
@@ -322,7 +335,7 @@ public class Connector extends AppCompatActivity implements Updatable {
 
                 int posToIns = getIndex(SSID);
 
-                if((connectionViewDatas.size() - 1) == posToIns){
+                if(posToIns == -1){
                     connectionViewDatas.add(conn);
                 } else {
                     connectionViewDatas.remove(posToIns);
@@ -349,18 +362,24 @@ public class Connector extends AppCompatActivity implements Updatable {
 
         private int getIndex(String ssid){
             int matchIndex = -1;
+            boolean itemExists = false;
             for(ConnectionViewData cvd : connectionViewDatas){
                 matchIndex++;
 
                 if(cvd.uniqueId.equals(ssid)){
+                    itemExists = true;
                     break;
                 }
             }
-            return matchIndex;
+            if(itemExists){
+                return matchIndex;
+            } else {
+                return -1;
+            }
         }
     }
 
-    class WifiScannerRunnable implements Runnable {
+    /*class WifiScannerRunnable implements Runnable {
         Map<String, String> currentSsidToPass = new HashMap<>();
         private final Object syncObj = new Object();
         private boolean active = true;
@@ -399,7 +418,7 @@ public class Connector extends AppCompatActivity implements Updatable {
                 active = false;
             }
         }
-    };
+    };*/
 
 
 }

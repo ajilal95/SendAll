@@ -57,7 +57,8 @@ public class WifiStatusBroadcastReceiver extends BroadcastReceiver {
                 if (currentAppStatus == SharedPrefConstants.CURR_STATUS_SENDING
                         || currentAppStatus == SharedPrefConstants.CURR_STATUS_RECEIVABLE
                         || currentAppStatus == SharedPrefConstants.CURR_STATUS_CEATING_CONNECTION) {
-                    appManager.stopAllWifiOps();
+//                    appManager.stopAllWifiOps();
+                    appManager.stopHotspotAndScanning();
                 }
             }
         } else {

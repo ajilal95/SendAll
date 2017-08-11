@@ -15,9 +15,9 @@ public class SharedPrefConstants {
 
     public static final String DEVICE_ID = "this_device_id";
     public static final String USER_NAME = "user_name";
-    public static final int USERNAME_MAX_LEN = 15;
+    public static final int USERNAME_MAX_LEN = 14;
     static final String DEVICE_ID_PREFIX = "SNDAL";
     static final String DEFAULT_HOTSPOT_PASS = "SENDALL123";
     static final int DEF_SERVER_PORT = 10001;
-    static final int THIS_DEVICE_ID_LENGTH = 10;
+    static final int THIS_DEVICE_ID_LENGTH = 9;
 }
