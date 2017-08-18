@@ -45,6 +45,7 @@ public class AppManager implements Serializable{
     private SendallNetWifiScanBroadcastReceiver sendallNetWifiScanBroadcastReceiver = null;
     private WifiApControl wifiApControl = null;
     private WifiManager.WifiLock wifiLock = null;
+    private WifiConfiguration currentSystemWifiConfig = null;
 
     @Inject
     public AppManager(Context context,
@@ -129,9 +130,10 @@ public class AppManager implements Serializable{
             sharedPrefUtil.commit();
             enableWifi(false);
 
+            stopHotspot();
+
             WifiConfiguration wifiConfiguration = getWifiConfiguration(sharedPrefUtil.getThisDeviceId() + '_' + sharedPrefUtil.getUserName(), sharedPrefUtil.getDefaultWifiPass(), true);
 
-            stopHotspot();
             wifiApControl = WifiApControl.getInstance(context);
             if(wifiApControl != null) {
                 wifiApControl.setEnabled(wifiConfiguration, true);
@@ -143,8 +145,14 @@ public class AppManager implements Serializable{
 
     private void stopHotspot(){
         if(wifiApControl != null){
+            //Restoring wifi ap configuration of the system
+            wifiApControl.disable();
+            if(currentSystemWifiConfig != null){
+                wifiApControl.setWifiApEnabled(currentSystemWifiConfig, true);
+            }
             wifiApControl.disable();
         }
+        currentSystemWifiConfig = null;
         wifiApControl = null;
     }
 
@@ -187,6 +195,13 @@ public class AppManager implements Serializable{
 
     @NonNull
     private WifiConfiguration getWifiConfiguration(String ssid, String pass, boolean create) {
+        if(wifiApControl == null){
+            wifiApControl = WifiApControl.getInstance(context);
+        }
+        if(wifiApControl != null) {
+            //For restoring the configuration on exit
+            currentSystemWifiConfig = wifiApControl.getConfiguration();
+        }
         WifiConfiguration wifiConfiguration = new WifiConfiguration();
         if(!create){
             ssid = "\"" + ssid + "\"";
