@@ -40,7 +40,12 @@ public class NewConnCreationClientConnector extends AbstractClientConnector {
 
     public void update(Updatable.UpdateEvent updateEvent) {
         if(Constants.ACCEPT_CONN.equals(updateEvent.data.get(Constants.ACTION))){
-            acceptConnComm();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    acceptConnComm();
+                }
+            }).start();
         } else if(Constants.CLOSE_SOCKET.equals(updateEvent.data.get(Constants.ACTION))){
             closeSocket();
         }
@@ -57,8 +62,10 @@ public class NewConnCreationClientConnector extends AbstractClientConnector {
             UpdateEvent event = new UpdateEvent();
             event.source = this.getClass();
 
-            boolean success = dataInputStream.readBoolean();
-            if(success) {
+            String response = dataInputStream.readUTF();
+            if(Constants.SUCCESS.equals(response)) {
+                dataOutputStream.writeUTF(Constants.SUCCESS);
+                dataOutputStream.flush();
                 Connections connection = new Connections();
                 connection.setConnectionName(otherUserName);
                 connection.setSSID(otherDeviceId);
@@ -66,6 +73,8 @@ public class NewConnCreationClientConnector extends AbstractClientConnector {
                 appManager.dbUtil.saveConnection(connection);
                 event.data.put(Constants.ACTION, Constants.SUCCESS);
             } else {
+                dataOutputStream.writeUTF(Constants.FAILED);
+                dataOutputStream.flush();
                 event.data.put(Constants.ACTION, Constants.FAILED);
             }
 

@@ -17,22 +17,18 @@ public class NewConnCreationServer extends AbstractServer {
 
     @Override
     public void preRun() {
-        //Auto close the socket after 45 seconds
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(45000L);
-                    NewConnCreationServer.super.closeServer();
-                } catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
-        });
         UpdateEvent event = new UpdateEvent();
         event.source = this.getClass();
         event.data.put(Constants.ACTION, Constants.ACCEPT_CONN);
         updatableActivity.update(event);
+    }
+
+    protected void configureSocket(Socket socket){
+        /*try{
+            socket.setSoTimeout(60000);
+        } catch (Exception e){
+            e.printStackTrace();
+        }*/
     }
 
     @Override

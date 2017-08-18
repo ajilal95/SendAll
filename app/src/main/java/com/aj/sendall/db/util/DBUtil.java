@@ -16,32 +16,29 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-/**
- * Created by ajilal on 9/5/17.
- */
-
 @Singleton
 public class DBUtil {
-    private String DB_NAME = "sendall.db";
     private DaoSession daoSession = null;
     private Context context;
 
     @Inject
-    public DBUtil(Context context){
+    DBUtil(Context context){
         this.context = context;
         createDaoSession();
     }
 
     private void createDaoSession(){
+        String DB_NAME = "sendall.db";
         DaoMaster.DevOpenHelper helper = new DaoMaster.DevOpenHelper(context, DB_NAME, null);
         Database db = helper.getWritableDb();
         DaoMaster daoMaster = new DaoMaster(db);
         daoSession = daoMaster.newSession();
     }
 
+    @SuppressWarnings({"unchecked"})
     public List<ConnectionViewData> getAllConnectionViewData(){
         List<Connections> connections =  daoSession.getConnectionsDao().queryBuilder().orderDesc(ConnectionsDao.Properties.LastContaced).list();
-        return new OnDemandConverterList<Connections, ConnectionViewData>(connections, new OnDemandConverterList.EntityConverter<Connections, ConnectionViewData>() {
+        return new OnDemandConverterList<>(connections, new OnDemandConverterList.EntityConverter<Connections, ConnectionViewData>() {
             @Override
             public ConnectionViewData convert(Connections fromEntity) {
                 ConnectionViewData cvd = null;
@@ -57,15 +54,26 @@ public class DBUtil {
         });
     }
 
-    public boolean isConnectedSendAllDevice(String deviceName){
+    /*public boolean isConnectedSendAllDevice(String deviceName){
         ConnectionsDao connectionsDao = daoSession.getConnectionsDao();
         List<Connections> matchedConnection = connectionsDao.queryBuilder()
                 .where(ConnectionsDao.Properties.SSID.eq(deviceName))
                 .list();
         return (matchedConnection != null && !matchedConnection.isEmpty());
-    }
+    }*/
 
     public void saveConnection(Connections conn){
-        daoSession.getConnectionsDao().save(conn);
+        ConnectionsDao connectionsDao = daoSession.getConnectionsDao();
+        List<Connections> matchedConnection = connectionsDao.queryBuilder()
+                .where(ConnectionsDao.Properties.SSID.eq(conn.getSSID()))
+                .list();
+        if(matchedConnection != null && !matchedConnection.isEmpty()){
+            for(Connections connections : matchedConnection){
+                connections.setConnectionName(conn.getConnectionName());
+            }
+            connectionsDao.updateInTx(matchedConnection);
+        } else {
+            daoSession.getConnectionsDao().save(conn);
+        }
     }
 }

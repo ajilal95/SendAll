@@ -15,7 +15,7 @@ abstract public class AbstractServer implements Runnable, Updatable {
     private final ServerSocket serverSocket;
     protected AppManager appManager;
     protected Updatable updatableActivity;
-    protected CloseServer closeServer = new CloseServer();
+    private CloseServer closeServer = new CloseServer();
 
     protected AbstractServer(ServerSocket serverSocket, AppManager appManager, Updatable updatableActivity){
         this.serverSocket = serverSocket;
@@ -26,10 +26,11 @@ abstract public class AbstractServer implements Runnable, Updatable {
     @Override
     public void run() {
         if(serverSocket != null) {
+            preRun();
             while (!serverSocket.isClosed()) {
                 try {
-                    preRun();
                     Socket socket = serverSocket.accept();
+                    configureSocket(socket);
                     AbstractClientConnector clientConnector = getClientConnector(socket, appManager, updatableActivity);
                     clientConnectors.add(clientConnector);
                     new Thread(clientConnector).start();
@@ -40,11 +41,12 @@ abstract public class AbstractServer implements Runnable, Updatable {
         }
     }
 
+    abstract protected void configureSocket(Socket socket);
     abstract protected AbstractClientConnector getClientConnector(Socket socket, AppManager appManager, Updatable updatableActivity);
 
     abstract protected void preRun();
 
-    protected void closeServer() {
+    private void closeServer() {
         UpdateEvent updateEvent = new UpdateEvent();
         updateEvent.source = this.getClass();
         updateEvent.data.put(Constants.ACTION, Constants.CLOSE_SOCKET);

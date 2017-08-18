@@ -39,9 +39,12 @@ public abstract class AbstractClient implements Runnable, Updatable {
         }
     }
 
+    abstract protected void configureSocket(Socket socket);
+
     private void tryToOpenSocket(InetAddress serverAdd){
         try {
             socket = new Socket(serverAdd, port);
+            configureSocket(socket);
             dataInputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
             dataOutputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
         } catch (Exception e){
