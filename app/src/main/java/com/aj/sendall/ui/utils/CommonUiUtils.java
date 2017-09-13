@@ -5,6 +5,7 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.graphics.Point;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.view.Display;
 import android.view.View;
 import android.widget.ImageView;
@@ -105,6 +106,19 @@ public class CommonUiUtils {
                         .override(overrideWidth, overrideHeight)
                         .into(imgVw);
                 break;
+        }
+    }
+
+    public static int getLocalMediaType(int uriMediaType) {
+        switch(uriMediaType){
+            case MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO:
+                return MediaConsts.TYPE_VIDEO;
+            case MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE:
+                return MediaConsts.TYPE_IMAGE;
+            case MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO:
+                return MediaConsts.TYPE_AUDIO;
+            default:
+                return MediaConsts.TYPE_OTHER;
         }
     }
 

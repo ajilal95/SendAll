@@ -1,4 +1,4 @@
-package com.aj.sendall.ui.businessservices;
+package com.aj.sendall.ui.utils;
 
 import android.content.Context;
 
@@ -16,11 +16,11 @@ import javax.inject.Singleton;
  */
 
 @Singleton
-public final class ConnectionsActivityService {
+public final class ConnectionsActivityUtil {
     private DBUtil dbUtil;
 
     @Inject
-    public ConnectionsActivityService(DBUtil dbUtil){
+    public ConnectionsActivityUtil(DBUtil dbUtil){
         this.dbUtil = dbUtil;
     }
 

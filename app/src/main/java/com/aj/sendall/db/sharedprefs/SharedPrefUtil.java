@@ -5,8 +5,6 @@ import android.content.SharedPreferences;
 import android.net.wifi.ScanResult;
 import android.widget.Toast;
 
-import java.util.Random;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -22,8 +20,7 @@ public class SharedPrefUtil {
     }
 
     private SharedPreferences getSharedPrefs(){
-        SharedPreferences sharedPreferences = context.getSharedPreferences(SharedPrefConstants.SHARED_PREF_NAME, Context.MODE_PRIVATE);
-        return sharedPreferences;
+        return context.getSharedPreferences(SharedPrefConstants.SHARED_PREF_NAME, Context.MODE_PRIVATE);
     }
 
     private SharedPreferences.Editor getEditor(){
@@ -93,7 +90,7 @@ public class SharedPrefUtil {
     }
 
     private String createIdForThisDevice(){
-        //creating a random string
+        /*//creating a random string
         char[] candidate =  new char[]{ 'A', 'B', 'C', 'D', 'E', 'F', 'G',
                                         'H', 'I', 'J', 'K', 'L', 'M', 'N',
                                         'O', 'P', 'Q', 'R', 'S', 'T', 'U',
@@ -104,11 +101,41 @@ public class SharedPrefUtil {
         Random random = new Random();
         for(int i = 0; i < SharedPrefConstants.THIS_DEVICE_ID_LENGTH; i++){
             idRandomize.append(candidate[random.nextInt(36)]);
-        }
-        String thisDeviceId = SharedPrefConstants.DEVICE_ID_PREFIX + idRandomize.toString();
+        }*/
+        /*String thisDeviceId = SharedPrefConstants.DEVICE_ID_PREFIX + idRandomize.toString();*/
+        String thisDeviceId = SharedPrefConstants.DEVICE_ID_PREFIX
+                + getStringForLong(System.currentTimeMillis(), SharedPrefConstants.THIS_DEVICE_ID_LENGTH);
         getEditor().putString(SharedPrefConstants.DEVICE_ID, thisDeviceId);
         commit();
         return thisDeviceId;
+    }
+
+    private String getStringForLong(long num, int strLen){
+        if(strLen != 10){
+            throw new IllegalStateException("Unique id length must be 10");
+        }
+        //to mask last 6 bits of num,since we choose character from a set of 64 characters
+        long maskbits = 0x3F;
+
+        //64 characters.
+        char[] candidate =  new char[]{ 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+                                        'H', 'I', 'J', 'K', 'L', 'M', 'N',
+                                        'O', 'P', 'Q', 'R', 'S', 'T', 'U',
+                                        'V', 'W', 'X', 'Y', 'Z',
+                                        'a', 'b', 'c', 'd', 'e', 'f', 'g',
+                                        'h', 'i', 'j', 'k', 'l', 'm', 'n',
+                                        'o', 'p', 'q', 'r', 's', 't', 'u',
+                                        'v', 'w', 'x', 'y', 'z',
+                                        '0', '1', '2', '3', '4', '5', '6',
+                                        '7', '8', '9', '$', '#' };
+        StringBuilder stringBuilder = new StringBuilder();
+        for(int i = 0; i < strLen; i++){
+            int nextIndex = (int) (num & maskbits);
+            char character = candidate[nextIndex];
+            stringBuilder.append(character);
+            num = num >> 4;
+        }
+        return stringBuilder.reverse().toString();
     }
 
     public String getDefaultWifiPass(){

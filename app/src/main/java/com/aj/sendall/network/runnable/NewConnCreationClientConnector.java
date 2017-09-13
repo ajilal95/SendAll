@@ -21,7 +21,7 @@ public class NewConnCreationClientConnector extends AbstractClientConnector {
     }
 
     @Override
-    public void postRun() {
+    public void postStreamSetup() {
         try {
             otherUserName = dataInputStream.readUTF();
             otherDeviceId = dataInputStream.readUTF();
@@ -38,7 +38,8 @@ public class NewConnCreationClientConnector extends AbstractClientConnector {
         }
     }
 
-    public void update(Updatable.UpdateEvent updateEvent) {
+    @Override
+    public void onUpdate(Updatable.UpdateEvent updateEvent) {
         if(Constants.ACCEPT_CONN.equals(updateEvent.data.get(Constants.ACTION))){
             new Thread(new Runnable() {
                 @Override
@@ -46,17 +47,15 @@ public class NewConnCreationClientConnector extends AbstractClientConnector {
                     acceptConnComm();
                 }
             }).start();
-        } else if(Constants.CLOSE_SOCKET.equals(updateEvent.data.get(Constants.ACTION))){
-            closeSocket();
         }
     }
 
-    protected void acceptConnComm() {
+    private void acceptConnComm() {
         String thisUserName = appManager.sharedPrefUtil.getUserName();
-        String thidDeviceId = appManager.sharedPrefUtil.getThisDeviceId();
+        String thisDeviceId = appManager.sharedPrefUtil.getThisDeviceId();
         try {
             dataOutputStream.writeUTF(thisUserName);
-            dataOutputStream.writeUTF(thidDeviceId);
+            dataOutputStream.writeUTF(thisDeviceId);
             dataOutputStream.flush();
 
             UpdateEvent event = new UpdateEvent();
@@ -70,7 +69,7 @@ public class NewConnCreationClientConnector extends AbstractClientConnector {
                 connection.setConnectionName(otherUserName);
                 connection.setSSID(otherDeviceId);
                 connection.setLastContaced(new Date());
-                appManager.dbUtil.saveConnection(connection);
+                appManager.dbUtil.saveOrUpdate(connection);
                 event.data.put(Constants.ACTION, Constants.SUCCESS);
             } else {
                 dataOutputStream.writeUTF(Constants.FAILED);

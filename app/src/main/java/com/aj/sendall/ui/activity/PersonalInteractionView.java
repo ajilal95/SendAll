@@ -12,14 +12,14 @@ import android.view.View;
 import com.aj.sendall.R;
 import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.ui.adapter.PersonalInteractionsAdapter;
-import com.aj.sendall.ui.businessservices.PersonalInteractionsService;
+import com.aj.sendall.ui.utils.PersonalInteractionsUtil;
 import com.aj.sendall.ui.interfaces.ItemSelectableView;
 
 import javax.inject.Inject;
 
 public class PersonalInteractionView extends AppCompatActivity implements ItemSelectableView{
     @Inject
-    public PersonalInteractionsService personalInteractionsService;
+    public PersonalInteractionsUtil personalInteractionsUtil;
     private FloatingActionButton fltActionButtonSend;
     private RecyclerView recyclrVwPersInteractions;
 
@@ -65,7 +65,7 @@ public class PersonalInteractionView extends AppCompatActivity implements ItemSe
     private void initPersonalInteractionView() {
         LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, true);
         recyclrVwPersInteractions.setLayoutManager(layoutManager);
-        PersonalInteractionsAdapter personalInteractionsAdapter = new PersonalInteractionsAdapter(0, this, this, personalInteractionsService);
+        PersonalInteractionsAdapter personalInteractionsAdapter = new PersonalInteractionsAdapter(0, this, this, personalInteractionsUtil);
         recyclrVwPersInteractions.setAdapter(personalInteractionsAdapter);
     }
 

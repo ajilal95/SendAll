@@ -24,6 +24,8 @@ public abstract class AbstractServerService extends IntentService {
     private AppManager appManager;
     private static Updatable activityToUpdate;
 
+    private int port;
+
     public AbstractServerService(String serviceName) {
         super(serviceName);
     }
@@ -43,7 +45,9 @@ public abstract class AbstractServerService extends IntentService {
                     if(!serverRunning) {
                         serverRunning = true;
                         try {
-                            ServerSocket serverSocket = new ServerSocket(appManager.sharedPrefUtil.getDefServerPort());
+                            createHotspot(appManager, port);
+                            ServerSocket serverSocket = new ServerSocket(0);
+                            port = serverSocket.getLocalPort();
                             createServerToStaticVariable(serverSocket, appManager, activityToUpdate);
                             activityToUpdate = null;
                             startServerAction();
@@ -53,6 +57,7 @@ public abstract class AbstractServerService extends IntentService {
                         }
                     }
                 } else if (ACTION_STOP.equals(action)) {
+                    activityToUpdate = null;
                     stopCurrentServer();
                     afterStopped();
                 }
@@ -64,7 +69,9 @@ public abstract class AbstractServerService extends IntentService {
     abstract protected boolean createServerToStaticVariable(ServerSocket serverSocket, AppManager appManager, Updatable updatableActivity);
     abstract protected AbstractServer getServerFromAStaticVariable();
     abstract protected void setServerFromStaticVariableToNull();
-    abstract public void afterStopped();
+    abstract protected void afterStopped();
+    abstract protected void createHotspot(AppManager appManager, int port);
+    abstract protected void shutdownHotspot(AppManager appManager);
 
     private void startServerAction(){
         try{
@@ -84,6 +91,7 @@ public abstract class AbstractServerService extends IntentService {
     }
 
     private void stopCurrentServer() {
+        shutdownHotspot(appManager);
         if(getServerFromAStaticVariable() != null){
             Updatable.UpdateEvent event = new Updatable.UpdateEvent();
             event.source = NewConnCreationServerService.class;

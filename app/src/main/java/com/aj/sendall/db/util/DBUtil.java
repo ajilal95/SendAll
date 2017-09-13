@@ -6,11 +6,15 @@ import com.aj.sendall.db.converters.OnDemandConverterList;
 import com.aj.sendall.db.dao.ConnectionsDao;
 import com.aj.sendall.db.dao.DaoMaster;
 import com.aj.sendall.db.dao.DaoSession;
+import com.aj.sendall.db.dao.PersonalInteractionDao;
 import com.aj.sendall.db.dto.ConnectionViewData;
 import com.aj.sendall.db.model.Connections;
+import com.aj.sendall.db.model.PersonalInteraction;
 
 import org.greenrobot.greendao.database.Database;
+import org.greenrobot.greendao.query.WhereCondition;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -54,15 +58,7 @@ public class DBUtil {
         });
     }
 
-    /*public boolean isConnectedSendAllDevice(String deviceName){
-        ConnectionsDao connectionsDao = daoSession.getConnectionsDao();
-        List<Connections> matchedConnection = connectionsDao.queryBuilder()
-                .where(ConnectionsDao.Properties.SSID.eq(deviceName))
-                .list();
-        return (matchedConnection != null && !matchedConnection.isEmpty());
-    }*/
-
-    public void saveConnection(Connections conn){
+    public void saveOrUpdate(Connections conn){
         ConnectionsDao connectionsDao = daoSession.getConnectionsDao();
         List<Connections> matchedConnection = connectionsDao.queryBuilder()
                 .where(ConnectionsDao.Properties.SSID.eq(conn.getSSID()))
@@ -70,10 +66,61 @@ public class DBUtil {
         if(matchedConnection != null && !matchedConnection.isEmpty()){
             for(Connections connections : matchedConnection){
                 connections.setConnectionName(conn.getConnectionName());
+                connections.setLastContaced(conn.getLastContaced());
             }
             connectionsDao.updateInTx(matchedConnection);
         } else {
             daoSession.getConnectionsDao().save(conn);
+        }
+    }
+
+    public void saveOrUpdate(PersonalInteraction pi){
+        PersonalInteractionDao personalInteractionDao = daoSession.getPersonalInteractionDao();
+        List<PersonalInteraction> matchingPIs = personalInteractionDao.queryBuilder()
+                .where(PersonalInteractionDao.Properties.FilePath.eq(pi.getFilePath()),
+                        PersonalInteractionDao.Properties.ConnectionId.eq(pi.getConnectionId()),
+                        PersonalInteractionDao.Properties.MediaType.eq(pi.getMediaType()))
+                .list();
+        if(matchingPIs == null || matchingPIs.isEmpty()){
+            personalInteractionDao.save(pi);
+        } else {
+            for(PersonalInteraction mpi : matchingPIs){
+                mpi.setModifiedTime(pi.getModifiedTime());
+                mpi.setFileUri(pi.getFileUri());
+                mpi.setBytesTransfered(pi.getBytesTransfered());
+                mpi.setFileSize(pi.getFileSize());
+                mpi.setFileStatus(pi.getFileStatus());
+            }
+
+            personalInteractionDao.updateInTx(matchingPIs);
+        }
+    }
+
+    public PersonalInteraction getPersonalInteraction(long connId, String filePath, int mediaType){
+        PersonalInteractionDao personalInteractionDao = daoSession.getPersonalInteractionDao();
+        List<PersonalInteraction> matchingPIs = personalInteractionDao.queryBuilder()
+                .where(PersonalInteractionDao.Properties.FilePath.eq(filePath),
+                        PersonalInteractionDao.Properties.ConnectionId.eq(connId),
+                        PersonalInteractionDao.Properties.MediaType.eq(mediaType))
+                .list();
+        if(matchingPIs == null || matchingPIs.isEmpty()){
+            return null;
+        } else {
+            return matchingPIs.get(0);
+        }
+    }
+
+    public void save(PersonalInteraction pi){
+        PersonalInteractionDao personalInteractionDao = daoSession.getPersonalInteractionDao();
+        if(pi != null){
+            personalInteractionDao.save(pi);
+        }
+    }
+
+    public void update(PersonalInteraction pi){
+        PersonalInteractionDao personalInteractionDao = daoSession.getPersonalInteractionDao();
+        if(pi != null){
+            personalInteractionDao.update(pi);
         }
     }
 }

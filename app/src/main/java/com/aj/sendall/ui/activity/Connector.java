@@ -92,7 +92,7 @@ public class Connector extends AppCompatActivity implements Updatable {
 
                 new Handler().postDelayed(updateUI, 2000);
 
-                appManager.initConnection(SharedPrefConstants.CURR_STATUS_CEATING_CONNECTION);
+                appManager.initHotspotForNewConnCreation(SharedPrefConstants.CURR_STATUS_CEATING_CONNECTION);
                 selectedAction = Action.CREATE;
                 animateViewsOnButtonClicked(v);
                 NewConnCreationServerService.start(Connector.this, Connector.this, NewConnCreationServerService.class);

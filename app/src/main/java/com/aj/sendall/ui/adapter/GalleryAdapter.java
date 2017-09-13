@@ -44,8 +44,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         setProjections(mediaType);
         setBaseContentUri(mediaType);
         allFileInfoDTOs = new ArrayList<>();
-        filteredFileInfoDTOs = new ArrayList<>();
-        //initAdapter();
+        initAdapter();
     }
 
     private void setSortField(int mediaType) {
@@ -71,7 +70,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                 projections = new String[]{
                         MediaStore.Video.VideoColumns._ID,
                         MediaStore.Video.VideoColumns.TITLE,
-                        MediaStore.Video.VideoColumns.SIZE
+                        MediaStore.Video.VideoColumns.SIZE,
+                        MediaStore.Video.VideoColumns.DATA
                 };
                 break;
             case MediaConsts.TYPE_AUDIO:
@@ -79,6 +79,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                         MediaStore.Audio.AudioColumns._ID,
                         MediaStore.Audio.AudioColumns.TITLE,
                         MediaStore.Audio.AudioColumns.SIZE,
+                        MediaStore.Audio.AudioColumns.DATA,
                         MediaStore.Audio.AudioColumns.ALBUM_ID
                 };
                 break;
@@ -86,14 +87,16 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                 projections = new String[]{
                         MediaStore.Images.ImageColumns._ID,
                         MediaStore.Images.ImageColumns.TITLE,
-                        MediaStore.Images.ImageColumns.SIZE
+                        MediaStore.Images.ImageColumns.SIZE,
+                        MediaStore.Images.ImageColumns.DATA
                 };
                 break;
             case MediaConsts.TYPE_OTHER:
                 projections = new String[]{
                         MediaStore.Files.FileColumns._ID,
                         MediaStore.Files.FileColumns.TITLE,
-                        MediaStore.Files.FileColumns.SIZE
+                        MediaStore.Files.FileColumns.SIZE,
+                        MediaStore.Files.FileColumns.DATA
                 };
                 break;
         }
@@ -116,7 +119,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         }
     }
 
-    public void initAdapter(){
+    private void initAdapter(){
         selectedItems = new HashSet<>();
         allFileInfoDTOs = getGalleryItemsList();
     }
@@ -126,17 +129,17 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         ContentResolver contentResolver = context.getContentResolver();
         Uri uri = MediaStore.Files.getContentUri("external");
         String select = getSelectString();
-        String[] selectionArgs = null;
         String sort = null;
         if(sortField != null){
             sort = sortField + " DESC";
         }
-        Cursor cursor = contentResolver.query(uri, projections, select, selectionArgs, sort);
+        Cursor cursor = contentResolver.query(uri, projections, select, null, sort);
         if(cursor != null) {
             fileInfoDTOs = new ArrayList<>();
             int idColIndex = cursor.getColumnIndex(projections[0]);
             int titleColIndex = cursor.getColumnIndex(projections[1]);
             int sizeColIndex = cursor.getColumnIndex(projections[2]);
+            int pathColIndex = cursor.getColumnIndex(projections[3]);
             while(cursor.moveToNext()){
                 FileInfoDTO dto = new FileInfoDTO();
                 dto.title = cursor.getString(titleColIndex);
@@ -145,10 +148,12 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                 }
                 dto.id = cursor.getInt(idColIndex);
                 dto.size = cursor.getLong(sizeColIndex);
+                dto.mediaType = mediaType;
                 if(mediaType == MediaConsts.TYPE_AUDIO){
                     dto.albumId = cursor.getInt(cursor.getColumnIndex(MediaStore.Audio.AudioColumns.ALBUM_ID));
                 }
                 dto.uri = Uri.parse(baseUriString + '/' + dto.id);
+                dto.filePath = cursor.getString(pathColIndex);
                 fileInfoDTOs.add(dto);
             }
             cursor.close();
@@ -167,8 +172,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     }
 
     private String getSelectStringForNonMediaTypes(){
-        String selectString = MediaConsts.COL_MIME_TYPE + " IN " + MediaConsts.OTHER_FILE_MIME_SET;
-        return selectString;
+        return MediaConsts.COL_MIME_TYPE + " IN " + MediaConsts.OTHER_FILE_MIME_SET;
     }
 
     public Set<FileInfoDTO> getSelectedItems(){

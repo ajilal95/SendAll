@@ -16,18 +16,13 @@ import com.aj.sendall.R;
 import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.db.dto.PersonalInteractionDTO;
 import com.aj.sendall.ui.interfaces.ItemSelectableView;
-import com.aj.sendall.ui.businessservices.PersonalInteractionsService;
+import com.aj.sendall.ui.utils.PersonalInteractionsUtil;
 import com.aj.sendall.ui.utils.CommonUiUtils;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.inject.Inject;
-
-/**
- * Created by ajilal on 1/5/17.
- */
 
 public class PersonalInteractionsAdapter extends RecyclerView.Adapter<PersonalInteractionsAdapter.ViewHolder>{
 
@@ -39,20 +34,20 @@ public class PersonalInteractionsAdapter extends RecyclerView.Adapter<PersonalIn
 
     private Set<Uri> selectedItemUris;
 
-    private PersonalInteractionsService personalInteractionsService;
+    private PersonalInteractionsUtil personalInteractionsUtil;
 
 
-    public PersonalInteractionsAdapter(int connectionId, @NonNull Context context, ItemSelectableView parentItemSelectable, PersonalInteractionsService personalInteractionsService){
+    public PersonalInteractionsAdapter(int connectionId, @NonNull Context context, ItemSelectableView parentItemSelectable, PersonalInteractionsUtil personalInteractionsUtil){
         this.parentItemSelectable = parentItemSelectable;
         this.context = context;
         this.connectionId = connectionId;
-        this.personalInteractionsService = personalInteractionsService;
+        this.personalInteractionsUtil = personalInteractionsUtil;
         initAdapter();
     }
 
     private void initAdapter(){
         selectedItemUris = new HashSet<>();
-        personalInteractionDTOs = personalInteractionsService.getFileInteractionsByConnectionId(connectionId);
+        personalInteractionDTOs = personalInteractionsUtil.getFileInteractionsByConnectionId(connectionId);
     }
 
     @Override
@@ -100,12 +95,12 @@ public class PersonalInteractionsAdapter extends RecyclerView.Adapter<PersonalIn
         return personalInteractionDTOs != null ? personalInteractionDTOs.size() : 0;
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder{
+    class ViewHolder extends RecyclerView.ViewHolder{
         private ImageView imgVwItemThumbnail;
         private TextView txtVwFileName;
         private TextView txtVwFileSize;
 
-        public ViewHolder(View view){
+        ViewHolder(View view){
             super(view);
 
             imgVwItemThumbnail = (ImageView) view.findViewById(R.id.img_vw_pers_inter_thumbnail);

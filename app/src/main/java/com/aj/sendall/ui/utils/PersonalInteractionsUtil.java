@@ -1,4 +1,4 @@
-package com.aj.sendall.ui.businessservices;
+package com.aj.sendall.ui.utils;
 
 import com.aj.sendall.db.enums.FileStatus;
 import com.aj.sendall.ui.consts.MediaConsts;
@@ -15,10 +15,10 @@ import javax.inject.Singleton;
  */
 
 @Singleton
-public final class PersonalInteractionsService {
+public final class PersonalInteractionsUtil {
 
     @Inject
-    public PersonalInteractionsService(){
+    public PersonalInteractionsUtil(){
 
     }
 

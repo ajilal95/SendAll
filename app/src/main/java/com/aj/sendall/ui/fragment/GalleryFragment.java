@@ -18,7 +18,7 @@ import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.db.dto.FileInfoDTO;
 import com.aj.sendall.ui.activity.SelectReceiversActivity;
 import com.aj.sendall.ui.adapter.GalleryAdapter;
-import com.aj.sendall.ui.businessservices.FileSendingService;
+import com.aj.sendall.ui.utils.FileSendingUtil;
 import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.ui.interfaces.ItemFilterableView;
 import com.aj.sendall.ui.interfaces.ItemSelectableView;
@@ -48,7 +48,7 @@ public class GalleryFragment extends Fragment implements ItemSelectableView, Ite
     private int totalNoOfSelections = 0;
 
     @Inject
-    public FileSendingService fileSendingService;
+    public FileSendingUtil fileSendingUtil;
 
     public GalleryFragment() {
     }
@@ -132,10 +132,10 @@ public class GalleryFragment extends Fragment implements ItemSelectableView, Ite
                 for(RecyclerView recyclerView : getRecyclerViews()){
                     selectedItems.addAll(((GalleryAdapter)recyclerView.getAdapter()).getSelectedItems());
                 }
-                FileSendingService.SendOperationResult result = fileSendingService.send_items(selectedItems);
-                if(result.equals(FileSendingService.SendOperationResult.SENDING)){
+                FileSendingUtil.SendOperationResult result = fileSendingUtil.send_items(selectedItems);
+                if(result.equals(FileSendingUtil.SendOperationResult.SENDING)){
                     Toast.makeText(parentActivity, "Sending...", Toast.LENGTH_SHORT).show();
-                } else if(result.equals(FileSendingService.SendOperationResult.RECEIVER_EMPTY)){
+                } else if(result.equals(FileSendingUtil.SendOperationResult.RECEIVER_EMPTY)){
                     Toast.makeText(parentActivity, "Select receivers...", Toast.LENGTH_SHORT).show();
                     goToConnectionsViewToSelectConnections();
                 }

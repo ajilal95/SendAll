@@ -47,7 +47,7 @@ public class NewConnCreationClient extends AbstractClient {
                     conn.setSSID(otherDeviceId);
                     conn.setLastContaced(new Date());
 
-                    appManager.dbUtil.saveConnection(conn);
+                    appManager.dbUtil.saveOrUpdate(conn);
                 }
 
                 UpdateEvent event = new UpdateEvent();

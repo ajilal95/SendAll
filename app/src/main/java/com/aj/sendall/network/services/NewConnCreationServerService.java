@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.aj.sendall.application.AndroidApplication;
 import com.aj.sendall.application.AppManager;
+import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.network.runnable.NewConnCreationServer;
 import com.aj.sendall.network.runnable.abstr.AbstractServer;
 import com.aj.sendall.network.services.abstr.AbstractServerService;
@@ -20,7 +21,7 @@ public class NewConnCreationServerService extends AbstractServerService {
     private static NewConnCreationServer currServer = null;
 
     public NewConnCreationServerService() {
-        super("ConnCreationServerService");
+        super("NewConnCreationServerService");
     }
 
     @Override
@@ -39,6 +40,16 @@ public class NewConnCreationServerService extends AbstractServerService {
         } else {
             return false;
         }
+    }
+
+    @Override
+    protected void createHotspot(AppManager appManager, int port){
+        appManager.initHotspotForNewConnCreation(SharedPrefConstants.CURR_STATUS_CEATING_CONNECTION, port);
+    }
+
+    @Override
+    protected void shutdownHotspot(AppManager appManager){
+        appManager.stopHotspotAndScanning();
     }
 
     @Override

@@ -21,6 +21,8 @@ public abstract class AbstractClient implements Runnable, Updatable {
     private Socket socket;
     protected DataInputStream dataInputStream;
     protected DataOutputStream dataOutputStream;
+    private int connAttemptsRemining = 5;//Try 5 times to connect
+    private boolean active = true;//to make sure that reconnection is not tried after user closes the connection
 
     public AbstractClient(String SSID, String passPhrase, int serverPort, Updatable updatableActivity, AppManager appManager){
         this.SSID = SSID;
@@ -49,16 +51,23 @@ public abstract class AbstractClient implements Runnable, Updatable {
             dataOutputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
         } catch (Exception e){
             e.printStackTrace();
-            UpdateEvent event = new UpdateEvent();
-            event.source = this.getClass();
-            event.data.put(Constants.ACTION, Constants.FAILED);
-            updatableActivity.update(event);
+            //retries
+            connAttemptsRemining--;
+            if(active && connAttemptsRemining > 0){
+                try {
+                    Thread.sleep(1000);//wait 1 second
+                } catch(InterruptedException ie){
+                    //ignored
+                }
+                tryToOpenSocket(serverAdd);
+            }
         }
     }
 
     protected abstract void communicate();
 
     private void tryToCloseSocket(){
+        active = false;
         if(socket != null){
             try {
                 socket.close();

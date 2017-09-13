@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,8 +22,8 @@ import com.aj.sendall.ui.activity.SelectMediaActivity;
 import com.aj.sendall.ui.adapter.ConnectionAdapter;
 import com.aj.sendall.ui.consts.ConnectionsConstants;
 import com.aj.sendall.db.dto.ConnectionViewData;
-import com.aj.sendall.ui.businessservices.ConnectionsActivityService;
-import com.aj.sendall.ui.businessservices.FileSendingService;
+import com.aj.sendall.ui.utils.ConnectionsActivityUtil;
+import com.aj.sendall.ui.utils.FileSendingUtil;
 import com.aj.sendall.ui.interfaces.ItemFilterableView;
 import com.aj.sendall.ui.utils.CommonUiUtils;
 
@@ -42,9 +41,9 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
     private String purpose;
 
     @Inject
-    public ConnectionsActivityService connectionsActivityService;
+    public ConnectionsActivityUtil connectionsActivityUtil;
     @Inject
-    public FileSendingService fileSendingService;
+    public FileSendingUtil fileSendingUtil;
 
     public static ConnectionsFragment newInstance(Activity parentActivity, String purpose){
         ConnectionsFragment connectionsFragment = new ConnectionsFragment();
@@ -104,7 +103,7 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
 
         @Override
         protected List<ConnectionViewData> doInBackground(Void... params) {
-            return connectionsActivityService.getAllConnections();
+            return connectionsActivityUtil.getAllConnections();
         }
 
         @Override
@@ -180,11 +179,11 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
 
         @Override
         public void onClick(View view) {
-            FileSendingService.SendOperationResult result = fileSendingService.send_to(receivers);
-            if(FileSendingService.SendOperationResult.URI_EMPTY.equals(result)){
+            FileSendingUtil.SendOperationResult result = fileSendingUtil.send_to(receivers);
+            if(FileSendingUtil.SendOperationResult.URI_EMPTY.equals(result)){
                 Intent fileSelectIntent = new Intent(parentActivity, SelectMediaActivity.class);
                 parentActivity.startActivity(fileSelectIntent);
-            } else if(FileSendingService.SendOperationResult.SENDING.equals(result)){
+            } else if(FileSendingUtil.SendOperationResult.SENDING.equals(result)){
                 Toast.makeText(parentActivity, "Sending..", Toast.LENGTH_SHORT).show();
                 if(!(parentActivity instanceof Home)){
                     parentActivity.finish();

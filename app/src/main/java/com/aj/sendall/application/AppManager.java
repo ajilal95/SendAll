@@ -1,14 +1,21 @@
 package com.aj.sendall.application;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -17,11 +24,14 @@ import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
 import com.aj.sendall.db.util.DBUtil;
 import com.aj.sendall.network.broadcastreceiver.SendallNetWifiScanBroadcastReceiver;
 import com.aj.sendall.notification.util.NotificationUtil;
+import com.aj.sendall.ui.activity.Home;
 import com.aj.sendall.ui.interfaces.Updatable;
 
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -39,13 +49,15 @@ public class AppManager implements Serializable{
     public SharedPrefUtil sharedPrefUtil;
     private int wifiP2pState;
     public NotificationUtil notificationUtil;
+
+    public Permissions permissions;
 //    private ContentProviderUtil contentProviderUtil;
 
     private ServiceListenerRepeater serviceListenerRepeater = null;
     private SendallNetWifiScanBroadcastReceiver sendallNetWifiScanBroadcastReceiver = null;
     private WifiApControl wifiApControl = null;
     private WifiManager.WifiLock wifiLock = null;
-    private WifiConfiguration currentSystemWifiConfig = null;
+    private WifiConfiguration systemWifiConfig = null;
 
     @Inject
     public AppManager(Context context,
@@ -63,6 +75,7 @@ public class AppManager implements Serializable{
 
     private void init(Context context) {
         if(!initialised) {
+            permissions = new Permissions();
             wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
             wifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
             channel = wifiP2pManager.initialize(context, context.getMainLooper(), new WifiP2pManager.ChannelListener() {
@@ -122,7 +135,20 @@ public class AppManager implements Serializable{
         return wifiLock != null && wifiLock.isHeld();
     }
 
-    public void initConnection(int newAppStatus){
+    public void initHotspotForNewConnCreation(int newAppStatus, int portNo){
+        //TODO modification to add port number to the SSID
+        //append username to the ssid so that username is available at the other end
+        WifiConfiguration wifiConfiguration = getWifiConfiguration(sharedPrefUtil.getThisDeviceId() + '_' + sharedPrefUtil.getUserName(), sharedPrefUtil.getDefaultWifiPass(), true);
+        initHotspot(newAppStatus, wifiConfiguration);
+    }
+
+    public void initHotspotForFileTransfer(int newAppStatus, int portNo){
+        //append the port no to the ssid so that the port no is available at the other end
+        WifiConfiguration wifiConfiguration = getWifiConfiguration(sharedPrefUtil.getThisDeviceId() + '_' + portNo, sharedPrefUtil.getDefaultWifiPass(), true);
+        initHotspot(newAppStatus, wifiConfiguration);
+    }
+
+    private void initHotspot(int newAppStatus, WifiConfiguration wifiConfig){
         //first of all, change the app status
         int appStatus = sharedPrefUtil.getCurrentAppStatus();
         if(appStatus == SharedPrefConstants.CURR_STATUS_IDLE) {
@@ -132,11 +158,9 @@ public class AppManager implements Serializable{
 
             stopHotspot();
 
-            WifiConfiguration wifiConfiguration = getWifiConfiguration(sharedPrefUtil.getThisDeviceId() + '_' + sharedPrefUtil.getUserName(), sharedPrefUtil.getDefaultWifiPass(), true);
-
             wifiApControl = WifiApControl.getInstance(context);
             if(wifiApControl != null) {
-                wifiApControl.setEnabled(wifiConfiguration, true);
+                wifiApControl.setEnabled(wifiConfig, true);
             }
         } else {
             Toast.makeText(context, WAIT_FOR_CURRENT_OP_TOAST, Toast.LENGTH_SHORT).show();
@@ -147,12 +171,12 @@ public class AppManager implements Serializable{
         if(wifiApControl != null){
             //Restoring wifi ap configuration of the system
             wifiApControl.disable();
-            if(currentSystemWifiConfig != null){
-                wifiApControl.setWifiApEnabled(currentSystemWifiConfig, true);
+            if(systemWifiConfig != null){
+                wifiApControl.setWifiApEnabled(systemWifiConfig, true);
             }
             wifiApControl.disable();
         }
-        currentSystemWifiConfig = null;
+        systemWifiConfig = null;
         wifiApControl = null;
     }
 
@@ -200,7 +224,7 @@ public class AppManager implements Serializable{
         }
         if(wifiApControl != null) {
             //For restoring the configuration on exit
-            currentSystemWifiConfig = wifiApControl.getConfiguration();
+            systemWifiConfig = wifiApControl.getConfiguration();
         }
         WifiConfiguration wifiConfiguration = new WifiConfiguration();
         if(!create){
@@ -625,4 +649,131 @@ public class AppManager implements Serializable{
         }
         return conf;
     }*/
+
+    public class Permissions {
+        public String[] getDeniedPermissions() {
+            Set<String> deniedPermissions = new HashSet<>();
+            if (!isWriteExternalStorageGranted()) {
+                deniedPermissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            }
+            if (!isAccessWifiStateGranted()) {
+                deniedPermissions.add(Manifest.permission.ACCESS_WIFI_STATE);
+            }
+            if (!isChangeWifiStateGranted()) {
+                deniedPermissions.add(Manifest.permission.CHANGE_WIFI_STATE);
+            }
+            if (!isWakeLockGranted()) {
+                deniedPermissions.add(Manifest.permission.WAKE_LOCK);
+            }
+            if (!isInternetGranted()) {
+                deniedPermissions.add(Manifest.permission.INTERNET);
+            }
+            if (!isAccessNetorkStateGranted()) {
+                deniedPermissions.add(Manifest.permission.ACCESS_NETWORK_STATE);
+            }
+            if (!isChanegNetworkStateGranted()) {
+                deniedPermissions.add(Manifest.permission.CHANGE_NETWORK_STATE);
+            }
+            return (String[]) deniedPermissions.toArray();
+        }
+
+        public boolean isPermissionGranted(String permission) {
+            return PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(context, permission);
+        }
+
+        public boolean isWriteExternalStorageGranted() {
+            return isPermissionGranted(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+
+        public boolean isAccessWifiStateGranted() {
+            return isPermissionGranted(Manifest.permission.ACCESS_WIFI_STATE);
+        }
+
+        public boolean isChangeWifiStateGranted() {
+            return isPermissionGranted(Manifest.permission.CHANGE_WIFI_STATE);
+        }
+
+        public boolean isWakeLockGranted() {
+            return isPermissionGranted(Manifest.permission.WAKE_LOCK);
+        }
+
+        public boolean isInternetGranted() {
+            return isPermissionGranted(Manifest.permission.INTERNET);
+        }
+
+        public boolean isAccessNetorkStateGranted() {
+            return isPermissionGranted(Manifest.permission.ACCESS_NETWORK_STATE);
+        }
+
+        public boolean isChanegNetworkStateGranted() {
+            return isPermissionGranted(Manifest.permission.CHANGE_NETWORK_STATE);
+        }
+
+        public String getHumanReadablePermString(String permission){
+            String hrps = permission;
+            if(Manifest.permission.WRITE_EXTERNAL_STORAGE.equals(permission)){
+                hrps = "Write external storage";
+            } else if(Manifest.permission.ACCESS_WIFI_STATE.equals(permission)){
+                hrps = "Access wifi state";
+            } else if(Manifest.permission.CHANGE_WIFI_STATE.equals(permission)){
+                hrps = "Change wifi state";
+            } else if(Manifest.permission.WAKE_LOCK.equals(permission)){
+                hrps = "Wake lock";
+            } else if(Manifest.permission.INTERNET.equals(permission)){
+                hrps = "Internet";
+            } else if(Manifest.permission.ACCESS_NETWORK_STATE.equals(permission)){
+                hrps = "Access network state";
+            } else if(Manifest.permission.CHANGE_NETWORK_STATE.equals(permission)){
+                hrps = "Change network state";
+            }
+            return hrps;
+        }
+
+        public void getPermissions(final Activity activity,
+                                    final String[] missingPermissions,
+                                    final int permissionReqCode,
+                                    String negativeButtonCaption,
+                                    DialogInterface.OnClickListener negativeButtonAction) {
+            if (missingPermissions != null && missingPermissions.length > 0) {
+                //Find the permissions that needs an explanation to be shown to the user
+                boolean showDia = false;
+                for (String perm : missingPermissions) {
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(activity, perm)) {
+                        showDia = true;
+                        break;
+                    }
+                }
+
+                if (showDia) {
+                    //needs to show an explanation
+                    final AlertDialog.Builder alertBuilder = new AlertDialog.Builder(activity);
+                    alertBuilder.setTitle("Need permission");
+                    StringBuilder permsReqrd = new StringBuilder();
+                    permsReqrd.append(getHumanReadablePermString(missingPermissions[0]));
+                    for (int i = 1; i < missingPermissions.length; i++) {
+                        permsReqrd.append('\n');
+                        permsReqrd.append(getHumanReadablePermString(missingPermissions[i]));
+                    }
+                    alertBuilder.setMessage(permsReqrd.toString());
+                    alertBuilder.setPositiveButton("Okay", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            requestPermissions(activity, missingPermissions, permissionReqCode);
+                        }
+                    });
+                    if(negativeButtonCaption != null && negativeButtonAction != null) {
+                        alertBuilder.setNegativeButton("No! Close App", negativeButtonAction);
+                    }
+                    alertBuilder.show();
+                } else {
+                    //directly request permissions
+                    requestPermissions(activity, missingPermissions, permissionReqCode);
+                }
+            }
+        }
+
+        public void requestPermissions(Activity activity, String[] perms, int permissionReqCode) {
+            ActivityCompat.requestPermissions(activity, perms, permissionReqCode);
+        }
+    }
 }
