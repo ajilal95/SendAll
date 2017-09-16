@@ -11,6 +11,7 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
+import android.os.Environment;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -24,12 +25,15 @@ import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
 import com.aj.sendall.db.util.DBUtil;
 import com.aj.sendall.network.broadcastreceiver.SendallNetWifiScanBroadcastReceiver;
 import com.aj.sendall.notification.util.NotificationUtil;
-import com.aj.sendall.ui.activity.Home;
+import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.ui.interfaces.Updatable;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -774,6 +778,87 @@ public class AppManager implements Serializable{
 
         public void requestPermissions(Activity activity, String[] perms, int permissionReqCode) {
             ActivityCompat.requestPermissions(activity, perms, permissionReqCode);
+        }
+    }
+
+    public boolean isValidFileName(String fileName){
+        if(fileName == null || fileName.isEmpty()){
+            return false;
+        }
+        String part1 = fileName.substring(0, Math.max(1, fileName.lastIndexOf('.')));
+        return !part1.isEmpty();
+    }
+
+    public File getTempFileToWrite(String fileName) throws IOException{
+        if (!isValidFileName(fileName)) {
+            return null;
+        }
+        File root = Environment.getExternalStorageDirectory();
+        File subDir = new File(root.getCanonicalPath() + '/' + SharedPrefConstants.APP_NAME + "Temp");
+        if(!subDir.exists()){
+            subDir.mkdirs();
+        }
+        String tempFileName = getTempFileName();
+        File file = new File(subDir.getCanonicalPath() + '/' + tempFileName);
+        return file;
+    }
+
+    private String getTempFileName(){
+        //add '.tmp' to the end
+        return new Date().getTime() + ".tmp";
+    }
+
+    public File getActualFileToWrite(String fileName, int fileType) throws IOException{
+        if (!isValidFileName(fileName)) {
+            return null;
+        }
+        File root = Environment.getExternalStorageDirectory();
+        String subDirName = getSubDirName(fileType);
+        File subDir = new File(root.getCanonicalPath() + '/' + SharedPrefConstants.APP_NAME + subDirName);
+        if(!subDir.exists()){
+            subDir.mkdirs();
+        }
+        return getUniqueFile(subDir, fileName);
+    }
+
+    private File getUniqueFile(File dir, String fileName) throws IOException{
+        String extnRemovedFileName = removeExtension(fileName);
+        String extn = getExtensionIncludingPeriod(fileName);
+        String part1 = dir.getCanonicalPath() + '/' + extnRemovedFileName;
+        File uniqueFile = new File(part1 + extn);
+        //to avoid fileName conflict
+        int count = 1;
+        while(uniqueFile.exists()){
+            String filePathTry = part1 + '(' + count + ')' + extn;
+            uniqueFile = new File(filePathTry);
+        }
+        return uniqueFile;
+    }
+
+    private String removeExtension(String fileName){
+        int lastIndexOfPeriod = fileName.lastIndexOf('.');
+        String fileNameWithoutExtn = fileName;
+        if(lastIndexOfPeriod > 0){
+            fileNameWithoutExtn = fileName.substring(0, lastIndexOfPeriod);
+        }
+        return fileNameWithoutExtn;
+    }
+
+    private String getExtensionIncludingPeriod(String fileName){
+        int lastIndexOfPeriod = fileName.lastIndexOf('.');
+        String extension = "";
+        if(lastIndexOfPeriod > 0){
+            extension = fileName.substring(lastIndexOfPeriod, fileName.length());
+        }
+        return extension;
+    }
+
+    private String getSubDirName(int fileType){
+        switch(fileType){
+            case MediaConsts.TYPE_VIDEO: return "Video";
+            case MediaConsts.TYPE_AUDIO: return "Audio";
+            case MediaConsts.TYPE_IMAGE: return "Image";
+            default : return "Others";
         }
     }
 }

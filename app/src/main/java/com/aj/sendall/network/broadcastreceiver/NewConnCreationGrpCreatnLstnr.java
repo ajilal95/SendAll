@@ -25,7 +25,7 @@ public class NewConnCreationGrpCreatnLstnr extends AbstractGroupCreationListener
         recToAdv.put(Constants.ADV_KEY_NETWORK_NAME, networkName);
         recToAdv.put(Constants.ADV_KEY_NETWORK_PASSPHRASE, passPhrase);
 
-        /*NewConnCreationServerService.connectorActivity = updatableActivity;
+        /*NewConnCreationServerService.connectorActivity = updatable;
         NewConnCreationServerService.start(context);*/
     }
 }

@@ -3,10 +3,6 @@ package com.aj.sendall.ui.consts;
 import android.net.Uri;
 import android.provider.MediaStore;
 
-/**
- * Created by ajilal on 28/4/17.
- */
-
 public class MediaConsts {
     public static Uri ALBUM_ART_URI = Uri.parse("content://media/external/audio/albumart");
     public static int TITLE_STRING_MAX_LENGTH = 20;

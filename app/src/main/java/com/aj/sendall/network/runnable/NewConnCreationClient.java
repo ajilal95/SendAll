@@ -53,7 +53,7 @@ public class NewConnCreationClient extends AbstractClient {
                 UpdateEvent event = new UpdateEvent();
                 event.source = this.getClass();
                 event.data.put(Constants.ACTION, Constants.SUCCESS);
-                updatableActivity.update(event);
+                updatable.update(event);
             }catch (Exception e){
                 try {
                     dataOutputStream.writeUTF(Constants.FAILED);//failure

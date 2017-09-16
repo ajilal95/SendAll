@@ -50,10 +50,6 @@
                 android:value="com.aj.sendall.ui.activity.Home" />
         </activity>
 
-        <service
-            android:name=".network.services.ToggleReceiverService"
-            android:exported="false" />
-
         <receiver android:name=".network.broadcastreceiver.WifiStatusBroadcastReceiver">
             <intent-filter>
                 <action android:name="android.net.wifi.p2p.STATE_CHANGED" />
@@ -66,10 +62,19 @@
         <activity android:name=".ui.activity.Connector" />
 
         <service
+            android:name=".network.services.ToggleReceiverService"
+            android:exported="false" />
+        <service
             android:name=".network.services.NewConnCreationServerService"
             android:exported="false" />
         <service
             android:name=".network.services.NewConnCreationClientService"
+            android:exported="false" />
+        <service
+            android:name=".network.services.FileTransferServerService"
+            android:exported="false" />
+        <service
+            android:name=".network.services.FileTransferClientService"
             android:exported="false" />
     </application>
 

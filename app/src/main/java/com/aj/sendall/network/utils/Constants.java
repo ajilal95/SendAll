@@ -30,4 +30,6 @@ public class Constants {
 
     public static final String ADV_KEY_USERNAME = "13";
 
+    public static final long FILE_TRANS_BUFFER_SIZE = 2048;
+
 }

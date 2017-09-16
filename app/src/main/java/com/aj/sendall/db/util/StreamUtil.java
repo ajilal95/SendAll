@@ -4,6 +4,7 @@ import android.net.Uri;
 
 import com.aj.sendall.application.AppManager;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -15,8 +16,16 @@ public class StreamUtil implements StreamManager{
         this.streamManger = new UriStreamManager(uri, appManager);
     }
 
+    private StreamUtil(File file){
+        this.streamManger = new FileStreamManager(file);
+    }
+
     public static StreamUtil getInstance(Uri uri, AppManager appManager){
         return new StreamUtil(uri, appManager);
+    }
+
+    public static StreamUtil getInstance(File file){
+        return new StreamUtil(file);
     }
 
     @Override

@@ -76,6 +76,7 @@ class FileTransferClientConnector extends AbstractClientConnector {
         int fileCount = connectionsAndUris.fileInfoDTOs.size();
         while(!(request.equals(Constants.SUCCESS) || request.equals(Constants.FAILED))
                 && fileCount > 0){
+            fileCount--;
             String fileName = request;
             FileInfoDTO file = getFileInfoByFileName(fileName);
             if(file == null){
@@ -83,25 +84,34 @@ class FileTransferClientConnector extends AbstractClientConnector {
                 dataOutputStream.writeUTF(Constants.FAILED);
             } else {
                 dataOutputStream.writeUTF(Constants.SUCCESS);
+                //Now send this device id for the other device to confirm
+                dataOutputStream.writeUTF(appManager.sharedPrefUtil.getThisDeviceId());
+                String result = dataInputStream.readUTF();
+                if(!Constants.SUCCESS.equals(result)){
+                    //Auth failed
+                    closeConn();
+                    return;
+                }
                 StreamUtil streamUtil = StreamUtil.getInstance(file.uri, appManager);
                 InputStream is = streamUtil.getInputStream();
                 dataOutputStream.writeLong(file.size);//inform about the size of the file
+                dataOutputStream.writeInt(file.mediaType);
                 long nextBytePos = dataInputStream.readLong();//To enable resuming failed transfer
                 long totalSent = nextBytePos - 1;
                 long skipped = is.skip(totalSent);//resuming
                 //Inform the skip status
-                if(skipped == nextBytePos - 1 || nextBytePos <= 0){
+                if(skipped == totalSent || nextBytePos <= 0){
                     //Skip is successful
                     dataOutputStream.writeUTF(Constants.SUCCESS);
                     PersonalInteraction pi;
                     if(nextBytePos == 0){
-                        //Transfering a new file
+                        //Transferring a new file
                         pi = saveNewPersonalInteraction(file);
                     } else {
-                        pi = appManager.dbUtil.getPersonalInteraction(thisConn.profileId, file.filePath, file.mediaType);
+                        pi = appManager.dbUtil.getPersonalInteraction(thisConn.profileId, file.title, file.mediaType, file.size);
                     }
                     DataInputStream fdis = new DataInputStream(is);
-                    byte[] buff = new byte[2048];
+                    byte[] buff = new byte[(int) Math.min(Constants.FILE_TRANS_BUFFER_SIZE, file.size)];
                     int bytesRead;
                     int transferCount = 0;
                     while ((bytesRead = fdis.read(buff)) > 0){
@@ -122,14 +132,19 @@ class FileTransferClientConnector extends AbstractClientConnector {
                             transferCount = 0;
                         }
                     }
-                    pi.setBytesTransfered(totalSent);
-                    appManager.dbUtil.update(pi);
-                    streamUtil.close();
+                    if(transferCount != 0) {
+                        //transfer count is set to 0 whenever db is updated
+                        pi.setBytesTransfered(totalSent);
+                        pi.setFileStatus(FileStatus.SENT);
+                        appManager.dbUtil.update(pi);
+                    }
                 } else {
                     dataOutputStream.writeUTF(Constants.FAILED);
                 }
+                streamUtil.close();
             }
             try {
+                //Read the next filename
                 request = dataInputStream.readUTF();
             } catch (SocketException | SocketTimeoutException e){
                 break;

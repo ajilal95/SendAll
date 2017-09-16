@@ -12,9 +12,7 @@ import com.aj.sendall.db.model.Connections;
 import com.aj.sendall.db.model.PersonalInteraction;
 
 import org.greenrobot.greendao.database.Database;
-import org.greenrobot.greendao.query.WhereCondition;
 
-import java.util.Date;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -58,6 +56,10 @@ public class DBUtil {
         });
     }
 
+    public Connections getConnectionBySSID(String SSID){
+        return daoSession.getConnectionsDao().queryBuilder().where(ConnectionsDao.Properties.SSID.eq(SSID)).unique();
+    }
+
     public void saveOrUpdate(Connections conn){
         ConnectionsDao connectionsDao = daoSession.getConnectionsDao();
         List<Connections> matchedConnection = connectionsDao.queryBuilder()
@@ -96,12 +98,13 @@ public class DBUtil {
         }
     }
 
-    public PersonalInteraction getPersonalInteraction(long connId, String filePath, int mediaType){
+    public PersonalInteraction getPersonalInteraction(long connId, String fileName, int mediaType, long fileSize){
         PersonalInteractionDao personalInteractionDao = daoSession.getPersonalInteractionDao();
         List<PersonalInteraction> matchingPIs = personalInteractionDao.queryBuilder()
-                .where(PersonalInteractionDao.Properties.FilePath.eq(filePath),
+                .where(PersonalInteractionDao.Properties.FileName.eq(fileName),
                         PersonalInteractionDao.Properties.ConnectionId.eq(connId),
-                        PersonalInteractionDao.Properties.MediaType.eq(mediaType))
+                        PersonalInteractionDao.Properties.MediaType.eq(mediaType),
+                        PersonalInteractionDao.Properties.FileSize.eq(fileSize))
                 .list();
         if(matchingPIs == null || matchingPIs.isEmpty()){
             return null;
@@ -113,7 +116,7 @@ public class DBUtil {
     public void save(PersonalInteraction pi){
         PersonalInteractionDao personalInteractionDao = daoSession.getPersonalInteractionDao();
         if(pi != null){
-            personalInteractionDao.save(pi);
+            personalInteractionDao.insert(pi);
         }
     }
 

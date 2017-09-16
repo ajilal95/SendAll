@@ -16,7 +16,7 @@ public abstract class AbstractClient implements Runnable, Updatable {
     private int port;
     private String SSID;
     private String passPhrase;
-    protected Updatable updatableActivity;
+    protected Updatable updatable;
     protected AppManager appManager;
     private Socket socket;
     protected DataInputStream dataInputStream;
@@ -24,10 +24,10 @@ public abstract class AbstractClient implements Runnable, Updatable {
     private int connAttemptsRemining = 5;//Try 5 times to connect
     private boolean active = true;//to make sure that reconnection is not tried after user closes the connection
 
-    public AbstractClient(String SSID, String passPhrase, int serverPort, Updatable updatableActivity, AppManager appManager){
+    public AbstractClient(String SSID, String passPhrase, int serverPort, Updatable updatable, AppManager appManager){
         this.SSID = SSID;
         this.passPhrase = passPhrase;
-        this.updatableActivity = updatableActivity;
+        this.updatable = updatable;
         this.appManager = appManager;
         this.port = serverPort;
     }
@@ -39,6 +39,7 @@ public abstract class AbstractClient implements Runnable, Updatable {
             tryToOpenSocket(serverAdd);
             communicate();
         }
+        tryToCloseSocket();
     }
 
     abstract protected void configureSocket(Socket socket);
@@ -66,7 +67,7 @@ public abstract class AbstractClient implements Runnable, Updatable {
 
     protected abstract void communicate();
 
-    private void tryToCloseSocket(){
+    protected void tryToCloseSocket(){
         active = false;
         if(socket != null){
             try {

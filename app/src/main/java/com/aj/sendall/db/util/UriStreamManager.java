@@ -13,7 +13,7 @@ class UriStreamManager implements StreamManager{
     private AppManager appManager;
     private InputStream inputStream = null;
     private OutputStream outputStream = null;
-    private String currentOStreamMode = null;
+    private String currentOStreamMode;
 
     public UriStreamManager(Uri uri, AppManager appManager){
         this.uri = uri;
@@ -45,8 +45,9 @@ class UriStreamManager implements StreamManager{
             } else {
                 outputStream = appManager.context.getContentResolver().openOutputStream(uri);
             }
+            currentOStreamMode = mode;
         } else {
-            if(mode != currentOStreamMode && !mode.equals(currentOStreamMode))
+            if(mode != currentOStreamMode && !mode.equalsIgnoreCase(currentOStreamMode))
                 throw new IllegalStateException("OutputStream alredy opened in another mode");
         }
         return outputStream;

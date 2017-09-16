@@ -3,6 +3,7 @@ package com.aj.sendall.db.sharedprefs;
 
 public class SharedPrefConstants {
     static final String SHARED_PREF_NAME = "com.aj.sendall.db.sharedprefs";
+    public static final String APP_NAME = "Send All";
 
     static final String CURR_APP_STATE = "curr_app_state";
     public static final int CURR_STATUS_IDLE = 0;
