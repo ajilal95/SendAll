@@ -1,8 +1,9 @@
 package com.aj.sendall.network.runnable.abstr;
 
 import com.aj.sendall.application.AppManager;
+import com.aj.sendall.network.monitor.SocketSystem;
+import com.aj.sendall.network.monitor.Updatable;
 import com.aj.sendall.network.utils.Constants;
-import com.aj.sendall.ui.interfaces.Updatable;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -12,19 +13,19 @@ import java.util.Set;
 
 abstract public class AbstractServer implements Runnable, Updatable {
     private Set<AbstractClientConnector> clientConnectors = new HashSet<>();
-    private final ServerSocket serverSocket;
+    private ServerSocket serverSocket;
     protected AppManager appManager;
     protected Updatable updatableActivity;
-    private CloseServer closeServer = new CloseServer();
+    protected SocketSystem socketSystem = SocketSystem.getInstance();
 
-    protected AbstractServer(ServerSocket serverSocket, AppManager appManager, Updatable updatableActivity){
-        this.serverSocket = serverSocket;
+    protected AbstractServer(AppManager appManager, Updatable updatableActivity){
         this.updatableActivity = updatableActivity;
         this.appManager = appManager;
     }
 
     @Override
     public void run() {
+        serverSocket = socketSystem.getCurrentServerSocket();
         if(serverSocket != null) {
             preRun();
             while (!serverSocket.isClosed()) {
@@ -32,6 +33,7 @@ abstract public class AbstractServer implements Runnable, Updatable {
                     Socket socket = serverSocket.accept();
                     configureSocket(socket);
                     AbstractClientConnector clientConnector = getClientConnector(socket, appManager, updatableActivity);
+                    socketSystem.addSocketCloseListener(socket, new ClientConnectorCloseListener(clientConnector));
                     clientConnectors.add(clientConnector);
                     new Thread(clientConnector).start();
                 } catch (IOException ioe) {
@@ -41,45 +43,24 @@ abstract public class AbstractServer implements Runnable, Updatable {
         }
     }
 
+    abstract protected void preRun();
     abstract protected void configureSocket(Socket socket);
     abstract protected AbstractClientConnector getClientConnector(Socket socket, AppManager appManager, Updatable updatableActivity);
 
-    abstract protected void preRun();
-
-    private void closeServer() {
-        UpdateEvent updateEvent = new UpdateEvent();
-        updateEvent.source = this.getClass();
-        updateEvent.data.put(Constants.ACTION, Constants.CLOSE_SOCKET);
-        if(!clientConnectors.isEmpty()){
-            for(AbstractClientConnector clientConnector : clientConnectors){
-                clientConnector.update(updateEvent);
-            }
-            clientConnectors.clear();
-        }
-        closeServer.run();
-    }
-
-
-    private class CloseServer implements Runnable{
-        public void run(){
-            if(serverSocket != null && !serverSocket.isClosed()) {
-                try {
-                    serverSocket.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
     @Override
     public void update(UpdateEvent updateEvent) {
-        if(Constants.CLOSE_SOCKET.equals(updateEvent.data.get(Constants.ACTION))){
-            try {
-                closeServer();
-            }catch (Exception e){
-                e.printStackTrace();
-            }
+    }
+
+    private class ClientConnectorCloseListener implements Updatable{
+        private AbstractClientConnector acc;
+
+        private ClientConnectorCloseListener(AbstractClientConnector acc){
+            this.acc = acc;
+        }
+
+        @Override
+        public void update(UpdateEvent updateEvent) {
+            acc.closeStreams();
         }
     }
 }

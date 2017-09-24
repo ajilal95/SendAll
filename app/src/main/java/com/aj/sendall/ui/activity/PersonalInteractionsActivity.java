@@ -17,7 +17,7 @@ import com.aj.sendall.ui.interfaces.ItemSelectableView;
 
 import javax.inject.Inject;
 
-public class PersonalInteractionView extends AppCompatActivity implements ItemSelectableView{
+public class PersonalInteractionsActivity extends AppCompatActivity implements ItemSelectableView{
     @Inject
     public PersonalInteractionsUtil personalInteractionsUtil;
     private FloatingActionButton fltActionButtonSend;

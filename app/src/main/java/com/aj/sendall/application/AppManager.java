@@ -10,14 +10,12 @@ import android.content.pm.PackageManager;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pManager;
-import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.os.Environment;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
@@ -26,14 +24,13 @@ import com.aj.sendall.db.util.DBUtil;
 import com.aj.sendall.network.broadcastreceiver.SendallNetWifiScanBroadcastReceiver;
 import com.aj.sendall.notification.util.NotificationUtil;
 import com.aj.sendall.ui.consts.MediaConsts;
-import com.aj.sendall.ui.interfaces.Updatable;
+import com.aj.sendall.network.monitor.Updatable;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -48,16 +45,11 @@ public class AppManager implements Serializable{
     public DBUtil dbUtil;
     private boolean initialised = false;
     private WifiManager wifiManager;
-    public WifiP2pManager wifiP2pManager;
-    public WifiP2pManager.Channel channel;
-    public SharedPrefUtil sharedPrefUtil;
+    private SharedPrefUtil sharedPrefUtil;
     private int wifiP2pState;
-    public NotificationUtil notificationUtil;
+    private NotificationUtil notificationUtil;
 
     public Permissions permissions;
-//    private ContentProviderUtil contentProviderUtil;
-
-    private ServiceListenerRepeater serviceListenerRepeater = null;
     private SendallNetWifiScanBroadcastReceiver sendallNetWifiScanBroadcastReceiver = null;
     private WifiApControl wifiApControl = null;
     private WifiManager.WifiLock wifiLock = null;
@@ -73,7 +65,6 @@ public class AppManager implements Serializable{
         this.dbUtil = dbUtil;
         this.sharedPrefUtil = sharedPrefUtil;
         this.notificationUtil = notificationUtil;
-//        this.contentProviderUtil = contentProviderUtil;
         init(context);
     }
 
@@ -81,13 +72,6 @@ public class AppManager implements Serializable{
         if(!initialised) {
             permissions = new Permissions();
             wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-            wifiP2pManager = (WifiP2pManager) context.getSystemService(Context.WIFI_P2P_SERVICE);
-            channel = wifiP2pManager.initialize(context, context.getMainLooper(), new WifiP2pManager.ChannelListener() {
-                @Override
-                public void onChannelDisconnected() {
-
-                }
-            });
             initialised = true;
 
             enableWifi(false);
@@ -116,6 +100,11 @@ public class AppManager implements Serializable{
         }
     }
 
+    public void enableWifi(boolean enable, int newAppStatus){
+        enableWifi(enable);
+        setCurrentAppStatus(newAppStatus);
+    }
+
     /*Method to set current wifi status from wifi broadcast receiver*/
     public void setWifiP2pState(int currentWifiStatus){
         this.wifiP2pState = currentWifiStatus;
@@ -139,16 +128,28 @@ public class AppManager implements Serializable{
         return wifiLock != null && wifiLock.isHeld();
     }
 
-    public void initHotspotForNewConnCreation(int newAppStatus, int portNo){
-        //TODO modification to add port number to the SSID
-        //append username to the ssid so that username is available at the other end
-        WifiConfiguration wifiConfiguration = getWifiConfiguration(sharedPrefUtil.getThisDeviceId() + '_' + sharedPrefUtil.getUserName(), sharedPrefUtil.getDefaultWifiPass(), true);
-        initHotspot(newAppStatus, wifiConfiguration);
+    public int getPortNo(String SSID){
+        if(SSID != null && SSID.contains("_")){
+            String[] splits = SSID.split("_");
+            if(splits.length == 3){
+                try {
+                    int portNo = Integer.valueOf(splits[1]);
+                    return portNo;
+                } catch(Exception e){
+                    e.printStackTrace();
+                }
+            }
+        }
+        return -1;
     }
 
-    public void initHotspotForFileTransfer(int newAppStatus, int portNo){
-        //append the port no to the ssid so that the port no is available at the other end
-        WifiConfiguration wifiConfiguration = getWifiConfiguration(sharedPrefUtil.getThisDeviceId() + '_' + portNo, sharedPrefUtil.getDefaultWifiPass(), true);
+    public void initHotspot(int newAppStatus, int portNo){
+        //append username to the ssid so that username is available at the other end
+        String SSID = sharedPrefUtil.getThisDeviceId() + '_' + portNo + '_' +sharedPrefUtil.getUserName();
+        if(SSID.length() > 32){
+            SSID = SSID.substring(0, 32);
+        }
+        WifiConfiguration wifiConfiguration = getWifiConfiguration(SSID, sharedPrefUtil.getDefaultWifiPass(), true);
         initHotspot(newAppStatus, wifiConfiguration);
     }
 
@@ -156,9 +157,8 @@ public class AppManager implements Serializable{
         //first of all, change the app status
         int appStatus = sharedPrefUtil.getCurrentAppStatus();
         if(appStatus == SharedPrefConstants.CURR_STATUS_IDLE) {
-            sharedPrefUtil.setCurrentAppStatus(newAppStatus);
-            sharedPrefUtil.commit();
             enableWifi(false);
+            setCurrentAppStatus(newAppStatus);
 
             stopHotspot();
 
@@ -217,8 +217,7 @@ public class AppManager implements Serializable{
         stopHotspot();
         enableWifi(false);
 
-        sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
-        sharedPrefUtil.commit();
+        setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
     }
 
     @NonNull
@@ -277,304 +276,6 @@ public class AppManager implements Serializable{
         }
     }
 
-    /*public Map<String, String> getAllActiveSendallNets(){
-//        wifiManager.startScan();
-        Map<String, String> ssidToPass = new HashMap<>();
-        List<ScanResult> scanResults = wifiManager.getScanResults();
-        if(scanResults != null){
-            for(ScanResult scanResult : scanResults){
-                if(sharedPrefUtil.isOurNetwork(scanResult)){
-                    ssidToPass.put(scanResult.SSID, sharedPrefUtil.getDefaultWifiPass());
-                }
-            }
-        }
-        return ssidToPass;
-    }*/
-
-    public void startP2pServiceDiscovery(final WifiP2pManager.DnsSdTxtRecordListener textListener, final WifiP2pManager.DnsSdServiceResponseListener serviceResponseListener){
-        startP2pServiceDiscovery(textListener, serviceResponseListener, true);
-    }
-
-    private void startP2pServiceDiscovery(final WifiP2pManager.DnsSdTxtRecordListener textListener, final WifiP2pManager.DnsSdServiceResponseListener serviceResponseListener, boolean newRequest){
-        enableWifi(true);
-        if(newRequest){
-            //this is a new request to start service discovery. So stop old repeater and start new repeater
-            if(this.serviceListenerRepeater != null){
-                this.serviceListenerRepeater.setInactive();
-            }
-            this.serviceListenerRepeater = new ServiceListenerRepeater(textListener, serviceResponseListener);
-        }
-
-        final Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                wifiP2pManager.clearLocalServices(channel, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        clearedLocalServices();
-                    }
-
-                    @Override
-                    public void onFailure(int reason) {
-                        clearedLocalServices();
-                    }
-
-                    private void clearedLocalServices(){
-                        wifiP2pManager.clearServiceRequests(channel, new WifiP2pManager.ActionListener() {
-                            @Override
-                            public void onSuccess() {
-                                clearedServiceRequests();
-                            }
-
-                            @Override
-                            public void onFailure(int reason) {
-                                clearedServiceRequests();
-                            }
-
-                            private void clearedServiceRequests(){
-                                wifiP2pManager.setDnsSdResponseListeners(channel, serviceResponseListener, textListener);
-
-                                final WifiP2pDnsSdServiceRequest serviceRequest = WifiP2pDnsSdServiceRequest.newInstance();
-                                wifiP2pManager.addServiceRequest(channel, serviceRequest, new WifiP2pManager.ActionListener() {
-                                    int failureCount = 0;
-                                    @Override
-                                    public void onSuccess() {
-                                        Log.d(AppManager.class.getSimpleName(), "Added service request");
-                                        if(isWifiEnabled()) {
-                                            notificationUtil.showToggleReceivingNotification();
-                                        }
-                                        serviceRequestAdded();
-                                    }
-
-                                    @Override
-                                    public void onFailure(int reason) {
-                                        Log.d(AppManager.class.getSimpleName(), "Adding Service request failed");
-                                        failureCount++;
-                                        if(isWifiEnabled() && WifiP2pManager.BUSY == reason && failureCount < 5) {
-                                            //retry after 2 seconds
-                                            final WifiP2pManager.ActionListener thisListener = this;
-                                            handler.postDelayed(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    wifiP2pManager.addServiceRequest(channel, serviceRequest, thisListener);
-                                                }
-                                            }, 2000);
-                                        } else {
-                                            Log.d(AppManager.class.getSimpleName(), "Removed service request");
-                                            Toast.makeText(context, "Scanning failed", Toast.LENGTH_SHORT).show();
-                                            sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
-                                            sharedPrefUtil.commit();
-                                            if(isWifiEnabled()) {
-                                                notificationUtil.showToggleReceivingNotification();
-                                            }
-                                            serviceRequestAdded();
-                                        }
-                                    }
-
-                                    private void serviceRequestAdded(){
-                                        wifiP2pManager.discoverServices(channel, new WifiP2pManager.ActionListener() {
-                                            int failureCount = 0;
-
-                                            @Override
-                                            public void onSuccess() {
-                                                Log.d(AppManager.class.getSimpleName(), "Started service discovery");
-                                                if(isWifiEnabled()) {
-                                                    notificationUtil.showToggleReceivingNotification();
-                                                }
-                                                new Handler().postDelayed(AppManager.this.serviceListenerRepeater, 2000);
-                                            }
-
-                                            @Override
-                                            public void onFailure(int reason) {
-                                                Log.d(AppManager.class.getSimpleName(), "Failed starting service discovery");
-                                                failureCount++;
-                                                if(isWifiEnabled() && WifiP2pManager.BUSY == reason && failureCount < 5) {
-                                                    //retry after 2 seconds
-                                                    final WifiP2pManager.ActionListener thisListener = this;
-                                                    handler.postDelayed(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                            wifiP2pManager.discoverServices(channel, thisListener);
-                                                        }
-                                                    }, 2000);
-                                                } else {
-                                                    Log.d(AppManager.class.getSimpleName(), "Aborted service discovery");
-                                                    Toast.makeText(context, "Something's not right. Please turn on wifi", Toast.LENGTH_SHORT).show();
-                                                    sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
-                                                    sharedPrefUtil.commit();
-                                                    if(isWifiEnabled()) {
-                                                        notificationUtil.showToggleReceivingNotification();
-                                                    }
-                                                }
-                                            }
-                                        });
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
-            }
-        }, 1000);
-
-    }
-
-    public void stopP2pServiceDiscovery(){
-        //set the old repeaters if any
-        if(this.serviceListenerRepeater != null){
-            this.serviceListenerRepeater.setInactive();
-        }
-
-        wifiP2pManager.clearServiceRequests(channel, new WifiP2pManager.ActionListener() {
-            Handler handler = new Handler();
-            int failureCount = 0;
-            @Override
-            public void onSuccess() {
-            }
-
-            @Override
-            public void onFailure(int reason) {
-                Log.d(AppManager.class.getSimpleName(), "Failed stopping service discovery");
-                failureCount++;
-                if(isWifiEnabled() && WifiP2pManager.BUSY == reason && failureCount < 2) {
-                    //retry after 0.5 seconds
-                    final WifiP2pManager.ActionListener thisListener = this;
-                    handler.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            wifiP2pManager.clearServiceRequests(channel, thisListener);
-                        }
-                    }, 500);
-                } else {
-                    Log.d(AppManager.class.getSimpleName(), "Stopped service discovery");
-                }
-            }
-        });
-    }
-
-    public void stopP2pServiceAdv(){
-        wifiP2pManager.clearLocalServices(channel, new WifiP2pManager.ActionListener() {
-            Handler handler = new Handler();
-            int failureCount = 0;
-            @Override
-            public void onSuccess() {
-            }
-
-            @Override
-            public void onFailure(int reason) {
-                Log.d(AppManager.class.getSimpleName(), "Failed stopping service discovery");
-                failureCount++;
-                if(isWifiEnabled() && WifiP2pManager.BUSY == reason && failureCount < 2) {
-                    //retry after 0.5 seconds
-                    final WifiP2pManager.ActionListener thisListener = this;
-                    handler.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            wifiP2pManager.clearServiceRequests(channel, thisListener);
-                        }
-                    }, 500);
-                } else {
-                    Log.d(AppManager.class.getSimpleName(), "Stopped service discovery");
-                }
-            }
-        });
-    }
-
-    /*public void stopAllWifiOps(){
-        //Stop the request repeater if any{
-        if(serviceListenerRepeater != null){
-            serviceListenerRepeater.setInactive();
-        }
-        final Handler handler = new Handler();
-        sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_STOPPING_ALL);
-        sharedPrefUtil.commit();
-        enableWifi(true);
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                wifiP2pManager.clearLocalServices(channel, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        removedLocalServices();
-                    }
-
-                    @Override
-                    public void onFailure(int reason) {
-                        removedLocalServices();
-                    }
-
-                    private void removedLocalServices(){
-                        wifiP2pManager.clearServiceRequests(channel, new WifiP2pManager.ActionListener() {
-                            @Override
-                            public void onSuccess() {
-                                clearedServiceRequests();
-                            }
-
-                            @Override
-                            public void onFailure(int reason) {
-                                clearedServiceRequests();
-                            }
-
-                            private void clearedServiceRequests(){
-                                wifiP2pManager.removeGroup(channel, new WifiP2pManager.ActionListener() {
-                                    @Override
-                                    public void onSuccess() {
-                                        groupRemoved();
-                                    }
-
-                                    @Override
-                                    public void onFailure(int reason) {
-                                        groupRemoved();
-                                    }
-
-                                    private void groupRemoved(){
-                                        if(isWifiEnabled()) {
-                                            sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_STOPPING_ALL);
-                                            sharedPrefUtil.commit();
-                                            enableWifi(false);
-                                        } else {
-                                            sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
-                                            sharedPrefUtil.commit();
-                                        }
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
-            }
-        }, 1000);
-    }*/
-
-    private class ServiceListenerRepeater implements Runnable{
-        int requestCount = 20;
-        private WifiP2pManager.DnsSdTxtRecordListener textListener;
-        private WifiP2pManager.DnsSdServiceResponseListener serviceResponseListener;
-        private boolean active = true;
-
-        ServiceListenerRepeater(WifiP2pManager.DnsSdTxtRecordListener textListener, WifiP2pManager.DnsSdServiceResponseListener serviceResponseListener){
-            this.textListener = textListener;
-            this.serviceResponseListener = serviceResponseListener;
-        }
-
-        @Override
-        public void run() {
-            if(active) {
-                requestCount--;
-                if (requestCount > 0) {
-                    startP2pServiceDiscovery(textListener, serviceResponseListener, false);
-                } else {
-                    stopP2pServiceDiscovery();
-                }
-            }
-        }
-
-        void setInactive(){
-            active = false;
-        }
-    }
-
     public InetAddress connectAndGetAddressOf(String SSID, String PASS) {
         WifiConfiguration wifiConfiguration = getWifiConfiguration(SSID, PASS, false);
         if(!isWifiEnabled()){
@@ -613,47 +314,6 @@ public class AppManager implements Serializable{
         }
     }
 
-    /*private WifiConfiguration getWifiConfig(String SSID, String PASS){
-        Collection<ScanResult> scanResults = wifiManager.getScanResults();
-        if(scanResults != null){
-            for(ScanResult res : scanResults){
-                if(res.SSID.equals(SSID)){
-                    return getWifiConfig(res, PASS);
-                }
-            }
-        }
-        return null;
-    }*/
-
-
-    /*private WifiConfiguration getWifiConfig(ScanResult scanRes, String PASS) {
-        WifiConfiguration conf = null;
-        try {
-
-            Log.i("rht", "Item clicked, SSID " + scanRes.SSID + " Security : " + scanRes.capabilities);
-
-            conf = new WifiConfiguration();
-            conf.SSID = "\"" + scanRes.SSID + "\"";
-            conf.status = WifiConfiguration.Status.ENABLED;
-            conf.priority = 40;
-
-            if (scanRes.capabilities.toUpperCase().contains("WEP")) {
-                conf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-                conf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
-                conf.wepKeys[0] = "\""+ PASS +"\"";
-
-            } else if (scanRes.capabilities.toUpperCase().contains("WPA")) {
-                conf.preSharedKey = "\"" + PASS + "\"";
-            } else {
-                conf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return conf;
-    }*/
-
     public class Permissions {
         public String[] getDeniedPermissions() {
             Set<String> deniedPermissions = new HashSet<>();
@@ -678,7 +338,15 @@ public class AppManager implements Serializable{
             if (!isChanegNetworkStateGranted()) {
                 deniedPermissions.add(Manifest.permission.CHANGE_NETWORK_STATE);
             }
-            return (String[]) deniedPermissions.toArray();
+
+            String[] deniedPermStringArray = null;
+            int permsize = deniedPermissions.size();
+            if(permsize > 0){
+                deniedPermStringArray = new String[permsize];
+                deniedPermStringArray = deniedPermissions.toArray(deniedPermStringArray);
+            }
+
+            return deniedPermStringArray;
         }
 
         public boolean isPermissionGranted(String permission) {
@@ -776,12 +444,12 @@ public class AppManager implements Serializable{
             }
         }
 
-        public void requestPermissions(Activity activity, String[] perms, int permissionReqCode) {
+        void requestPermissions(Activity activity, String[] perms, int permissionReqCode) {
             ActivityCompat.requestPermissions(activity, perms, permissionReqCode);
         }
     }
 
-    public boolean isValidFileName(String fileName){
+    private boolean isValidFileName(String fileName){
         if(fileName == null || fileName.isEmpty()){
             return false;
         }
@@ -789,23 +457,23 @@ public class AppManager implements Serializable{
         return !part1.isEmpty();
     }
 
-    public File getTempFileToWrite(String fileName) throws IOException{
+    public File getTempFileToWrite(long connId, String fileName, int mediaType) throws IOException{
         if (!isValidFileName(fileName)) {
             return null;
         }
         File root = Environment.getExternalStorageDirectory();
-        File subDir = new File(root.getCanonicalPath() + '/' + SharedPrefConstants.APP_NAME + "Temp");
+        File subDir = new File(root.getCanonicalPath() + '/' + SharedPrefConstants.APP_NAME + '/' + "Temp");
         if(!subDir.exists()){
             subDir.mkdirs();
         }
-        String tempFileName = getTempFileName();
+        String tempFileName = getTempFileName(connId, fileName, mediaType);
         File file = new File(subDir.getCanonicalPath() + '/' + tempFileName);
         return file;
     }
 
-    private String getTempFileName(){
-        //add '.tmp' to the end
-        return new Date().getTime() + ".tmp";
+    private String getTempFileName(long connId, String fileName, int mediaType){
+        //<connid>_<mediatype>_<filename>.tmp
+        return connId + '_' + mediaType + '_' + fileName + ".tmp";
     }
 
     public File getActualFileToWrite(String fileName, int fileType) throws IOException{
@@ -814,7 +482,7 @@ public class AppManager implements Serializable{
         }
         File root = Environment.getExternalStorageDirectory();
         String subDirName = getSubDirName(fileType);
-        File subDir = new File(root.getCanonicalPath() + '/' + SharedPrefConstants.APP_NAME + subDirName);
+        File subDir = new File(root.getCanonicalPath() + '/' + SharedPrefConstants.APP_NAME + '/' + subDirName);
         if(!subDir.exists()){
             subDir.mkdirs();
         }
@@ -860,5 +528,48 @@ public class AppManager implements Serializable{
             case MediaConsts.TYPE_IMAGE: return "Image";
             default : return "Others";
         }
+    }
+
+    public int getCurrentAppStatus(){
+        return sharedPrefUtil.getCurrentAppStatus();
+    }
+
+    public void setCurrentAppStatus(int appStatus){
+        sharedPrefUtil.setCurrentAppStatus(appStatus);
+        sharedPrefUtil.commit();
+        //command to show status notification. The notification util will decide whether to ot not to show the notification
+        showStatusNotification(true);
+    }
+
+    public String getDefaultWifiPass(){
+        return sharedPrefUtil.getDefaultWifiPass();
+    }
+
+    public String getUsername(){
+        return sharedPrefUtil.getUserName();
+    }
+
+    public String getThisDeviceId(){
+        return sharedPrefUtil.getThisDeviceId();
+    }
+
+    public void showStatusNotification(boolean show){
+        if(show){
+            notificationUtil.showToggleReceivingNotification();
+        } else {
+            notificationUtil.removeToggleNotification();
+        }
+    }
+
+    public void showInsuffSpaceNotific(){
+
+    }
+
+    public void showNoExtMediaNotific(){
+
+    }
+
+    public void showTransferSuccessNotific(){
+
     }
 }

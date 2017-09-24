@@ -4,14 +4,16 @@ import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.widget.Toast;
 
 import com.aj.sendall.application.AppManager;
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
+import com.aj.sendall.network.monitor.SocketSystem;
 import com.aj.sendall.network.runnable.abstr.AbstractServer;
 import com.aj.sendall.network.services.NewConnCreationServerService;
 import com.aj.sendall.network.utils.Constants;
-import com.aj.sendall.ui.interfaces.Updatable;
+import com.aj.sendall.network.monitor.Updatable;
 
 import java.net.ServerSocket;
 
@@ -20,11 +22,10 @@ public abstract class AbstractServerService extends IntentService {
     protected static final String ACTION_STOP = "com.aj.sendall.network.services.action.STOP";
 
     private static final Object syncObj = new Object();
-    private static boolean serverRunning = false;
     private AppManager appManager;
     private static Updatable activityToUpdate;
 
-    private int port;
+    private static SocketSystem socketSystem;
 
     public AbstractServerService(String serviceName) {
         super(serviceName);
@@ -34,6 +35,21 @@ public abstract class AbstractServerService extends IntentService {
     public void onCreate(){
         super.onCreate();
         this.appManager = getAppManager(this);
+        if(socketSystem == null){
+            socketSystem = SocketSystem.getInstance();
+            socketSystem.addServerModeStopListener(new Runnable() {
+                @Override
+                public void run() {
+                    appManager.stopHotspotAndScanning();
+                }
+            });
+            socketSystem.addServerModeStartListener(new Runnable() {
+                @Override
+                public void run() {
+                    appManager.initHotspot(getHotspotInitAppStatus(), socketSystem.getServerPortNo());
+                }
+            });
+        }
     }
 
     @Override
@@ -42,21 +58,21 @@ public abstract class AbstractServerService extends IntentService {
             if (intent != null) {
                 final String action = intent.getAction();
                 if (ACTION_START_NEW.equals(action)) {
-                    if(!serverRunning) {
-                        serverRunning = true;
+                    if(socketSystem.idle()) {
                         try {
-                            createHotspot(appManager, port);
-                            ServerSocket serverSocket = new ServerSocket(0);
-                            port = serverSocket.getLocalPort();
-                            createServerToStaticVariable(serverSocket, appManager, activityToUpdate);
+                            socketSystem.clear();
+                            socketSystem.startServerMode(0);
+                            createServerToStaticVariable(appManager, activityToUpdate);
                             activityToUpdate = null;
                             startServerAction();
                         } catch (Exception e) {
-                            serverRunning = false;
                             e.printStackTrace();
                         }
                     }
                 } else if (ACTION_STOP.equals(action)) {
+                    if(socketSystem.inServerMode()){
+                        socketSystem.stopServerMode();
+                    }
                     activityToUpdate = null;
                     stopCurrentServer();
                     afterStopped();
@@ -66,21 +82,18 @@ public abstract class AbstractServerService extends IntentService {
     }
 
     abstract protected AppManager getAppManager(Context context);
-    abstract protected boolean createServerToStaticVariable(ServerSocket serverSocket, AppManager appManager, Updatable updatableActivity);
+    abstract protected boolean createServerToStaticVariable(AppManager appManager, Updatable updatableActivity);
     abstract protected AbstractServer getServerFromAStaticVariable();
     abstract protected void setServerFromStaticVariableToNull();
     abstract protected void afterStopped();
-    abstract protected void createHotspot(AppManager appManager, int port);
-    abstract protected void shutdownHotspot(AppManager appManager);
+    abstract protected int getHotspotInitAppStatus();
 
     private void startServerAction(){
         try{
             new Handler().post(getServerFromAStaticVariable());
-            appManager.notificationUtil.removeToggleNotification();
         } catch (Exception e){
             e.printStackTrace();
-            appManager.sharedPrefUtil.setCurrentAppStatus(SharedPrefConstants.CURR_STATUS_IDLE);
-            appManager.sharedPrefUtil.commit();
+            socketSystem.stopServerMode();
             setServerFromStaticVariableToNull();
             Toast.makeText(getContext(), "Sorry!! Failed", Toast.LENGTH_SHORT).show();
         }
@@ -91,25 +104,29 @@ public abstract class AbstractServerService extends IntentService {
     }
 
     private void stopCurrentServer() {
-        shutdownHotspot(appManager);
         if(getServerFromAStaticVariable() != null){
-            Updatable.UpdateEvent event = new Updatable.UpdateEvent();
-            event.source = NewConnCreationServerService.class;
-            event.data.put(Constants.ACTION, Constants.CLOSE_SOCKET);
+            Updatable.UpdateEvent event = getStopUpdateEvent();
             getServerFromAStaticVariable().update(event);
             setServerFromStaticVariableToNull();
         }
-        serverRunning = false;
     }
 
-    public static void start(Context context, Updatable activityToUpdate, Class<?> serviceClass) {
+    @NonNull
+    private Updatable.UpdateEvent getStopUpdateEvent() {
+        Updatable.UpdateEvent event = new Updatable.UpdateEvent();
+        event.source = NewConnCreationServerService.class;
+        event.action = Constants.CLOSE_SOCKET;
+        return event;
+    }
+
+    protected static void start(Context context, Updatable activityToUpdate, Class<?> serviceClass) {
         Intent intent = new Intent(context, serviceClass);
         intent.setAction(ACTION_START_NEW);
         AbstractServerService.activityToUpdate = activityToUpdate;
         context.startService(intent);
     }
 
-    public static void stop(Context context, Class<?> serviceClass) {
+    protected static void stop(Context context, Class<?> serviceClass) {
         Intent intent = new Intent(context, serviceClass);
         intent.setAction(ACTION_STOP);
         context.startService(intent);

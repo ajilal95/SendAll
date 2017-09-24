@@ -5,7 +5,7 @@ import com.aj.sendall.db.model.Connections;
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.network.runnable.abstr.AbstractClientConnector;
 import com.aj.sendall.network.utils.Constants;
-import com.aj.sendall.ui.interfaces.Updatable;
+import com.aj.sendall.network.monitor.Updatable;
 
 import java.net.Socket;
 import java.util.Date;
@@ -28,10 +28,10 @@ public class NewConnCreationClientConnector extends AbstractClientConnector {
 
             UpdateEvent event = new UpdateEvent();
             event.source = this.getClass();
-            event.data.put(Constants.ACTION, Constants.ACCEPT_CONN);
-            event.data.put(SharedPrefConstants.USER_NAME, otherUserName);
-            event.data.put(SharedPrefConstants.DEVICE_ID, otherDeviceId);
-            event.data.put(UPDATE_CONST_SENDER, this);
+            event.action = Constants.ACCEPT_CONN;
+            event.putExtra(SharedPrefConstants.USER_NAME, otherUserName);
+            event.putExtra(SharedPrefConstants.DEVICE_ID, otherDeviceId);
+            event.putExtra(UPDATE_CONST_SENDER, this);
             updatableActivity.update(event);
         } catch(Exception e){
             e.printStackTrace();
@@ -40,7 +40,7 @@ public class NewConnCreationClientConnector extends AbstractClientConnector {
 
     @Override
     public void onUpdate(Updatable.UpdateEvent updateEvent) {
-        if(Constants.ACCEPT_CONN.equals(updateEvent.data.get(Constants.ACTION))){
+        if(Constants.ACCEPT_CONN.equals(updateEvent.action)){
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -51,8 +51,8 @@ public class NewConnCreationClientConnector extends AbstractClientConnector {
     }
 
     private void acceptConnComm() {
-        String thisUserName = appManager.sharedPrefUtil.getUserName();
-        String thisDeviceId = appManager.sharedPrefUtil.getThisDeviceId();
+        String thisUserName = appManager.getUsername();
+        String thisDeviceId = appManager.getThisDeviceId();
         try {
             dataOutputStream.writeUTF(thisUserName);
             dataOutputStream.writeUTF(thisDeviceId);
@@ -70,14 +70,14 @@ public class NewConnCreationClientConnector extends AbstractClientConnector {
                 connection.setSSID(otherDeviceId);
                 connection.setLastContaced(new Date());
                 appManager.dbUtil.saveOrUpdate(connection);
-                event.data.put(Constants.ACTION, Constants.SUCCESS);
+                event.action = Constants.SUCCESS;
             } else {
                 dataOutputStream.writeUTF(Constants.FAILED);
                 dataOutputStream.flush();
-                event.data.put(Constants.ACTION, Constants.FAILED);
+                event.action = Constants.FAILED;
             }
 
-            event.data.put(SharedPrefConstants.USER_NAME, otherUserName);
+            event.putExtra(SharedPrefConstants.USER_NAME, otherUserName);
             updatableActivity.update(event);
         } catch (Exception e){
             e.printStackTrace();

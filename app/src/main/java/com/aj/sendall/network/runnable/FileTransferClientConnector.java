@@ -76,7 +76,6 @@ class FileTransferClientConnector extends AbstractClientConnector {
         int fileCount = connectionsAndUris.fileInfoDTOs.size();
         while(!(request.equals(Constants.SUCCESS) || request.equals(Constants.FAILED))
                 && fileCount > 0){
-            fileCount--;
             String fileName = request;
             FileInfoDTO file = getFileInfoByFileName(fileName);
             if(file == null){
@@ -85,7 +84,7 @@ class FileTransferClientConnector extends AbstractClientConnector {
             } else {
                 dataOutputStream.writeUTF(Constants.SUCCESS);
                 //Now send this device id for the other device to confirm
-                dataOutputStream.writeUTF(appManager.sharedPrefUtil.getThisDeviceId());
+                dataOutputStream.writeUTF(appManager.getThisDeviceId());
                 String result = dataInputStream.readUTF();
                 if(!Constants.SUCCESS.equals(result)){
                     //Auth failed
@@ -149,6 +148,8 @@ class FileTransferClientConnector extends AbstractClientConnector {
             } catch (SocketException | SocketTimeoutException e){
                 break;
             }
+
+            fileCount--;
         }
 
     }
@@ -183,7 +184,7 @@ class FileTransferClientConnector extends AbstractClientConnector {
 
     private void closeConn(){
         UpdateEvent updateEvent = new UpdateEvent();
-        updateEvent.data.put(Constants.ACTION, Constants.CLOSE_SOCKET);
+        updateEvent.action = Constants.CLOSE_SOCKET;
         update(updateEvent);
     }
 }

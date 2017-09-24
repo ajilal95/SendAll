@@ -10,7 +10,7 @@ import com.aj.sendall.db.model.PersonalInteraction;
 import com.aj.sendall.db.util.StreamUtil;
 import com.aj.sendall.network.runnable.abstr.AbstractClient;
 import com.aj.sendall.network.utils.Constants;
-import com.aj.sendall.ui.interfaces.Updatable;
+import com.aj.sendall.network.monitor.Updatable;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -26,11 +26,20 @@ public class FileTransferClient extends AbstractClient {
     public static final String FAILED_NET_IO_ERR = "communication_error";
     public static final String FAILED_FILE_IO_ERR = "file_error";
     public static final String FAILED_IN_SUFF_SPACE = "insufficient_space";
+    public static final String TRANSFER_SUCCESS = "transfer-succes";
+
+    public static final String OP_FINISHED = "op-finished";
+    public static final String CLIENT_STATUS = "client-status";
+    private String clientStatus = TRANSFER_SUCCESS;
+    public static final String SSID = "ssid";
+    private String ssid;
 
     private Connections conn;
+    private Updatable opFinishedListener;
 
-    public FileTransferClient(String SSID, String passPhrase, int serverPort, Updatable updatable, AppManager appManager){
-        super(SSID, passPhrase, serverPort, updatable, appManager);
+    public FileTransferClient(String SSID, String passPhrase, int serverPort, AppManager appManager){
+        super(SSID, passPhrase, serverPort, null, appManager);
+        this.ssid = SSID;
     }
 
     @Override
@@ -42,7 +51,7 @@ public class FileTransferClient extends AbstractClient {
     protected void communicate() {
         try {
             //Authentication
-            String thisDeviceId = appManager.sharedPrefUtil.getThisDeviceId();
+            String thisDeviceId = appManager.getThisDeviceId();
             dataOutputStream.writeUTF(thisDeviceId);
 
             String authResult = dataInputStream.readUTF();
@@ -61,14 +70,14 @@ public class FileTransferClient extends AbstractClient {
                         transferFiles();
                     }
                 } else {
-                    failed(null);//At this stage there is no need for updating the ui regarding the failure
+                    failed(FAILED_AUTH_ERR);
                 }
             }
         } catch (Exception e){
             failed(FAILED_NET_IO_ERR);
+            closeStreams();
             e.printStackTrace();
         }
-        tryToCloseSocket();
     }
 
     private void transferFiles() throws Exception {
@@ -95,12 +104,13 @@ public class FileTransferClient extends AbstractClient {
                 }
                 File fileToWrite;
                 try {
-                    fileToWrite = appManager.getTempFileToWrite(fileName);
+                    fileToWrite = appManager.getTempFileToWrite(conn.getConnectionId(), fileName, mediaType);
                 } catch (Exception e){
                     failed(FAILED_FILE_IO_ERR);
                     return;
                 }
                 pi.setFilePath(fileToWrite.getCanonicalPath());
+                pi.setBytesTransfered(fileToWrite.length());
                 //For enabling pause and resume
                 long nextByteToRead = pi.getBytesTransfered() + 1;
                 dataOutputStream.writeLong(nextByteToRead);
@@ -109,6 +119,7 @@ public class FileTransferClient extends AbstractClient {
                     transferSingleFile(fileToWrite, fileName, bytesRemaining, pi);
                 } else {
                     failed(FAILED_IN_SUFF_SPACE);
+                    return;
                 }
             }
         }
@@ -211,13 +222,29 @@ public class FileTransferClient extends AbstractClient {
         return mExternalStorageWriteable;
     }
 
-    private void failed(String action){
-        tryToCloseSocket();
+    private void failed(String failureReason){
         if(updatable != null) {
             UpdateEvent event = new UpdateEvent();
             event.source = this.getClass();
-            event.data.put(Constants.ACTION, action);
+            event.action = failureReason;
             updatable.update(event);
         }
+        clientStatus = failureReason;
+    }
+
+    @Override
+    protected void finalAction(){
+        if(opFinishedListener != null){
+            UpdateEvent ev = new UpdateEvent();
+            ev.source = FileTransferClient.class;
+            ev.action = OP_FINISHED;
+            ev.putExtra(CLIENT_STATUS,clientStatus);
+            ev.putExtra(SSID, ssid);
+            opFinishedListener.update(ev);
+        }
+    }
+
+    public void setOpFinisedListener(Updatable u){
+        this.opFinishedListener = u;
     }
 }

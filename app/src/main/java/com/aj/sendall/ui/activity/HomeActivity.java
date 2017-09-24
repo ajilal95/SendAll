@@ -11,7 +11,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.SearchView;
@@ -29,7 +28,7 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-public class Home extends AppCompatActivity {
+public class HomeActivity extends AppCompatActivity {
     @Inject
     public AppManager appManager;
 
@@ -46,10 +45,6 @@ public class Home extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         ((AndroidApplication) getApplication()).getDaggerInjector().inject(this);
         setContentView(R.layout.activity_home);
-
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_home);
-        setSupportActionBar(toolbar);
-
         checkPerms();
     }
 
@@ -68,7 +63,7 @@ public class Home extends AppCompatActivity {
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            Home.this.finish();
+                            HomeActivity.this.finish();
                         }
                     }
             );
@@ -136,7 +131,7 @@ public class Home extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.action_settings) {
-            Intent settings = new Intent(this, Settings.class);
+            Intent settings = new Intent(this, SettingsActivity.class);
             startActivity(settings);
             return true;
         }
@@ -184,14 +179,14 @@ public class Home extends AppCompatActivity {
 
         private ConnectionsFragment getConnectionsFragment() {
             if (connectionsFragment == null) {
-                connectionsFragment = ConnectionsFragment.newInstance(Home.this, ConnectionsConstants.PURPOSE_VIEW);
+                connectionsFragment = ConnectionsFragment.newInstance(HomeActivity.this, ConnectionsConstants.PURPOSE_VIEW);
             }
             return connectionsFragment;
         }
 
         private GalleryFragment getGalleryFragment() {
             if (galleryFragment == null) {
-                galleryFragment = GalleryFragment.newInstance(Home.this);
+                galleryFragment = GalleryFragment.newInstance(HomeActivity.this);
             }
             return galleryFragment;
         }

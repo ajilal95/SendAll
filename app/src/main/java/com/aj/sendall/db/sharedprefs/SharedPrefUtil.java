@@ -39,11 +39,8 @@ public class SharedPrefUtil {
             case SharedPrefConstants.CURR_STATUS_IDLE:
                 Toast.makeText(context, "Idle", Toast.LENGTH_LONG).show();
                 break;
-            case SharedPrefConstants.CURR_STATUS_RECEIVABLE:
-                Toast.makeText(context, "Receivable", Toast.LENGTH_LONG).show();
-                break;
-            case SharedPrefConstants.CURR_STATUS_SENDING:
-                Toast.makeText(context, "Sending", Toast.LENGTH_LONG).show();
+            case SharedPrefConstants.CURR_STATUS_TRANSFERRING:
+                Toast.makeText(context, "Transferring", Toast.LENGTH_LONG).show();
                 break;
         }
     }
@@ -54,14 +51,6 @@ public class SharedPrefUtil {
 
     public void setCurrentAppStatus(int value){
         getEditor().putInt(SharedPrefConstants.CURR_APP_STATE, value);
-    }
-
-    public boolean isAutoScanOnWifiEnabled(){
-        return getSharedPrefs().getBoolean(SharedPrefConstants.IS_AUTOSCAN_ON_WIFI_ENABLED, false);
-    }
-
-    public void setAutoScanOnWifiEnabled(boolean isAutoScan){
-        getEditor().putBoolean(SharedPrefConstants.IS_AUTOSCAN_ON_WIFI_ENABLED, isAutoScan);
     }
 
     public String getUserName() throws IllegalStateException{
@@ -90,19 +79,6 @@ public class SharedPrefUtil {
     }
 
     private String createIdForThisDevice(){
-        /*//creating a random string
-        char[] candidate =  new char[]{ 'A', 'B', 'C', 'D', 'E', 'F', 'G',
-                                        'H', 'I', 'J', 'K', 'L', 'M', 'N',
-                                        'O', 'P', 'Q', 'R', 'S', 'T', 'U',
-                                        'V', 'W', 'X', 'Y', 'Z',
-                                        '0', '1', '2', '3', '4', '5', '6',
-                                        '7', '8', '9' };
-        StringBuilder idRandomize = new StringBuilder();
-        Random random = new Random();
-        for(int i = 0; i < SharedPrefConstants.THIS_DEVICE_ID_LENGTH; i++){
-            idRandomize.append(candidate[random.nextInt(36)]);
-        }*/
-        /*String thisDeviceId = SharedPrefConstants.DEVICE_ID_PREFIX + idRandomize.toString();*/
         String thisDeviceId = SharedPrefConstants.DEVICE_ID_PREFIX
                 + getStringForLong(System.currentTimeMillis(), SharedPrefConstants.THIS_DEVICE_ID_LENGTH);
         getEditor().putString(SharedPrefConstants.DEVICE_ID, thisDeviceId);

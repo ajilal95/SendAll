@@ -11,7 +11,7 @@ import android.widget.ToggleButton;
 
 import com.aj.sendall.R;
 
-public class Settings extends AppCompatActivity {
+public class SettingsActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

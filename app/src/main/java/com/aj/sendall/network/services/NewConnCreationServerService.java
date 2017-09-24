@@ -8,7 +8,7 @@ import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.network.runnable.NewConnCreationServer;
 import com.aj.sendall.network.runnable.abstr.AbstractServer;
 import com.aj.sendall.network.services.abstr.AbstractServerService;
-import com.aj.sendall.ui.interfaces.Updatable;
+import com.aj.sendall.network.monitor.Updatable;
 
 import java.net.ServerSocket;
 
@@ -33,9 +33,9 @@ public class NewConnCreationServerService extends AbstractServerService {
     }
 
     @Override
-    protected boolean createServerToStaticVariable(ServerSocket serverSocket, AppManager appManager, Updatable connectorActivity){
+    protected boolean createServerToStaticVariable(AppManager appManager, Updatable connectorActivity){
         if(currServer == null){
-            currServer = new NewConnCreationServer(serverSocket, appManager, connectorActivity);
+            currServer = new NewConnCreationServer(appManager, connectorActivity);
             return true;
         } else {
             return false;
@@ -43,13 +43,8 @@ public class NewConnCreationServerService extends AbstractServerService {
     }
 
     @Override
-    protected void createHotspot(AppManager appManager, int port){
-        appManager.initHotspotForNewConnCreation(SharedPrefConstants.CURR_STATUS_CEATING_CONNECTION, port);
-    }
-
-    @Override
-    protected void shutdownHotspot(AppManager appManager){
-        appManager.stopHotspotAndScanning();
+    protected int getHotspotInitAppStatus() {
+        return SharedPrefConstants.CURR_STATUS_CEATING_CONNECTION;
     }
 
     @Override
@@ -65,5 +60,13 @@ public class NewConnCreationServerService extends AbstractServerService {
     @Override
     public void afterStopped(){
         currServer = null;
+    }
+
+    public static void start(Context context, Updatable activityToUpdate) {
+        start(context, activityToUpdate, NewConnCreationServerService.class);
+    }
+
+    public static void stop(Context context) {
+        stop(context, NewConnCreationServerService.class);
     }
 }

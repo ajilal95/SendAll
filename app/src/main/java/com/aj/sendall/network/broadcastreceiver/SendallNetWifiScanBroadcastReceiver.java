@@ -7,7 +7,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 
 import com.aj.sendall.db.sharedprefs.SharedPrefUtil;
-import com.aj.sendall.ui.interfaces.Updatable;
+import com.aj.sendall.network.monitor.Updatable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +42,7 @@ public class SendallNetWifiScanBroadcastReceiver extends BroadcastReceiver {
                 if(!filteredResults.isEmpty()) {
                     Updatable.UpdateEvent event = new Updatable.UpdateEvent();
                     event.source = this.getClass();
-                    event.data.put(UPDATE_EXTRA_RESULT, filteredResults);
+                    event.putExtra(UPDATE_EXTRA_RESULT, filteredResults);
                     if (updatable != null) {
                         updatable.update(event);
                     }

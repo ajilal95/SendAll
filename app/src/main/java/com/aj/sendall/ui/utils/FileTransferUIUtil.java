@@ -5,6 +5,7 @@ import com.aj.sendall.db.dto.ConnectionViewData;
 import com.aj.sendall.db.dto.ConnectionsAndUris;
 import com.aj.sendall.db.dto.FileInfoDTO;
 import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
+import com.aj.sendall.network.services.FileTransferServerService;
 
 import java.util.Set;
 
@@ -13,13 +14,13 @@ import javax.inject.Singleton;
 
 
 @Singleton
-public final class FileSendingUtil {
+public final class FileTransferUIUtil {
     private  ConnectionsAndUris connectionsAndUris;
 
     private AppManager appManager;
 
     @Inject
-    FileSendingUtil(AppManager appManager){
+    FileTransferUIUtil(AppManager appManager){
         this.appManager = appManager;
     }
 
@@ -60,10 +61,11 @@ public final class FileSendingUtil {
     }
 
     private boolean isOkayToSend(){
-        return appManager.sharedPrefUtil.getCurrentAppStatus() == SharedPrefConstants.CURR_STATUS_IDLE;
+        return appManager.getCurrentAppStatus() == SharedPrefConstants.CURR_STATUS_IDLE;
     }
 
     private void send(){
+        FileTransferServerService.start(appManager.context, getConnectionsAndUris());
     }
 
 //    private static void addCurrentToSendQueue(){

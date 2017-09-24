@@ -2,7 +2,7 @@ package com.aj.sendall.network.runnable.abstr;
 
 import com.aj.sendall.application.AppManager;
 import com.aj.sendall.network.utils.Constants;
-import com.aj.sendall.ui.interfaces.Updatable;
+import com.aj.sendall.network.monitor.Updatable;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -38,7 +38,7 @@ abstract public class AbstractClientConnector implements Runnable, Updatable {
 
     abstract protected void postStreamSetup();
 
-    private void closeSocket(){
+    void closeStreams(){
         try {
             dataInputStream.close();
         } catch (Exception e){
@@ -49,17 +49,15 @@ abstract public class AbstractClientConnector implements Runnable, Updatable {
         } catch(Exception e) {
             e.printStackTrace();
         }
-        try{
-            socket.close();
-        } catch (Exception e){
-            e.printStackTrace();
-        }
     }
 
     public final void update(UpdateEvent updateEvent){
-        if(Constants.CLOSE_SOCKET.equals(updateEvent.data.get(Constants.ACTION))){
-            closeSocket();
-            return;//no need to go furhter to onUpdate()
+        if(Constants.CLOSE_SOCKET.equals(updateEvent.action)){
+            try{
+                socket.close();
+            } catch (Exception e){
+                e.printStackTrace();
+            }
         }
         //for child class specific updates
         onUpdate(updateEvent);

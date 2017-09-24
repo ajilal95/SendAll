@@ -15,15 +15,15 @@ import android.widget.Toast;
 
 import com.aj.sendall.R;
 import com.aj.sendall.application.AndroidApplication;
-import com.aj.sendall.ui.activity.Connector;
-import com.aj.sendall.ui.activity.Home;
-import com.aj.sendall.ui.activity.PersonalInteractionView;
+import com.aj.sendall.ui.activity.ConnectionCreatorActivity;
+import com.aj.sendall.ui.activity.HomeActivity;
+import com.aj.sendall.ui.activity.PersonalInteractionsActivity;
 import com.aj.sendall.ui.activity.SelectMediaActivity;
 import com.aj.sendall.ui.adapter.ConnectionAdapter;
 import com.aj.sendall.ui.consts.ConnectionsConstants;
 import com.aj.sendall.db.dto.ConnectionViewData;
 import com.aj.sendall.ui.utils.ConnectionsActivityUtil;
-import com.aj.sendall.ui.utils.FileSendingUtil;
+import com.aj.sendall.ui.utils.FileTransferUIUtil;
 import com.aj.sendall.ui.interfaces.ItemFilterableView;
 import com.aj.sendall.ui.utils.CommonUiUtils;
 
@@ -43,7 +43,7 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
     @Inject
     public ConnectionsActivityUtil connectionsActivityUtil;
     @Inject
-    public FileSendingUtil fileSendingUtil;
+    public FileTransferUIUtil fileTransferUIUtil;
 
     public static ConnectionsFragment newInstance(Activity parentActivity, String purpose){
         ConnectionsFragment connectionsFragment = new ConnectionsFragment();
@@ -116,7 +116,7 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
     private class ListViewItemClickListenerForPurposeView implements AdapterView.OnItemClickListener{
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            Intent personalInteractionView = new Intent(parentActivity, PersonalInteractionView.class);
+            Intent personalInteractionView = new Intent(parentActivity, PersonalInteractionsActivity.class);
             personalInteractionView.putExtra("id", ((ConnectionViewData)view.getTag()).profileId);
             personalInteractionView.putExtra("title", ((ConnectionViewData)view.getTag()).profileName);
             parentActivity.startActivity(personalInteractionView);
@@ -165,7 +165,7 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
     private class FltBtnClickListenerForAdd implements View.OnClickListener{
         @Override
         public void onClick(View view) {
-            Intent connectorIntent = new Intent(parentActivity, Connector.class);
+            Intent connectorIntent = new Intent(parentActivity, ConnectionCreatorActivity.class);
             parentActivity.startActivity(connectorIntent);
         }
     }
@@ -179,13 +179,13 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
 
         @Override
         public void onClick(View view) {
-            FileSendingUtil.SendOperationResult result = fileSendingUtil.send_to(receivers);
-            if(FileSendingUtil.SendOperationResult.URI_EMPTY.equals(result)){
+            FileTransferUIUtil.SendOperationResult result = fileTransferUIUtil.send_to(receivers);
+            if(FileTransferUIUtil.SendOperationResult.URI_EMPTY.equals(result)){
                 Intent fileSelectIntent = new Intent(parentActivity, SelectMediaActivity.class);
                 parentActivity.startActivity(fileSelectIntent);
-            } else if(FileSendingUtil.SendOperationResult.SENDING.equals(result)){
+            } else if(FileTransferUIUtil.SendOperationResult.SENDING.equals(result)){
                 Toast.makeText(parentActivity, "Sending..", Toast.LENGTH_SHORT).show();
-                if(!(parentActivity instanceof Home)){
+                if(!(parentActivity instanceof HomeActivity)){
                     parentActivity.finish();
                 }
             }

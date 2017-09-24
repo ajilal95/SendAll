@@ -11,13 +11,11 @@ import android.widget.TextView;
 
 import com.aj.sendall.R;
 import com.aj.sendall.db.dto.ConnectionViewData;
-import com.aj.sendall.ui.activity.Connector;
-import com.aj.sendall.ui.interfaces.Updatable;
+import com.aj.sendall.ui.activity.ConnectionCreatorActivity;
+import com.aj.sendall.network.monitor.Updatable;
 import com.bumptech.glide.Glide;
 
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.Map;
 
 /**
  * Created by ajilal on 4/7/17.
@@ -79,9 +77,9 @@ public class ConnectorAdapter extends RecyclerView.Adapter {
                 public void onClick(View v) {
                     Updatable.UpdateEvent event = new Updatable.UpdateEvent();
                     event.source = ConnectorAdapter.class;
-                    event.data.put(UPDATE_CONST_SELECTED_CONN, itemView.getTag());
+                    event.putExtra(UPDATE_CONST_SELECTED_CONN, itemView.getTag());
 
-                    ((Connector)containerActivity).update(event);
+                    ((ConnectionCreatorActivity)containerActivity).update(event);
                 }
             });
         }

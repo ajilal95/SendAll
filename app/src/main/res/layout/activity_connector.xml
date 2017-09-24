@@ -5,7 +5,7 @@
     android:id="@+id/activity_connector"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.aj.sendall.ui.activity.Connector">
+    tools:context="com.aj.sendall.ui.activity.ConnectionCreatorActivity">
 
     <android.support.v7.widget.RecyclerView
         android:layout_width="match_parent"

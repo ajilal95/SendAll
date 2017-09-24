@@ -9,10 +9,6 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 
-/**
- * Created by ajilal on 13/6/17.
- */
-
 @Module
 public class DModule {
     public static final String NAME_WIFI_GROUP_HANDLER = "wifi_group_handler";

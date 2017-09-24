@@ -6,10 +6,7 @@ import android.content.Intent;
 import com.aj.sendall.depndency.dagger.DComponent;
 import com.aj.sendall.depndency.dagger.DModule;
 import com.aj.sendall.depndency.dagger.DaggerDComponent;
-
-/**
- * Created by ajilal on 14/6/17.
- */
+import com.aj.sendall.network.monitor.SocketSystem;
 
 public class AndroidApplication extends Application {
     private DComponent dComponent;

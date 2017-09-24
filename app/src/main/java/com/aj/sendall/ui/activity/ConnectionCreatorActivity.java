@@ -25,7 +25,7 @@ import com.aj.sendall.network.services.NewConnCreationClientService;
 import com.aj.sendall.network.services.NewConnCreationServerService;
 import com.aj.sendall.network.utils.Constants;
 import com.aj.sendall.ui.adapter.ConnectorAdapter;
-import com.aj.sendall.ui.interfaces.Updatable;
+import com.aj.sendall.network.monitor.Updatable;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -34,7 +34,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-public class Connector extends AppCompatActivity implements Updatable {
+public class ConnectionCreatorActivity extends AppCompatActivity implements Updatable {
     private RecyclerView availableConns;
     private LinearLayout transBgLayout;
     private ProgressBar pBarLoadingConns;
@@ -54,8 +54,6 @@ public class Connector extends AppCompatActivity implements Updatable {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_connector);
         ((AndroidApplication)getApplication()).getDaggerInjector().inject(this);
-
-        appManager.notificationUtil.removeToggleNotification();
 
         usernameToConnSender = new HashMap<>();
 
@@ -92,10 +90,9 @@ public class Connector extends AppCompatActivity implements Updatable {
 
                 new Handler().postDelayed(updateUI, 2000);
 
-                appManager.initHotspotForNewConnCreation(SharedPrefConstants.CURR_STATUS_CEATING_CONNECTION);
                 selectedAction = Action.CREATE;
                 animateViewsOnButtonClicked(v);
-                NewConnCreationServerService.start(Connector.this, Connector.this, NewConnCreationServerService.class);
+                NewConnCreationServerService.start(ConnectionCreatorActivity.this, ConnectionCreatorActivity.this);
             }
         });
 
@@ -109,7 +106,7 @@ public class Connector extends AppCompatActivity implements Updatable {
 
                 new Handler().postDelayed(updateUI, 2000);
 
-                appManager.startScanningWifi(Connector.this, SharedPrefConstants.CURR_STATUS_RECEIVABLE);
+                appManager.startScanningWifi(ConnectionCreatorActivity.this, SharedPrefConstants.CURR_STATUS_CEATING_CONNECTION);
                 selectedAction = Action.JOIN;
                 animateViewsOnButtonClicked(v);
             }
@@ -143,65 +140,64 @@ public class Connector extends AppCompatActivity implements Updatable {
         super.onPause();
 
         if(Action.CREATE.equals(selectedAction)) {
-            NewConnCreationServerService.stop(this, NewConnCreationServerService.class);
+            NewConnCreationServerService.stop(this);
         } else if(Action.JOIN.equals(selectedAction)){
-            NewConnCreationClientService.stop(this, NewConnCreationClientService.class);
+            NewConnCreationClientService.stop(this);
         }
 
         if(updateUI != null) {
             updateUI.setInactive();
         }
         appManager.stopHotspotAndScanning();
-        appManager.notificationUtil.showToggleReceivingNotification();
         finish();
     }
 
     @Override
     protected void onResume(){
         super.onResume();
-        appManager.notificationUtil.removeToggleNotification();
     }
 
     @Override
     public void update(UpdateEvent updateEvent) {
         if(NewConnCreationClientConnector.class.equals(updateEvent.source)){
-            if(Constants.ACCEPT_CONN.equals(updateEvent.data.get(Constants.ACTION))) {
-                String username = (String) updateEvent.data.get(SharedPrefConstants.USER_NAME);
+            if(Constants.ACCEPT_CONN.equals(updateEvent.action)) {
+                String username = (String) updateEvent.getExtra(SharedPrefConstants.USER_NAME);
                 //A new connection request arrived. add it to the ui
-                usernameToConnSender.put(username, (NewConnCreationClientConnector) updateEvent.data.get(NewConnCreationClientConnector.UPDATE_CONST_SENDER));
-                updateUI.addNew(username, (String) updateEvent.data.get(SharedPrefConstants.DEVICE_ID));
-            } else if(Constants.SUCCESS.equals(updateEvent.data.get(Constants.ACTION))){
+                usernameToConnSender.put(username, (NewConnCreationClientConnector) updateEvent.getExtra(NewConnCreationClientConnector.UPDATE_CONST_SENDER));
+                updateUI.addNew(username, (String) updateEvent.getExtra(SharedPrefConstants.DEVICE_ID));
+            } else if(Constants.SUCCESS.equals(updateEvent.action)){
                 goHome();
             }
 
         } else if(ConnectorAdapter.class.equals(updateEvent.source)){
-            ConnectionViewData conn = (ConnectionViewData) updateEvent.data.get(ConnectorAdapter.UPDATE_CONST_SELECTED_CONN);
+            ConnectionViewData conn = (ConnectionViewData) updateEvent.getExtra(ConnectorAdapter.UPDATE_CONST_SELECTED_CONN);
             if(Action.CREATE.equals(selectedAction)){
                 NewConnCreationClientConnector clientConn = usernameToConnSender.get(conn.profileName);
                 if(clientConn != null){
                     UpdateEvent event = new UpdateEvent();
                     event.source = this.getClass();
-                    event.data.put(Constants.ACTION, Constants.ACCEPT_CONN);
+                    event.action = Constants.ACCEPT_CONN;
                     clientConn.update(event);
                 }
                 transBgLayout.setVisibility(View.VISIBLE);
             } else if(Action.JOIN.equals(selectedAction)){
                 appManager.stopWifiScanning();
                 String SSID = conn.uniqueId;
-                String pass = appManager.sharedPrefUtil.getDefaultWifiPass();
-                int port = appManager.sharedPrefUtil.getDefServerPort();
+                String pass = appManager.getDefaultWifiPass();
+//                int port = appManager.sharedPrefUtil.getDefServerPort();
+                int port = Integer.valueOf(SSID.split("_")[1]);
                 NewConnCreationClient client = new NewConnCreationClient(SSID, pass, port, this, appManager);
                 transBgLayout.setVisibility(View.VISIBLE);
-                NewConnCreationClientService.start(this, client, NewConnCreationClientService.class);
+                NewConnCreationClientService.start(this, client);
             }
         } else if(NewConnCreationClient.class.equals(updateEvent.source)){
-            if(Constants.SUCCESS.equals(updateEvent.data.get(Constants.ACTION))){
+            if(Constants.SUCCESS.equals(updateEvent.action)){
                 goHome();
-            } else if(Constants.FAILED.equals(updateEvent.data.get(Constants.ACTION))){
+            } else if(Constants.FAILED.equals(updateEvent.action)){
                 Log.i(this.getClass().getSimpleName(), "Socket connection failed");
             }
         } else if(SendallNetWifiScanBroadcastReceiver.class.equals(updateEvent.source)){
-            @SuppressWarnings({"unchecked"}) List<ScanResult> scanResults = (List<ScanResult>) updateEvent.data.get(SendallNetWifiScanBroadcastReceiver.UPDATE_EXTRA_RESULT);
+            @SuppressWarnings({"unchecked"}) List<ScanResult> scanResults = (List<ScanResult>) updateEvent.getExtra(SendallNetWifiScanBroadcastReceiver.UPDATE_EXTRA_RESULT);
             if(scanResults != null){
                 for(ScanResult scanResult : scanResults){
                     updateUI.addNew(scanResult.SSID);
@@ -211,8 +207,7 @@ public class Connector extends AppCompatActivity implements Updatable {
     }
 
     private void goHome(){
-        appManager.notificationUtil.showToggleReceivingNotification();
-        Intent home = new Intent(this, Home.class);
+        Intent home = new Intent(this, HomeActivity.class);
         startActivity(home);
     }
 
@@ -258,9 +253,9 @@ public class Connector extends AppCompatActivity implements Updatable {
         //For JOIN Action, SSID must be containing the username separated by an '_'
         private void addNew(String SSID){
             synchronized (connectionViewDatas){
-                int sepIndex = SSID.indexOf('_');
+                String[] parts = SSID.split("_");
                 ConnectionViewData conn = new ConnectionViewData();
-                conn.profileName = SSID.substring(sepIndex + 1, SSID.length());
+                conn.profileName = parts[2];
                 conn.uniqueId = SSID;
 
                 int posToIns = getIndex(SSID);
@@ -292,15 +287,6 @@ public class Connector extends AppCompatActivity implements Updatable {
                 changed = true;
             }
         }
-        /*private void remove(String SSID){
-            synchronized (connectionViewDatas){
-                int posToDelete = getIndex(SSID);
-                if(posToDelete != -1){
-                    connectionViewDatas.remove(posToDelete);
-                    changed = true;
-                }
-            }
-        }*/
 
         private int getIndex(String ssid){
             int matchIndex = -1;

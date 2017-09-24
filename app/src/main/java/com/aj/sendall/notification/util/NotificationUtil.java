@@ -39,34 +39,34 @@ public class NotificationUtil {
         int currentAppStatus = sharedPrefUtil.getCurrentAppStatus();
 
         //Do not show the notification of enable scanning while the application is sending
-        if((currentAppStatus == SharedPrefConstants.CURR_STATUS_IDLE || currentAppStatus == SharedPrefConstants.CURR_STATUS_RECEIVABLE)) {
+        Intent serviceIntent = new Intent(context, ToggleReceiverService.class);
 
-            Intent serviceIntent = new Intent(context, ToggleReceiverService.class);
-            PendingIntent pendingServiceIntent = PendingIntent.getService(context, 0, serviceIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-            NotificationCompat.Builder notiBuilder = new NotificationCompat.Builder(context);
-            int actionIcon;
-            String actionMessage;
-            String notificationTitle;
-            if (currentAppStatus == SharedPrefConstants.CURR_STATUS_IDLE) {
-                actionIcon = R.drawable.toggle_rec_start;
-                actionMessage = "Enable";
-                notificationTitle = "Send All(Inactive)";
-            } else {
-                actionIcon = R.drawable.toggle_rec_stop;
-                actionMessage = "Disable";
-                notificationTitle = "Send All(Active)";
-            }
-            notiBuilder.setContentTitle(notificationTitle);
-            notiBuilder.addAction(actionIcon, actionMessage, pendingServiceIntent);
-            notiBuilder.setSmallIcon(R.drawable.toggle_rec_notif_icon);
-            notiBuilder.setOngoing(true);
-
-            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-            notificationManager.notify(NotifConsts.NOTIF_ID_TOGGLE_RECEIVING, notiBuilder.build());
+        NotificationCompat.Builder notiBuilder = new NotificationCompat.Builder(context);
+        int actionIcon;
+        String actionMessage;
+        String notificationTitle;
+        if (currentAppStatus == SharedPrefConstants.CURR_STATUS_IDLE) {
+            actionIcon = R.drawable.toggle_rec_start;
+            actionMessage = "Enable";
+            notificationTitle = "Send All";
+            serviceIntent.putExtra(ToggleReceiverService.ACTION, ToggleReceiverService.ACTION_START);
         } else {
-            removeToggleNotification();
+            actionIcon = R.drawable.toggle_rec_stop;
+            actionMessage = "Disable";
+            String currentOp = currentAppStatus == SharedPrefConstants.CURR_STATUS_CEATING_CONNECTION ?
+                    "Creating connection" : "Transferring";
+            notificationTitle = "Send All(" + currentOp + ')';
+            serviceIntent.putExtra(ToggleReceiverService.ACTION, ToggleReceiverService.ACTION_STOP);
         }
+        PendingIntent pendingServiceIntent = PendingIntent.getService(context, 0, serviceIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        notiBuilder.setContentTitle(notificationTitle);
+        notiBuilder.addAction(actionIcon, actionMessage, pendingServiceIntent);
+        notiBuilder.setSmallIcon(R.drawable.toggle_rec_notif_icon);
+        notiBuilder.setOngoing(true);
+
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(NotifConsts.NOTIF_ID_TOGGLE_RECEIVING, notiBuilder.build());
     }
 
     public void removeToggleNotification(){

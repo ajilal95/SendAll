@@ -4,7 +4,7 @@ import com.aj.sendall.application.AppManager;
 import com.aj.sendall.db.model.Connections;
 import com.aj.sendall.network.runnable.abstr.AbstractClient;
 import com.aj.sendall.network.utils.Constants;
-import com.aj.sendall.ui.interfaces.Updatable;
+import com.aj.sendall.network.monitor.Updatable;
 
 import java.net.Socket;
 import java.util.Date;
@@ -17,18 +17,13 @@ public class NewConnCreationClient extends AbstractClient {
     }
 
     protected void configureSocket(Socket socket){
-        /*try {
-            socket.setSoTimeout(60000);
-        } catch (Exception e){
-            e.printStackTrace();
-        }*/
     }
 
     protected void communicate(){
         if(dataInputStream != null && dataOutputStream != null){
             try {
-                String thisUserName = appManager.sharedPrefUtil.getUserName();
-                String thisDeviceId = appManager.sharedPrefUtil.getThisDeviceId();
+                String thisUserName = appManager.getUsername();
+                String thisDeviceId = appManager.getThisDeviceId();
 
                 dataOutputStream.writeUTF(thisUserName);
                 dataOutputStream.writeUTF(thisDeviceId);
@@ -52,7 +47,7 @@ public class NewConnCreationClient extends AbstractClient {
 
                 UpdateEvent event = new UpdateEvent();
                 event.source = this.getClass();
-                event.data.put(Constants.ACTION, Constants.SUCCESS);
+                event.action = Constants.SUCCESS;
                 updatable.update(event);
             }catch (Exception e){
                 try {
@@ -65,4 +60,6 @@ public class NewConnCreationClient extends AbstractClient {
             }
         }
     }
+
+    protected void finalAction(){}
 }

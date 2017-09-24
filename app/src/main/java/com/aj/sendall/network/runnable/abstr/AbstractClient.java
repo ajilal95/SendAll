@@ -1,8 +1,9 @@
 package com.aj.sendall.network.runnable.abstr;
 
 import com.aj.sendall.application.AppManager;
+import com.aj.sendall.network.monitor.SocketSystem;
 import com.aj.sendall.network.utils.Constants;
-import com.aj.sendall.ui.interfaces.Updatable;
+import com.aj.sendall.network.monitor.Updatable;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -23,6 +24,7 @@ public abstract class AbstractClient implements Runnable, Updatable {
     protected DataOutputStream dataOutputStream;
     private int connAttemptsRemining = 5;//Try 5 times to connect
     private boolean active = true;//to make sure that reconnection is not tried after user closes the connection
+    protected SocketSystem socketSystem = SocketSystem.getInstance();
 
     public AbstractClient(String SSID, String passPhrase, int serverPort, Updatable updatable, AppManager appManager){
         this.SSID = SSID;
@@ -38,15 +40,23 @@ public abstract class AbstractClient implements Runnable, Updatable {
         if(serverAdd != null){
             tryToOpenSocket(serverAdd);
             communicate();
+            tryToCloseSocket();
         }
-        tryToCloseSocket();
+        finalAction();
     }
 
     abstract protected void configureSocket(Socket socket);
+    abstract protected void finalAction();
 
     private void tryToOpenSocket(InetAddress serverAdd){
         try {
-            socket = new Socket(serverAdd, port);
+            socket = socketSystem.createClientSocket(serverAdd, port);
+            socketSystem.addSocketCloseListener(socket, new Updatable() {
+                @Override
+                public void update(UpdateEvent updateEvent) {
+                    closeStreams();
+                }
+            });
             configureSocket(socket);
             dataInputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
             dataOutputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
@@ -78,9 +88,23 @@ public abstract class AbstractClient implements Runnable, Updatable {
         }
     }
 
+    protected void closeStreams(){
+        try{
+            dataInputStream.close();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+        try{
+            dataOutputStream.close();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void update(UpdateEvent updateEvent) {
-        if(Constants.CLOSE_SOCKET.equals(updateEvent.data.get(Constants.ACTION))){
+        if(Constants.CLOSE_SOCKET.equals(updateEvent.action)){
             tryToCloseSocket();
             socket = null;
         }
