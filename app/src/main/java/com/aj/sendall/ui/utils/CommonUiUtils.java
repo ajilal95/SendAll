@@ -5,26 +5,21 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.graphics.Point;
 import android.net.Uri;
-import android.provider.MediaStore;
 import android.view.Display;
 import android.view.View;
 import android.widget.ImageView;
 
 import com.aj.sendall.R;
-import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.db.dto.FileInfoDTO;
+import com.aj.sendall.ui.consts.MediaConsts;
 import com.bumptech.glide.Glide;
-
-/**
- * Created by ajilal on 1/5/17.
- */
 
 public class CommonUiUtils {
     private static Point point = null;
 
     public static String getFileSizeString(long size){
         String sizeStringFinal;
-        if(size < 1024l){
+        if(size < 1024L){
             sizeStringFinal = size + " Bytes";
         } else if(size < (1024 * 1024)){
             sizeStringFinal = (size / 1024) + " KB";
@@ -109,7 +104,7 @@ public class CommonUiUtils {
         }
     }
 
-    public static int getLocalMediaType(int uriMediaType) {
+    /*public static int getLocalMediaType(int uriMediaType) {
         switch(uriMediaType){
             case MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO:
                 return MediaConsts.TYPE_VIDEO;
@@ -120,7 +115,7 @@ public class CommonUiUtils {
             default:
                 return MediaConsts.TYPE_OTHER;
         }
-    }
+    }*/
 
     public static int getGallerySectionWidth(Activity activity){
         if(point == null) {

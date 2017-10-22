@@ -14,7 +14,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.aj.sendall.R;
-import com.aj.sendall.application.AndroidApplication;
+import com.aj.sendall.application.ThisApplication;
 import com.aj.sendall.ui.activity.ConnectionCreatorActivity;
 import com.aj.sendall.ui.activity.HomeActivity;
 import com.aj.sendall.ui.activity.PersonalInteractionsActivity;
@@ -50,7 +50,7 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
         connectionsFragment.parentActivity = parentActivity;
         connectionsFragment.purpose = purpose;
         connectionsFragment.adapter = new ConnectionAdapter(null, parentActivity);
-        ((AndroidApplication)parentActivity.getApplication()).getDaggerInjector().inject(connectionsFragment);
+        ((ThisApplication)parentActivity.getApplication()).getDaggerInjector().inject(connectionsFragment);
 
         return connectionsFragment;
     }
@@ -173,7 +173,7 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
     private class FltBtnClickListenerForSend implements View.OnClickListener{
         private Set<ConnectionViewData> receivers;
 
-        public FltBtnClickListenerForSend(Set<ConnectionViewData> receivers){
+        FltBtnClickListenerForSend(Set<ConnectionViewData> receivers){
             this.receivers = receivers;
         }
 

@@ -20,20 +20,20 @@ public class MediaConsts {
     public static final String COL_MIME_TYPE = MediaStore.MediaColumns.MIME_TYPE;
     public static final String COL_MEDIA_TYPE = MediaStore.Files.FileColumns.MEDIA_TYPE;
 
-    public static final String QUOTED_MIME_TYPE_PDF = "'application/pdf'";
-    public static final String QUOTED_MIME_TYPE_XML = "'application/xml'";
-    public static final String QUOTED_MIME_TYPE_ZIP1 = "'application/zip'";
-    public static final String QUOTED_MIME_TYPE_ZIP2 = "'application/x-compressed-zip'";
-    public static final String QUOTED_MIME_TYPE_XLS = "'application/vnd.ms-excel'";
-    public static final String QUOTED_MIME_TYPE_TXT = "'text/plain'";
-    public static final String QUOTED_MIME_TYPE_TAR = "'application/x-tar'";
-    public static final String QUOTED_MIME_TYPE_SGML = "'text/sgml'";
-    public static final String QUOTED_MIME_TYPE_RTF = "'application/rtf'";
-    public static final String QUOTED_MIME_TYPE_PPT = "'application/vnd.ms-powerpoint'";
-    public static final String QUOTED_MIME_TYPE_JAR = "'application/java-archive'";
-    public static final String QUOTED_MIME_TYPE_HTML = "'text/html'";
-    public static final String QUOTED_MIME_TYPE_XZIP = "'application/x-gzip'";
-    public static final String QUOTED_MIME_TYPE_DOC = "'application/msword'";
+    private static final String QUOTED_MIME_TYPE_PDF = "'application/pdf'";
+    private static final String QUOTED_MIME_TYPE_XML = "'application/xml'";
+    private static final String QUOTED_MIME_TYPE_ZIP1 = "'application/zip'";
+    private static final String QUOTED_MIME_TYPE_ZIP2 = "'application/x-compressed-zip'";
+    private static final String QUOTED_MIME_TYPE_XLS = "'application/vnd.ms-excel'";
+    private static final String QUOTED_MIME_TYPE_TXT = "'text/plain'";
+    private static final String QUOTED_MIME_TYPE_TAR = "'application/x-tar'";
+    private static final String QUOTED_MIME_TYPE_SGML = "'text/sgml'";
+    private static final String QUOTED_MIME_TYPE_RTF = "'application/rtf'";
+    private static final String QUOTED_MIME_TYPE_PPT = "'application/vnd.ms-powerpoint'";
+    private static final String QUOTED_MIME_TYPE_JAR = "'application/java-archive'";
+    private static final String QUOTED_MIME_TYPE_HTML = "'text/html'";
+    private static final String QUOTED_MIME_TYPE_XZIP = "'application/x-gzip'";
+    private static final String QUOTED_MIME_TYPE_DOC = "'application/msword'";
 
     public static final String OTHER_FILE_MIME_SET = '('
             + QUOTED_MIME_TYPE_PDF + ','

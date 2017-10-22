@@ -10,7 +10,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 
 import com.aj.sendall.R;
-import com.aj.sendall.application.AndroidApplication;
+import com.aj.sendall.application.ThisApplication;
 import com.aj.sendall.ui.adapter.PersonalInteractionsAdapter;
 import com.aj.sendall.ui.utils.PersonalInteractionsUtil;
 import com.aj.sendall.ui.interfaces.ItemSelectableView;
@@ -28,13 +28,15 @@ public class PersonalInteractionsActivity extends AppCompatActivity implements I
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ((AndroidApplication)getApplication()).getDaggerInjector().inject(this);
+        ((ThisApplication)getApplication()).getDaggerInjector().inject(this);
         setContentView(R.layout.activity_pesonal_interaction_view);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle(getIntent().getStringExtra("title"));
         setSupportActionBar(toolbar);
-        getSupportActionBar().setHomeButtonEnabled(true);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        if(getSupportActionBar() != null) {
+            getSupportActionBar().setHomeButtonEnabled(true);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
 
         this.numberOfSelecedItems = 0;
 

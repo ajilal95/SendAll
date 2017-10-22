@@ -4,6 +4,8 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -32,6 +34,8 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     private List<FileInfoDTO> allFileInfoDTOs;
     private List<FileInfoDTO> filteredFileInfoDTOs;
 
+    private Handler handler;
+
     private Set<FileInfoDTO> selectedItems;
 
     private ItemSelectableView viewParent;
@@ -40,11 +44,13 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         this.context = context;
         this.mediaType = mediaType;
         this.viewParent = viewParent;
+        this.handler = new Handler(context.getMainLooper());
         setSortField(mediaType);
         setProjections(mediaType);
         setBaseContentUri(mediaType);
         allFileInfoDTOs = new ArrayList<>();
-        initAdapter();
+//        initAdapter();
+        new FileLoader().execute();
     }
 
     private void setSortField(int mediaType) {
@@ -237,7 +243,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                         selectedItems.add((FileInfoDTO)v.getTag());
                         viewParent.incrementTotalNoOfSelections();
                     } else {
-                        selectedItems.remove(((FileInfoDTO)v.getTag()).uri);
+                        selectedItems.remove(v.getTag());
                         viewParent.decrementTotalNoOfSelections();
                     }
                 }
@@ -265,4 +271,19 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             return allFileInfoDTOs;
         }
     }
+
+    private class FileLoader extends AsyncTask<Void, Void, Void>{
+        @Override
+        protected Void doInBackground(Void... params) {
+            initAdapter();
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    notifyDataSetChanged();
+                }
+            });
+            return null;
+        }
+    }
+
 }

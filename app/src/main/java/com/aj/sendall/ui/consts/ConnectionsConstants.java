@@ -2,10 +2,6 @@ package com.aj.sendall.ui.consts;
 
 import com.aj.sendall.R;
 
-/**
- * Created by ajilal on 3/5/17.
- */
-
 public final class ConnectionsConstants {
     public static String TITLE_RECEIVERS = "Receivers";
     public static String TITLE_ALL_CONNECTIONS = "Devices";

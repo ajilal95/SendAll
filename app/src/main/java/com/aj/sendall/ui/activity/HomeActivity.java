@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -13,11 +14,15 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.CompoundButton;
 import android.widget.SearchView;
+import android.widget.Switch;
 
 import com.aj.sendall.R;
-import com.aj.sendall.application.AndroidApplication;
-import com.aj.sendall.application.AppManager;
+import com.aj.sendall.application.ThisApplication;
+import com.aj.sendall.events.EventRouter;
+import com.aj.sendall.events.event.AppStatusChanged;
+import com.aj.sendall.controller.AppController;
 import com.aj.sendall.ui.consts.ConnectionsConstants;
 import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.ui.fragment.ConnectionsFragment;
@@ -28,14 +33,16 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-public class HomeActivity extends AppCompatActivity {
+public class HomeActivity extends AppCompatActivity{
     @Inject
-    public AppManager appManager;
+    public AppController appController;
 
     private ViewPager mViewPager;
     private TabLayout tabLayout;
     private SearchView searchView;
+    private Switch statusSwitch;
     private HomePageTabsAdapter tabsAdapter;
+    private Handler handler;
     private int currentTabPos = 0;
 
     private static final int PERMISSION_REQ_CODE = 100;
@@ -43,19 +50,19 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ((AndroidApplication) getApplication()).getDaggerInjector().inject(this);
+        ((ThisApplication) getApplication()).getDaggerInjector().inject(this);
         setContentView(R.layout.activity_home);
         checkPerms();
     }
 
     private void checkPerms() {
-        String[] deniedPerms = appManager.permissions.getDeniedPermissions();
+        String[] deniedPerms = appController.getDeniedSystemPermissions();
         if (deniedPerms == null || deniedPerms.length == 0) {
             //All permissions granted
             initActivity();
         } else {
             //get the missing permissions
-            appManager.permissions.getPermissions(
+            appController.requestPermissions(
                     this,
                     deniedPerms,
                     PERMISSION_REQ_CODE,
@@ -71,6 +78,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void initActivity() {
+        handler = new Handler();
         findViews();
         initViews();
         setClickListeners();
@@ -80,12 +88,14 @@ public class HomeActivity extends AppCompatActivity {
         mViewPager = (ViewPager) findViewById(R.id.container);
         tabLayout = (TabLayout) findViewById(R.id.tabs_vw_home);
         searchView = (SearchView) findViewById(R.id.srch_vw_home);
+        statusSwitch = (Switch) findViewById(R.id.action_bar_nw_state_switch);
     }
 
     private void initViews() {
         tabsAdapter = new HomePageTabsAdapter(getSupportFragmentManager());
         mViewPager.setAdapter(tabsAdapter);
         tabLayout.setupWithViewPager(mViewPager);
+        statusSwitch.setChecked(!appController.isSystemFree());
     }
 
     private void setClickListeners() {
@@ -118,6 +128,9 @@ public class HomeActivity extends AppCompatActivity {
             public void onTabReselected(TabLayout.Tab tab) {
             }
         });
+
+        subscribeEvents();
+        statusSwitch.setOnCheckedChangeListener(new StateSwitckCheckedChangedListener());
     }
 
     @Override
@@ -222,6 +235,33 @@ public class HomeActivity extends AppCompatActivity {
         reset();
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unsubscribeEvents();
+    }
+
+    private AppStatusListener appStatusListener = new AppStatusListener();
+    private void subscribeEvents(){
+        appController.registerAppStatusListener(appStatusListener);
+    }
+
+    private void unsubscribeEvents(){
+        appController.unregisterAppStatusListener(appStatusListener);
+    }
+
+    private class AppStatusListener implements EventRouter.Receiver<AppStatusChanged>{
+        @Override
+        public void receive(AppStatusChanged event) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    statusSwitch.setChecked(!appController.isSystemFree());
+                }
+            });
+        }
+    }
+
     private void reset() {
         searchView.setQuery("", false);
         tabsAdapter = new HomePageTabsAdapter(getSupportFragmentManager());
@@ -235,7 +275,7 @@ public class HomeActivity extends AppCompatActivity {
         if (requestCode == PERMISSION_REQ_CODE) {
             for(int i = 0; i < grantResults.length; i++){
                 if(grantResults[i] != PackageManager.PERMISSION_GRANTED){
-                    deniedPerms.add(appManager.permissions.getHumanReadablePermString(permissions[i]));
+                    deniedPerms.add(appController.getHumanReadablePermString(permissions[i]));
                 }
             }
 
@@ -247,4 +287,19 @@ public class HomeActivity extends AppCompatActivity {
             }
         }
     }
+
+    private class StateSwitckCheckedChangedListener implements CompoundButton.OnCheckedChangeListener {
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            if(buttonView.isPressed()) {
+                if (!isChecked) {
+                    appController.setSystemIdle();
+                } else {
+                    appController.showToggleReceiverNotification();
+                }
+            }
+
+        }
+    }
+
 }

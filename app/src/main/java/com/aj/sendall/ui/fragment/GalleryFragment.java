@@ -14,7 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.aj.sendall.R;
-import com.aj.sendall.application.AndroidApplication;
+import com.aj.sendall.application.ThisApplication;
 import com.aj.sendall.db.dto.FileInfoDTO;
 import com.aj.sendall.ui.activity.SelectReceiversActivity;
 import com.aj.sendall.ui.adapter.GalleryAdapter;
@@ -58,7 +58,7 @@ public class GalleryFragment extends Fragment implements ItemSelectableView, Ite
     public static GalleryFragment newInstance(Activity parentActivity) {
         GalleryFragment fragment = new GalleryFragment();
         fragment.parentActivity = parentActivity;
-        ((AndroidApplication)parentActivity.getApplication()).getDaggerInjector().inject(fragment);
+        ((ThisApplication)parentActivity.getApplication()).getDaggerInjector().inject(fragment);
         Bundle args = new Bundle();
         fragment.setArguments(args);
         return fragment;

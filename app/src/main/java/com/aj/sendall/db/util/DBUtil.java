@@ -8,6 +8,7 @@ import com.aj.sendall.db.dao.DaoMaster;
 import com.aj.sendall.db.dao.DaoSession;
 import com.aj.sendall.db.dao.PersonalInteractionDao;
 import com.aj.sendall.db.dto.ConnectionViewData;
+import com.aj.sendall.db.dto.PersonalInteractionDTO;
 import com.aj.sendall.db.model.Connections;
 import com.aj.sendall.db.model.PersonalInteraction;
 
@@ -52,6 +53,26 @@ public class DBUtil {
                     cvd.uniqueId = fromEntity.getSSID();
                 }
                 return cvd;
+            }
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<PersonalInteractionDTO> getAllPersonalInteractionDTO(Integer connId){
+        List<PersonalInteraction> pis = daoSession.getPersonalInteractionDao()
+                .queryBuilder()
+                .where(PersonalInteractionDao.Properties.ConnectionId.eq(connId))
+                .orderDesc(PersonalInteractionDao.Properties.ModifiedTime)
+                .list();
+        return new OnDemandConverterList<>(pis, new OnDemandConverterList.EntityConverter<PersonalInteraction, PersonalInteractionDTO>() {
+            public PersonalInteractionDTO convert(PersonalInteraction pi){
+                PersonalInteractionDTO pidto = new PersonalInteractionDTO();
+                pidto.filePath = pi.getFilePath();
+                pidto.mediaType = pi.getMediaType();
+                pidto.status = pi.getFileStatus();
+                pidto.size = pi.getFileSize();
+                pidto.title = pi.getFileName();
+                return pidto;
             }
         });
     }
@@ -121,9 +142,16 @@ public class DBUtil {
     }
 
     public void update(PersonalInteraction pi){
-        PersonalInteractionDao personalInteractionDao = daoSession.getPersonalInteractionDao();
         if(pi != null){
+            PersonalInteractionDao personalInteractionDao = daoSession.getPersonalInteractionDao();
             personalInteractionDao.update(pi);
+        }
+    }
+
+    public void update(Connections conn){
+        if(conn != null){
+            ConnectionsDao connectionsDao = daoSession.getConnectionsDao();
+            connectionsDao.update(conn);
         }
     }
 }

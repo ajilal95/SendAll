@@ -10,21 +10,18 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.aj.sendall.R;
+import com.aj.sendall.events.EventRouter;
+import com.aj.sendall.events.EventRouterFactory;
+import com.aj.sendall.events.event.NewConnSelected;
 import com.aj.sendall.db.dto.ConnectionViewData;
-import com.aj.sendall.ui.activity.ConnectionCreatorActivity;
-import com.aj.sendall.network.monitor.Updatable;
 import com.bumptech.glide.Glide;
 
 import java.util.LinkedList;
 
-/**
- * Created by ajilal on 4/7/17.
- */
-
 public class ConnectorAdapter extends RecyclerView.Adapter {
-    public static final String UPDATE_CONST_SELECTED_CONN = "conn";
     private LinkedList<ConnectionViewData> connectionViewDatas;
     private Activity containerActivity;
+    private EventRouter eventRouter = EventRouterFactory.getInstance();
 
     public ConnectorAdapter(Activity containerActivity){
         this.containerActivity = containerActivity;
@@ -66,7 +63,7 @@ public class ConnectorAdapter extends RecyclerView.Adapter {
         ImageView profilePic;
         TextView profileName;
 
-        public ViewHolder(View view){
+        ViewHolder(View view){
             super(view);
 
             profilePic = (ImageView) view.findViewById(R.id.img_vw_profile_pic);
@@ -75,11 +72,9 @@ public class ConnectorAdapter extends RecyclerView.Adapter {
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Updatable.UpdateEvent event = new Updatable.UpdateEvent();
-                    event.source = ConnectorAdapter.class;
-                    event.putExtra(UPDATE_CONST_SELECTED_CONN, itemView.getTag());
-
-                    ((ConnectionCreatorActivity)containerActivity).update(event);
+                    NewConnSelected event = new NewConnSelected();
+                    event.selectedConn = (ConnectionViewData) itemView.getTag();
+                    eventRouter.broadcast(event);
                 }
             });
         }

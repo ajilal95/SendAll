@@ -1,7 +1,6 @@
 package com.aj.sendall.ui.activity;
 
 import android.content.Intent;
-import android.net.wifi.ScanResult;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
@@ -14,18 +13,17 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
 import com.aj.sendall.R;
-import com.aj.sendall.application.AndroidApplication;
-import com.aj.sendall.application.AppManager;
+import com.aj.sendall.application.ThisApplication;
+import com.aj.sendall.events.EventRouter;
+import com.aj.sendall.events.EventRouterFactory;
+import com.aj.sendall.events.event.NewClientAvailable;
+import com.aj.sendall.events.event.NewConnCreationFinished;
+import com.aj.sendall.events.event.NewConnSelected;
+import com.aj.sendall.events.event.SendallNetsAvailable;
+import com.aj.sendall.controller.AppConsts;
+import com.aj.sendall.controller.AppController;
 import com.aj.sendall.db.dto.ConnectionViewData;
-import com.aj.sendall.db.sharedprefs.SharedPrefConstants;
-import com.aj.sendall.network.broadcastreceiver.SendallNetWifiScanBroadcastReceiver;
-import com.aj.sendall.network.runnable.NewConnCreationClient;
-import com.aj.sendall.network.runnable.NewConnCreationClientConnector;
-import com.aj.sendall.network.services.NewConnCreationClientService;
-import com.aj.sendall.network.services.NewConnCreationServerService;
-import com.aj.sendall.network.utils.Constants;
 import com.aj.sendall.ui.adapter.ConnectorAdapter;
-import com.aj.sendall.network.monitor.Updatable;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -34,18 +32,19 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-public class ConnectionCreatorActivity extends AppCompatActivity implements Updatable {
+public class ConnectionCreatorActivity extends AppCompatActivity{
     private RecyclerView availableConns;
     private LinearLayout transBgLayout;
     private ProgressBar pBarLoadingConns;
     private LinearLayout buttonLayout;
     private ImageView imgBtnInitConn;
     private ImageView imgBtnScanConn;
-    private Map<String, NewConnCreationClientConnector> usernameToConnSender;
+    private Map<String, Acceptable> usernameToClientCommunicator;
+    private EventRouter eventRouter = EventRouterFactory.getInstance();
     private Action selectedAction;
     private UpdateUI updateUI;
     @Inject
-    AppManager appManager;
+    AppController appController;
 
     private ConnectorAdapter connectorAdapter;
 
@@ -53,9 +52,9 @@ public class ConnectionCreatorActivity extends AppCompatActivity implements Upda
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_connector);
-        ((AndroidApplication)getApplication()).getDaggerInjector().inject(this);
+        ((ThisApplication)getApplication()).getDaggerInjector().inject(this);
 
-        usernameToConnSender = new HashMap<>();
+        usernameToClientCommunicator = new HashMap<>();
 
         findViews();
         initViews();
@@ -77,40 +76,85 @@ public class ConnectionCreatorActivity extends AppCompatActivity implements Upda
         availableConns.setAdapter(connectorAdapter);
 
         pBarLoadingConns.setAlpha(0);
+
+        updateUI = new UpdateUI(new Handler());
     }
 
     private void setListeners(){
         imgBtnInitConn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(updateUI != null){
-                    updateUI.setInactive();
-                }
-                updateUI = new UpdateUI();
-
-                new Handler().postDelayed(updateUI, 2000);
-
+                appController.startNewConnCreationServer();
                 selectedAction = Action.CREATE;
                 animateViewsOnButtonClicked(v);
-                NewConnCreationServerService.start(ConnectionCreatorActivity.this, ConnectionCreatorActivity.this);
             }
         });
 
         imgBtnScanConn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(updateUI != null){
-                    updateUI.setInactive();
-                }
-                updateUI = new UpdateUI();
-
-                new Handler().postDelayed(updateUI, 2000);
-
-                appManager.startScanningWifi(ConnectionCreatorActivity.this, SharedPrefConstants.CURR_STATUS_CEATING_CONNECTION);
+                appController.scanForConnCreationServer();
                 selectedAction = Action.JOIN;
                 animateViewsOnButtonClicked(v);
             }
         });
+        subscribeEvents();
+    }
+
+    public void subscribeEvents() {
+        eventRouter.subscribe(NewConnSelected.class, new EventRouter.Receiver<NewConnSelected>() {
+            @Override
+            public void receive(NewConnSelected event) {
+                if(Action.CREATE.equals(selectedAction)){
+                    Acceptable clientConn = usernameToClientCommunicator.get(event.selectedConn.profileName);
+                    if(clientConn != null){
+                        clientConn.accept();
+                    }
+                    transBgLayout.setVisibility(View.VISIBLE);
+                } else if(Action.JOIN.equals(selectedAction)){
+                    transBgLayout.setVisibility(View.VISIBLE);
+                    appController.connectToConnCreationServer(event.selectedConn.uniqueId);
+                }
+                eventRouter.unsubscribe(NewConnSelected.class, this);
+            }
+        });
+        eventRouter.subscribe(NewConnCreationFinished.class, new EventRouter.Receiver<NewConnCreationFinished>() {
+            @Override
+            public void receive(NewConnCreationFinished event) {
+                if(AppConsts.SUCCESS.equals(event.status)){
+                    goHome();
+                } else if(AppConsts.FAILED.equals(event.status)){
+                    Log.i(this.getClass().getSimpleName(), "Socket connection failed");
+                }
+                eventRouter.unsubscribe(NewConnCreationFinished.class, this);
+            }
+        });
+        eventRouter.subscribe(SendallNetsAvailable.class, new EventRouter.Receiver<SendallNetsAvailable>() {
+            @Override
+            public void receive(SendallNetsAvailable event) {
+                List<String> SSIDs = event.availableSSIDs;
+                if (SSIDs != null) {
+                    for (String scanResult : SSIDs) {
+                        updateUI.addNew(scanResult);
+                    }
+                }
+            }
+        });
+        eventRouter.subscribe(NewClientAvailable.class, new EventRouter.Receiver<NewClientAvailable>() {
+            @Override
+            public void receive(NewClientAvailable event) {
+                //A new connection request arrived. add it to the ui
+                usernameToClientCommunicator.put(event.username, event.acceptable);
+                updateUI.addNew(event.username, event.deviceId);
+            }
+        });
+    }
+
+    private void unsubscribeEvents(){
+        eventRouter.clearListeners(SendallNetsAvailable.class);
+        eventRouter.clearListeners(NewClientAvailable.class);
+        eventRouter.clearListeners(NewConnSelected.class);
+        eventRouter.clearListeners(NewConnCreationFinished.class);
     }
 
     private void animateViewsOnButtonClicked(View clickedButton){
@@ -138,72 +182,14 @@ public class ConnectionCreatorActivity extends AppCompatActivity implements Upda
     @Override
     protected void onPause() {
         super.onPause();
-
-        if(Action.CREATE.equals(selectedAction)) {
-            NewConnCreationServerService.stop(this);
-        } else if(Action.JOIN.equals(selectedAction)){
-            NewConnCreationClientService.stop(this);
-        }
-
-        if(updateUI != null) {
-            updateUI.setInactive();
-        }
-        appManager.stopHotspotAndScanning();
+        appController.setSystemIdle();
+        unsubscribeEvents();
         finish();
     }
 
     @Override
     protected void onResume(){
         super.onResume();
-    }
-
-    @Override
-    public void update(UpdateEvent updateEvent) {
-        if(NewConnCreationClientConnector.class.equals(updateEvent.source)){
-            if(Constants.ACCEPT_CONN.equals(updateEvent.action)) {
-                String username = (String) updateEvent.getExtra(SharedPrefConstants.USER_NAME);
-                //A new connection request arrived. add it to the ui
-                usernameToConnSender.put(username, (NewConnCreationClientConnector) updateEvent.getExtra(NewConnCreationClientConnector.UPDATE_CONST_SENDER));
-                updateUI.addNew(username, (String) updateEvent.getExtra(SharedPrefConstants.DEVICE_ID));
-            } else if(Constants.SUCCESS.equals(updateEvent.action)){
-                goHome();
-            }
-
-        } else if(ConnectorAdapter.class.equals(updateEvent.source)){
-            ConnectionViewData conn = (ConnectionViewData) updateEvent.getExtra(ConnectorAdapter.UPDATE_CONST_SELECTED_CONN);
-            if(Action.CREATE.equals(selectedAction)){
-                NewConnCreationClientConnector clientConn = usernameToConnSender.get(conn.profileName);
-                if(clientConn != null){
-                    UpdateEvent event = new UpdateEvent();
-                    event.source = this.getClass();
-                    event.action = Constants.ACCEPT_CONN;
-                    clientConn.update(event);
-                }
-                transBgLayout.setVisibility(View.VISIBLE);
-            } else if(Action.JOIN.equals(selectedAction)){
-                appManager.stopWifiScanning();
-                String SSID = conn.uniqueId;
-                String pass = appManager.getDefaultWifiPass();
-//                int port = appManager.sharedPrefUtil.getDefServerPort();
-                int port = Integer.valueOf(SSID.split("_")[1]);
-                NewConnCreationClient client = new NewConnCreationClient(SSID, pass, port, this, appManager);
-                transBgLayout.setVisibility(View.VISIBLE);
-                NewConnCreationClientService.start(this, client);
-            }
-        } else if(NewConnCreationClient.class.equals(updateEvent.source)){
-            if(Constants.SUCCESS.equals(updateEvent.action)){
-                goHome();
-            } else if(Constants.FAILED.equals(updateEvent.action)){
-                Log.i(this.getClass().getSimpleName(), "Socket connection failed");
-            }
-        } else if(SendallNetWifiScanBroadcastReceiver.class.equals(updateEvent.source)){
-            @SuppressWarnings({"unchecked"}) List<ScanResult> scanResults = (List<ScanResult>) updateEvent.getExtra(SendallNetWifiScanBroadcastReceiver.UPDATE_EXTRA_RESULT);
-            if(scanResults != null){
-                for(ScanResult scanResult : scanResults){
-                    updateUI.addNew(scanResult.SSID);
-                }
-            }
-        }
     }
 
     private void goHome(){
@@ -215,22 +201,23 @@ public class ConnectionCreatorActivity extends AppCompatActivity implements Upda
         CREATE, JOIN
     }
 
-    /*The server and client are run on a separeate thread. That thread cannot update ui. So
+    /*The server and client are runUpdate on a separeate thread. That thread cannot update ui. So
     * update the ui with this runnable*/
-    private class UpdateUI implements Runnable{
-        private boolean active = true;
+    private class UpdateUI{
         private final LinkedList<ConnectionViewData> connectionViewDatas;
-        private boolean changed = false;
+        private Handler handler;
 
-        private UpdateUI(){
+        private UpdateUI(Handler handler){
+            this.handler = handler;
             connectionViewDatas = new LinkedList<>();
             connectorAdapter.setData(connectionViewDatas);
         }
 
-        public void run(){
-            synchronized (connectionViewDatas) {
-                if(active){
-                    if(changed) {
+        private void runUpdate(){
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    synchronized (connectionViewDatas) {
                         transBgLayout.setVisibility(View.VISIBLE);
 
                         connectorAdapter.setData(connectionViewDatas);
@@ -238,16 +225,9 @@ public class ConnectionCreatorActivity extends AppCompatActivity implements Upda
                         if (!connectionViewDatas.isEmpty()) {
                             transBgLayout.setVisibility(View.GONE);
                         }
-                        changed = false;
                     }
-                    new Handler().postDelayed(this, 2000);
                 }
-            }
-        }
-
-        private void setInactive(){
-            active = false;
-
+            });
         }
 
         //For JOIN Action, SSID must be containing the username separated by an '_'
@@ -266,7 +246,7 @@ public class ConnectionCreatorActivity extends AppCompatActivity implements Upda
                     connectionViewDatas.remove(posToIns);
                     connectionViewDatas.add(posToIns, conn);
                 }
-                changed = true;
+                runUpdate();
             }
         }
 
@@ -284,7 +264,7 @@ public class ConnectionCreatorActivity extends AppCompatActivity implements Upda
                     connectionViewDatas.remove(posToIns);
                     connectionViewDatas.add(posToIns, conn);
                 }
-                changed = true;
+                runUpdate();
             }
         }
 
@@ -305,5 +285,9 @@ public class ConnectionCreatorActivity extends AppCompatActivity implements Upda
                 return -1;
             }
         }
+    }
+
+    public interface Acceptable{
+        void accept();
     }
 }

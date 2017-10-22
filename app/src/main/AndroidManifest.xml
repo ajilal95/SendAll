@@ -11,9 +11,10 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
 
     <application
-        android:name=".application.AndroidApplication"
+        android:name=".application.ThisApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -52,7 +53,7 @@
 
         <activity android:name=".ui.activity.ConnectionCreatorActivity" />
 
-        <receiver android:name=".network.broadcastreceiver.WifiStatusBroadcastReceiver">
+        <receiver android:name=".broadcastreceiver.WifiStatusBroadcastReceiver">
             <intent-filter>
                 <action android:name="android.net.wifi.p2p.STATE_CHANGED" />
                 <action android:name="android.net.wifi.p2p.PEERS_CHANGED" />
@@ -62,19 +63,19 @@
         </receiver>
 
         <service
-            android:name=".network.services.ToggleReceiverService"
+            android:name=".services.ToggleReceiverService"
             android:exported="false" />
         <service
-            android:name=".network.services.NewConnCreationServerService"
+            android:name=".services.NewConnCreationServerService"
             android:exported="false" />
         <service
-            android:name=".network.services.NewConnCreationClientService"
+            android:name=".services.NewConnCreationClientService"
             android:exported="false" />
         <service
-            android:name=".network.services.FileTransferServerService"
+            android:name=".services.FileTransferServerService"
             android:exported="false" />
         <service
-            android:name=".network.services.FileTransferClientService"
+            android:name=".services.FileTransferClientService"
             android:exported="false" />
     </application>
 
