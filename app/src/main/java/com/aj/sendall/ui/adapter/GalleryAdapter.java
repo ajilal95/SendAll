@@ -75,7 +75,6 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             case MediaConsts.TYPE_VIDEO:
                 projections = new String[]{
                         MediaStore.Video.VideoColumns._ID,
-                        MediaStore.Video.VideoColumns.TITLE,
                         MediaStore.Video.VideoColumns.SIZE,
                         MediaStore.Video.VideoColumns.DATA
                 };
@@ -83,7 +82,6 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             case MediaConsts.TYPE_AUDIO:
                 projections = new String[]{
                         MediaStore.Audio.AudioColumns._ID,
-                        MediaStore.Audio.AudioColumns.TITLE,
                         MediaStore.Audio.AudioColumns.SIZE,
                         MediaStore.Audio.AudioColumns.DATA,
                         MediaStore.Audio.AudioColumns.ALBUM_ID
@@ -92,7 +90,6 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             case MediaConsts.TYPE_IMAGE:
                 projections = new String[]{
                         MediaStore.Images.ImageColumns._ID,
-                        MediaStore.Images.ImageColumns.TITLE,
                         MediaStore.Images.ImageColumns.SIZE,
                         MediaStore.Images.ImageColumns.DATA
                 };
@@ -100,7 +97,6 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             case MediaConsts.TYPE_OTHER:
                 projections = new String[]{
                         MediaStore.Files.FileColumns._ID,
-                        MediaStore.Files.FileColumns.TITLE,
                         MediaStore.Files.FileColumns.SIZE,
                         MediaStore.Files.FileColumns.DATA
                 };
@@ -143,15 +139,10 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         if(cursor != null) {
             fileInfoDTOs = new ArrayList<>();
             int idColIndex = cursor.getColumnIndex(projections[0]);
-            int titleColIndex = cursor.getColumnIndex(projections[1]);
-            int sizeColIndex = cursor.getColumnIndex(projections[2]);
-            int pathColIndex = cursor.getColumnIndex(projections[3]);
+            int sizeColIndex = cursor.getColumnIndex(projections[1]);
+            int pathColIndex = cursor.getColumnIndex(projections[2]);
             while(cursor.moveToNext()){
                 FileInfoDTO dto = new FileInfoDTO();
-                dto.title = cursor.getString(titleColIndex);
-                if(dto.title == null){
-                    continue;//Cannot list the file
-                }
                 dto.id = cursor.getInt(idColIndex);
                 dto.size = cursor.getLong(sizeColIndex);
                 dto.mediaType = mediaType;
@@ -160,6 +151,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                 }
                 dto.uri = Uri.parse(baseUriString + '/' + dto.id);
                 dto.filePath = cursor.getString(pathColIndex);
+                dto.title = dto.filePath.substring(dto.filePath.lastIndexOf('/') + 1);
                 fileInfoDTOs.add(dto);
             }
             cursor.close();

@@ -286,13 +286,13 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
             //communicate bytes send so far(for resuming transfer)
             dataOutputStream.writeLong(bytesReadForNextFile);
             dataOutputStream.flush();
-            StreamManager streamManager = StreamManagerFactory.getInstance(fileToWrite);
             String osMode;
-            if(fileToWrite.exists()){
+//            if(fileToWrite.exists()){
                 osMode = "a";
-            } else {
-                osMode = "w";
-            }
+//            } else {
+//                osMode = "w";
+//            }
+            StreamManager streamManager = StreamManagerFactory.getInstance(fileToWrite);
             FileOutputStream fos = (FileOutputStream) streamManager.getOutputStream(osMode);
 
             long bytesRemaining = nextFileSize - bytesReadForNextFile;
@@ -309,16 +309,21 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
                     dataOutputStream.writeInt(bytesRead);
                     dataOutputStream.flush();
                 } catch (Exception e){
-                    dataOutputStream.writeInt(-1);
+                    dataOutputStream.writeInt(0);
                     dataOutputStream.flush();
-                    pi.setBytesTransfered(bytesReadForNextFile);
-                    appController.update(pi);
-                    break;
+                    continue;
                 }
                 try {
                     fos.write(buff, 0, bytesRead);
                 } catch (IOException e){
-                    //indicate the server to stop sending
+                    dataOutputStream.writeInt(0);
+                    dataOutputStream.flush();
+                    continue;
+                }
+                try {
+                    fos.flush();
+                } catch (IOException e){
+                    //indicate the server to stop
                     dataOutputStream.writeInt(-1);
                     dataOutputStream.flush();
                     break;
@@ -330,12 +335,14 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
             pi.setBytesTransfered(bytesReadForNextFile);
             appController.update(pi);
 
-            //now move the temporary file to permanent location
-            File actualFile = appController.getActualFileToWrite(nextFile, pi.getMediaType());
-            if(fileToWrite.renameTo(actualFile)){
-                pi.setFilePath(actualFile.getPath());
-                pi.setFileStatus(FileStatus.RECEIVED);
-                appController.update(pi);
+            //now move the temporary file to permanent location if the file reading is complete
+            if(bytesRemaining == 0) {
+                File actualFile = appController.getActualFileToWrite(nextFile, pi.getMediaType());
+                if(fileToWrite.renameTo(actualFile)){
+                    pi.setFilePath(actualFile.getPath());
+                    pi.setFileStatus(FileStatus.RECEIVED);
+                    appController.update(pi);
+                }
             }
 
         } catch (IOException e){

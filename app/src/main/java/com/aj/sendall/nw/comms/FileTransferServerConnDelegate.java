@@ -241,7 +241,7 @@ class FileTransferServerConnDelegate extends AbstractServerConnDelegate implemen
             InputStream is = streamManager.getInputStream();
             long bytesSkipped = is.skip(bytesTransferred);
 
-            if(bytesSkipped < 0 || bytesSkipped != bytesTransferred) {
+            if(bytesSkipped == bytesTransferred) {
                 DataInputStream fdis = new DataInputStream(is);
                 byte[] buff = new byte[(int) Math.min(AppConsts.FILE_TRANS_BUFFER_SIZE, file.size)];
                 int bytesRead;
@@ -251,14 +251,19 @@ class FileTransferServerConnDelegate extends AbstractServerConnDelegate implemen
                         dataOutputStream.write(buff, 0, bytesRead);
                         dataOutputStream.flush();
                         bytesReadAtClient = dataInputStream.readInt();//an acknowledgement from client that data received
-                        if (bytesReadAtClient < 0) {
-                            throwNetIOE();
+                        if (bytesReadAtClient == 0) {
+                            //file read failed at client resend the data
+                            while(bytesReadAtClient == 0){
+                                dataOutputStream.write(buff, 0, bytesRead);
+                                dataOutputStream.flush();
+                                bytesReadAtClient = dataInputStream.readInt();
+                            }
+                        }
+                        if(bytesReadAtClient < 0){
+                            break;
                         }
                     } catch (Exception e) {
-                        pi.setBytesTransfered(bytesTransferred);
-                        appController.update(pi);
-                        streamManager.close();
-                        throw e;
+                        break;
                     }
                     bytesTransferred += bytesRead;
                 }
