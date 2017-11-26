@@ -24,6 +24,7 @@ public abstract class AbstractClient implements Runnable {
     private int connAttemptsRemining = 5;//Try 5 times to connect
     private boolean active = true;//to make sure that reconnection is not tried after user closes the connection
     private EventRouter eventRouter = EventRouterFactory.getInstance();
+    private SocketCloseListener socketCloseListener = new SocketCloseListener();
 
     public AbstractClient(String SSID, String passPhrase, int serverPort, AppController appController){
         this.SSID = SSID;
@@ -36,9 +37,10 @@ public abstract class AbstractClient implements Runnable {
     public void run() {
         InetAddress serverAdd = appController.connectAndGetAddressOf(this.SSID, this.passPhrase);
         if(serverAdd != null){
-            tryToOpenSocket(serverAdd);
-            communicate();
-            tryToCloseSocket();
+            if(tryToOpenSocket(serverAdd)) {
+                communicate();
+                tryToCloseSocket();
+            }
         }
         finalAction();
     }
@@ -46,21 +48,17 @@ public abstract class AbstractClient implements Runnable {
     abstract protected void configureSocket(Socket socket);
     abstract protected void finalAction();
 
-    private void tryToOpenSocket(InetAddress serverAdd){
+    private boolean tryToOpenSocket(InetAddress serverAdd){
         try {
-            socket = appController.createClientSocket(serverAdd, port);
-            eventRouter.subscribe(SocketClosing.class, new EventRouter.Receiver<SocketClosing>() {
-                @Override
-                public void receive(SocketClosing event) {
-                    if(event.closingSocket == socket){
-                        closeStreams();
-                    }
-                    eventRouter.unsubscribe(SocketClosing.class, this);
-                }
-            });
-            configureSocket(socket);
-            dataInputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-            dataOutputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+            if(appController.isClient()) {
+                eventRouter.unsubscribe(SocketClosing.class, socketCloseListener);//un-subscribe old listener(if any)
+                eventRouter.subscribe(SocketClosing.class, socketCloseListener);//subscribe new listener
+                socket = appController.createClientSocket(serverAdd, port);
+                configureSocket(socket);
+                dataInputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+                dataOutputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+                return true;
+            }
         } catch (Exception e){
             e.printStackTrace();
             //retries
@@ -74,6 +72,7 @@ public abstract class AbstractClient implements Runnable {
                 tryToOpenSocket(serverAdd);
             }
         }
+        return false;
     }
 
     protected abstract void communicate();
@@ -101,6 +100,16 @@ public abstract class AbstractClient implements Runnable {
             dataOutputStream.close();
         } catch (Exception e){
             e.printStackTrace();
+        }
+    }
+
+    private class SocketCloseListener implements EventRouter.Receiver<SocketClosing>{
+        @Override
+        public void receive(SocketClosing event) {
+            if (event.closingSocket == socket) {
+                closeStreams();
+            }
+            eventRouter.unsubscribe(SocketClosing.class, this);
         }
     }
 }

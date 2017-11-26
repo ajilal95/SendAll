@@ -34,12 +34,10 @@ public abstract class AbstractServerService extends IntentService {
         if (intent != null) {
             final String action = intent.getAction();
             if (ACTION_START_NEW.equals(action)) {
-                if(appController.isSystemFree()) {
-                    try {
-                        startServerAction();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                try {
+                    startServerAction();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             } else if (ACTION_STOP.equals(action)) {
                 stopCurrentServer();
@@ -54,7 +52,7 @@ public abstract class AbstractServerService extends IntentService {
 
     private void startServerAction(){
         try{
-            new Handler().post(getServer(appController));
+            new Thread(getServer(appController)).start();
         } catch (Exception e){
             e.printStackTrace();
             Toast.makeText(getContext(), "Sorry!! Failed", Toast.LENGTH_SHORT).show();

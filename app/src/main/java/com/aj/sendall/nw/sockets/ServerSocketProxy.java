@@ -9,6 +9,8 @@ import com.aj.sendall.events.event.ServerListeningForNewConn;
 import com.aj.sendall.events.event.ServerSocketClosing;
 
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 

@@ -15,7 +15,7 @@ abstract public class AbstractServer implements Runnable {
 
     @Override
     public void run() {
-        ServerSocket serverSocket = appController.getRunningSocket();
+        ServerSocket serverSocket = appController.getRunningServerSocket();
         if(serverSocket != null) {
             preRun();
             while (!serverSocket.isClosed()) {

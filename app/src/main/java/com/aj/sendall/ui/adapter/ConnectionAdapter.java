@@ -16,10 +16,6 @@ import com.aj.sendall.ui.utils.CommonUiUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by ajilal on 24/4/17.
- */
-
 public class ConnectionAdapter extends BaseAdapter {
     private List<ConnectionViewData> dataList;
     private List<ConnectionViewData> filteredItems;

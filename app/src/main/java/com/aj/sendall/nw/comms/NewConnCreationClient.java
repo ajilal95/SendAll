@@ -48,7 +48,7 @@ public class NewConnCreationClient extends AbstractClient {
                     conn.setSSID(otherDeviceId);
                     conn.setLastContaced(new Date());
 
-                    appController.saveToDB(conn);
+                    appController.save(conn);
                 }
                 status = AppConsts.SUCCESS;
             }catch (Exception e){

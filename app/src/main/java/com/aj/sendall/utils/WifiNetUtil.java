@@ -497,12 +497,16 @@ final public class WifiNetUtil {
 
     public void stopScanningWifi(){
         if(wifiScanBr != null){
-            context.unregisterReceiver(wifiScanBr);
+            try {
+                context.unregisterReceiver(wifiScanBr);
+                wifiScanBr = null;
+            } catch (IllegalArgumentException e){
+                wifiScanBr = null;
+            }
         }
     }
 
-
-    public int connectAndGetServerAddress(WifiConfiguration wifiConfiguration) {
+    private int connectAndGetServerAddress(WifiConfiguration wifiConfiguration, int remAttempts){
         int res = wm.addNetwork(wifiConfiguration);
         wm.disconnect();
         try {
@@ -518,6 +522,16 @@ final public class WifiNetUtil {
         } catch(Exception e){
             e.printStackTrace();
         }
-        return wm.getDhcpInfo().serverAddress;
+        int serverAddress = wm.getDhcpInfo().serverAddress;
+        if(serverAddress > 0 || remAttempts <= 0){
+            return serverAddress;
+        } else {
+            //Try again
+            return connectAndGetServerAddress(wifiConfiguration, remAttempts - 1);
+        }
+    }
+
+    public int connectAndGetServerAddress(WifiConfiguration wifiConfiguration) {
+        return connectAndGetServerAddress(wifiConfiguration, 3);//try a max of three times to get connected
     }
 }

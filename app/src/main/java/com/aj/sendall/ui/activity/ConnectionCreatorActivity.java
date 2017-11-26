@@ -46,6 +46,11 @@ public class ConnectionCreatorActivity extends AppCompatActivity{
     @Inject
     AppController appController;
 
+    private EventRouter.Receiver<NewConnSelected> receiver1;
+    private EventRouter.Receiver<NewConnCreationFinished> receiver2;
+    private EventRouter.Receiver<SendallNetsAvailable> receiver3;
+    private EventRouter.Receiver<NewClientAvailable> receiver4;
+
     private ConnectorAdapter connectorAdapter;
 
     @Override
@@ -102,23 +107,25 @@ public class ConnectionCreatorActivity extends AppCompatActivity{
     }
 
     public void subscribeEvents() {
-        eventRouter.subscribe(NewConnSelected.class, new EventRouter.Receiver<NewConnSelected>() {
+        eventRouter.subscribe(NewConnSelected.class, receiver1 = new EventRouter.Receiver<NewConnSelected>() {
             @Override
             public void receive(NewConnSelected event) {
                 if(Action.CREATE.equals(selectedAction)){
+                    transBgLayout.setVisibility(View.VISIBLE);
                     Acceptable clientConn = usernameToClientCommunicator.get(event.selectedConn.profileName);
                     if(clientConn != null){
                         clientConn.accept();
                     }
-                    transBgLayout.setVisibility(View.VISIBLE);
                 } else if(Action.JOIN.equals(selectedAction)){
                     transBgLayout.setVisibility(View.VISIBLE);
                     appController.connectToConnCreationServer(event.selectedConn.uniqueId);
                 }
                 eventRouter.unsubscribe(NewConnSelected.class, this);
+                eventRouter.unsubscribe(SendallNetsAvailable.class, receiver3);
+                eventRouter.unsubscribe(NewClientAvailable.class, receiver4);
             }
         });
-        eventRouter.subscribe(NewConnCreationFinished.class, new EventRouter.Receiver<NewConnCreationFinished>() {
+        eventRouter.subscribe(NewConnCreationFinished.class, receiver2 = new EventRouter.Receiver<NewConnCreationFinished>() {
             @Override
             public void receive(NewConnCreationFinished event) {
                 if(AppConsts.SUCCESS.equals(event.status)){
@@ -129,7 +136,7 @@ public class ConnectionCreatorActivity extends AppCompatActivity{
                 eventRouter.unsubscribe(NewConnCreationFinished.class, this);
             }
         });
-        eventRouter.subscribe(SendallNetsAvailable.class, new EventRouter.Receiver<SendallNetsAvailable>() {
+        eventRouter.subscribe(SendallNetsAvailable.class, receiver3 = new EventRouter.Receiver<SendallNetsAvailable>() {
             @Override
             public void receive(SendallNetsAvailable event) {
                 List<String> SSIDs = event.availableSSIDs;
@@ -140,7 +147,7 @@ public class ConnectionCreatorActivity extends AppCompatActivity{
                 }
             }
         });
-        eventRouter.subscribe(NewClientAvailable.class, new EventRouter.Receiver<NewClientAvailable>() {
+        eventRouter.subscribe(NewClientAvailable.class, receiver4 = new EventRouter.Receiver<NewClientAvailable>() {
             @Override
             public void receive(NewClientAvailable event) {
                 //A new connection request arrived. add it to the ui
@@ -151,10 +158,10 @@ public class ConnectionCreatorActivity extends AppCompatActivity{
     }
 
     private void unsubscribeEvents(){
-        eventRouter.clearListeners(SendallNetsAvailable.class);
-        eventRouter.clearListeners(NewClientAvailable.class);
-        eventRouter.clearListeners(NewConnSelected.class);
-        eventRouter.clearListeners(NewConnCreationFinished.class);
+        eventRouter.unsubscribe(SendallNetsAvailable.class, receiver3);
+        eventRouter.unsubscribe(NewClientAvailable.class, receiver4);
+        eventRouter.unsubscribe(NewConnSelected.class, receiver1);
+        eventRouter.unsubscribe(NewConnCreationFinished.class, receiver2);
     }
 
     private void animateViewsOnButtonClicked(View clickedButton){
@@ -182,8 +189,8 @@ public class ConnectionCreatorActivity extends AppCompatActivity{
     @Override
     protected void onPause() {
         super.onPause();
-        appController.setSystemIdle();
         unsubscribeEvents();
+        appController.setSystemIdle();
         finish();
     }
 

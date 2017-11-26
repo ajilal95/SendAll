@@ -31,6 +31,6 @@ public class FileTransferServer extends AbstractServer{
 
     @Override
     protected void preRun() {
-        appController.setServerAcceptWaitTimer(ACCEPT_WAIT_TIME);//30 sec
+        //appController.setServerAcceptWaitTimer(ACCEPT_WAIT_TIME);//30 sec
     }
 }

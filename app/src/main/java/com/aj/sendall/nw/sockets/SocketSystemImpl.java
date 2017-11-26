@@ -19,7 +19,7 @@ class SocketSystemImpl implements SocketSystem{
     private EventRouter eventRouter = EventRouterFactory.getInstance();
 
     private boolean serverRunning = false;
-    private boolean clientRunning = true;
+    private boolean clientRunning = false;
     private ServerIdleTimeMonitor serverIdleTimeMonitor;
 
     private static final Object lock = new Object();
@@ -73,7 +73,9 @@ class SocketSystemImpl implements SocketSystem{
             }
             serverSocket = new ServerSocketProxy(port);
             serverRunning = true;
-            eventRouter.broadcast(new ServerModeStarted());
+            ServerModeStarted event = new ServerModeStarted();
+            event.portNo = serverSocket.getLocalPort();
+            eventRouter.broadcast(event);
             return serverSocket;
         }
     }

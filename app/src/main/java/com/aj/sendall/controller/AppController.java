@@ -89,7 +89,7 @@ public class AppController implements Serializable{
             eventRouter.subscribe(ServerModeStarted.class, new EventRouter.Receiver<ServerModeStarted>() {
                 @Override
                 public void receive(ServerModeStarted event) {
-                    initHotspot(socketSystem.getServerPortNo());
+                    initHotspot(event.portNo);
                 }
             });
             eventRouter.subscribe(ServerModeStopped.class, new EventRouter.Receiver<ServerModeStopped>() {
@@ -320,6 +320,7 @@ public class AppController implements Serializable{
         while(uniqueFile.exists()){
             String filePathTry = part1 + '(' + count + ')' + extn;
             uniqueFile = new File(filePathTry);
+            count++;
         }
         return uniqueFile;
     }
@@ -375,25 +376,31 @@ public class AppController implements Serializable{
         return appStatus == AppStatus.TRANSF_CLIENT;
     }
 
+    public boolean isClient(){
+        return isConnCreationClient() || isFileTransferClient();
+    }
+
     private static final Object socketSystemSync = new Object();
     private void setCurrentAppStatus(AppStatus newStatus){
-        this.appStatus = newStatus;
-        synchronized (socketSystemSync) {
-            Thread socketUpdator = getSocketUpdtingThread();
-            if (socketUpdator != null){
-                socketUpdator.start();
-                try {
-                    socketSystemSync.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+        if(!this.appStatus.equals(newStatus)) {
+            this.appStatus = newStatus;
+            synchronized (socketSystemSync) {
+                Thread socketUpdator = getSocketUpdtingThread();
+                if (socketUpdator != null) {
+                    socketUpdator.start();
+                    try {
+                        socketSystemSync.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
+            //command to show status notification. The notification util will decide whether to ot not to show the notification
+            showStatusNotification(true);
+            AppStatusChanged ev = new AppStatusChanged();
+            ev.newStatus = newStatus;
+            eventRouter.broadcast(ev);
         }
-        //command to show status notification. The notification util will decide whether to ot not to show the notification
-        showStatusNotification(true);
-        AppStatusChanged ev = new AppStatusChanged();
-        ev.newStatus = newStatus;
-        eventRouter.broadcast(ev);
     }
 
     private Thread getSocketUpdtingThread(){
@@ -500,7 +507,7 @@ public class AppController implements Serializable{
         return isConnCreationServer() || isFileTransferServer();
     }
 
-    public ServerSocket getRunningSocket(){
+    public ServerSocket getRunningServerSocket(){
         if(isServer()){
             return socketSystem.getCurrentServerSocket();
         }
@@ -520,12 +527,12 @@ public class AppController implements Serializable{
         socketSystem.setServerAcceptWaitTimer(waitTime);
     }
 
-    public void saveToDB(Connections conn){
-        dbUtil.saveOrUpdate(conn);
+    public void save(Connections conn){
+        dbUtil.save(conn);
     }
 
-    public void saveToDB(PersonalInteraction pi){
-        dbUtil.saveOrUpdate(pi);
+    public void save(PersonalInteraction pi){
+        dbUtil.save(pi);
     }
 
     public void update(Connections conn){

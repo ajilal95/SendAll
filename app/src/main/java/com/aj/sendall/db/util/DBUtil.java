@@ -81,44 +81,6 @@ public class DBUtil {
         return daoSession.getConnectionsDao().queryBuilder().where(ConnectionsDao.Properties.SSID.eq(SSID)).unique();
     }
 
-    public void saveOrUpdate(Connections conn){
-        ConnectionsDao connectionsDao = daoSession.getConnectionsDao();
-        List<Connections> matchedConnection = connectionsDao.queryBuilder()
-                .where(ConnectionsDao.Properties.SSID.eq(conn.getSSID()))
-                .list();
-        if(matchedConnection != null && !matchedConnection.isEmpty()){
-            for(Connections connections : matchedConnection){
-                connections.setConnectionName(conn.getConnectionName());
-                connections.setLastContaced(conn.getLastContaced());
-            }
-            connectionsDao.updateInTx(matchedConnection);
-        } else {
-            daoSession.getConnectionsDao().save(conn);
-        }
-    }
-
-    public void saveOrUpdate(PersonalInteraction pi){
-        PersonalInteractionDao personalInteractionDao = daoSession.getPersonalInteractionDao();
-        List<PersonalInteraction> matchingPIs = personalInteractionDao.queryBuilder()
-                .where(PersonalInteractionDao.Properties.FilePath.eq(pi.getFilePath()),
-                        PersonalInteractionDao.Properties.ConnectionId.eq(pi.getConnectionId()),
-                        PersonalInteractionDao.Properties.MediaType.eq(pi.getMediaType()))
-                .list();
-        if(matchingPIs == null || matchingPIs.isEmpty()){
-            personalInteractionDao.save(pi);
-        } else {
-            for(PersonalInteraction mpi : matchingPIs){
-                mpi.setModifiedTime(pi.getModifiedTime());
-                mpi.setFileUri(pi.getFileUri());
-                mpi.setBytesTransfered(pi.getBytesTransfered());
-                mpi.setFileSize(pi.getFileSize());
-                mpi.setFileStatus(pi.getFileStatus());
-            }
-
-            personalInteractionDao.updateInTx(matchingPIs);
-        }
-    }
-
     public PersonalInteraction getPersonalInteraction(long connId, String fileName, int mediaType, long fileSize){
         PersonalInteractionDao personalInteractionDao = daoSession.getPersonalInteractionDao();
         List<PersonalInteraction> matchingPIs = personalInteractionDao.queryBuilder()
@@ -137,7 +99,14 @@ public class DBUtil {
     public void save(PersonalInteraction pi){
         PersonalInteractionDao personalInteractionDao = daoSession.getPersonalInteractionDao();
         if(pi != null){
-            personalInteractionDao.insert(pi);
+            personalInteractionDao.save(pi);
+        }
+    }
+
+    public void save(Connections conn){
+        ConnectionsDao connectionsDao = daoSession.getConnectionsDao();
+        if(conn != null){
+            connectionsDao.insert(conn);
         }
     }
 

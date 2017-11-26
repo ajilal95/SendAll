@@ -64,7 +64,7 @@ class NewConnCreationServerConnDelegate extends AbstractServerConnDelegate imple
                 connection.setConnectionName(otherUserName);
                 connection.setSSID(otherDeviceId);
                 connection.setLastContaced(new Date());
-                appController.saveToDB(connection);
+                appController.save(connection);
                 status = AppConsts.SUCCESS;
             } else {
                 dataOutputStream.writeUTF(AppConsts.FAILED);
