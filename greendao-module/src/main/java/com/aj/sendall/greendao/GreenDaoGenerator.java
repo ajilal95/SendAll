@@ -9,28 +9,32 @@ import org.greenrobot.greendao.generator.ToOne;
 public class GreenDaoGenerator {
 
     public static void main(String[] args){
-        Schema schema = new Schema(4, "com.aj.sendall.dal.model");
-        schema.setDefaultJavaPackageDao("com.aj.sendall.dal.dao");
-        schema.setDefaultJavaPackageTest("com.aj.sendall.dal.daotest");
+        Schema schema = new Schema(8, "com.aj.sendall.db.model");
+        schema.setDefaultJavaPackageDao("com.aj.sendall.db.dao");
+//        schema.setDefaultJavaPackageTest("com.aj.sendall.dal.daotest");
 
         //Connections
         Entity connection = schema.addEntity("Connections");
         connection.addLongProperty("connectionId").primaryKey().autoincrement().getProperty();
         connection.addStringProperty("connectionName").notNull();
         connection.addStringProperty("SSID").notNull();
-        connection.addStringProperty("password").notNull();
+        connection.addStringProperty("profPicPath");
+        connection.addDateProperty("lastContaced");
 
         //PersonalInteractions
         Entity personalInteraction = schema.addEntity("PersonalInteraction");
         personalInteraction.addLongProperty("personalInteractionId").primaryKey().autoincrement();
         Property persIntConnIdProp = personalInteraction.addLongProperty("connectionId").notNull().getProperty();
         personalInteraction.addStringProperty("fileUri").notNull();
+        personalInteraction.addStringProperty("filePath").notNull();
         personalInteraction.addIntProperty("mediaType").notNull();
         personalInteraction.addIntProperty("fileStatus").customType(
-                "com.aj.sendall.dal.enums.FileStatus", "com.aj.sendall.dal.converters.FileStatusToIntConverter");
+                "com.aj.sendall.db.enums.FileStatus", "com.aj.sendall.db.converters.FileStatusToIntConverter");
         personalInteraction.addDateProperty("modifiedTime").notNull();
         personalInteraction.addStringProperty("fileName").notNull();
-        personalInteraction.addStringProperty("fileSize");
+        personalInteraction.addLongProperty("fileSize");
+        personalInteraction.addLongProperty("bytesTransfered");
+        personalInteraction.addLongProperty("transactionId");
 
         connection.addToMany(personalInteraction, persIntConnIdProp, "personalInters");
 
