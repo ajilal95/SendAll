@@ -368,11 +368,11 @@ public class AppController implements Serializable{
         return appStatus == AppStatus.NEW_CONN_CLIENT;
     }
 
-    public boolean isFileTransferServer(){
+    private boolean isFileTransferServer(){
         return appStatus == AppStatus.TRANSF_SERVER;
     }
 
-    public boolean isFileTransferClient(){
+    private boolean isFileTransferClient(){
         return appStatus == AppStatus.TRANSF_CLIENT;
     }
 
@@ -491,7 +491,7 @@ public class AppController implements Serializable{
         setSystemIdle();
     }
 
-    public List<PersonalInteractionDTO> getPersonalInteractionDTOs(Integer connId){
+    public List<PersonalInteractionDTO> getPersonalInteractionDTOs(long connId){
         return dbUtil.getAllPersonalInteractionDTO(connId);
     }
 

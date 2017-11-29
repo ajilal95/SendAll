@@ -1,6 +1,10 @@
 package com.aj.sendall.nw.protocol;
 
 public interface FileTransferProtocol {
+    int PAUSE_TRANSFER = 0;
+    int CONTINUE_TRANSFER = 1;
+    int STOP_TRANSFER = -1;
+
     void authenticate() throws ProtocolException;
     void checkClientExtMedia() throws ProtocolException;
     void communicateFileCount() throws ProtocolException;

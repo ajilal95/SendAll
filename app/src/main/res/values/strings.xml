@@ -14,6 +14,9 @@
     <!-- Strings related to Settings -->
     <string name="string_turn_on_receiver">Turn on receiving</string>
 
+    <!-- Default Thumbnail description -->
+    <string name="default_thumbnail_desc">Thumbnail</string>
+
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="title_activity_pesonal_interaction_view">Connection</string>

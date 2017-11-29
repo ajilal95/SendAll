@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import com.aj.sendall.R;
 import com.aj.sendall.application.ThisApplication;
+import com.aj.sendall.controller.AppConsts;
 import com.aj.sendall.ui.activity.ConnectionCreatorActivity;
 import com.aj.sendall.ui.activity.HomeActivity;
 import com.aj.sendall.ui.activity.PersonalInteractionsActivity;
@@ -117,8 +118,8 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             Intent personalInteractionView = new Intent(parentActivity, PersonalInteractionsActivity.class);
-            personalInteractionView.putExtra("id", ((ConnectionViewData)view.getTag()).profileId);
-            personalInteractionView.putExtra("title", ((ConnectionViewData)view.getTag()).profileName);
+            personalInteractionView.putExtra(AppConsts.INTENT_EXTRA_KEY_1, ((ConnectionViewData)view.getTag()).profileId);
+            personalInteractionView.putExtra(AppConsts.INTENT_EXTRA_KEY_2, ((ConnectionViewData)view.getTag()).profileName);
             parentActivity.startActivity(personalInteractionView);
         }
     }

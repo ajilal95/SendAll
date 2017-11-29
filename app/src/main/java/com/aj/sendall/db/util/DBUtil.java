@@ -58,7 +58,7 @@ public class DBUtil {
     }
 
     @SuppressWarnings("unchecked")
-    public List<PersonalInteractionDTO> getAllPersonalInteractionDTO(Integer connId){
+    public List<PersonalInteractionDTO> getAllPersonalInteractionDTO(long connId){
         List<PersonalInteraction> pis = daoSession.getPersonalInteractionDao()
                 .queryBuilder()
                 .where(PersonalInteractionDao.Properties.ConnectionId.eq(connId))

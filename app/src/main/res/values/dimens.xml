@@ -10,9 +10,9 @@
     <dimen name="gallery_item_margin">2dp</dimen>
     <dimen name="gallery_item_width">300dp</dimen>
 
+    <dimen name="thumbnail_default_padding">1dp</dimen>
     <!-- for personal interaction view-->
     <dimen name="pers_inter_item_side_marker">5dp</dimen>
-    <dimen name="pers_inter_item_img_padding">3dp</dimen>
     <dimen name="pers_inter_item_title_padding">3dp</dimen>
     <dimen name="pers_inter_item_top_margin">4dp</dimen>
     <dimen name="pers_inter_items_parent_vert_margin">2dp</dimen>

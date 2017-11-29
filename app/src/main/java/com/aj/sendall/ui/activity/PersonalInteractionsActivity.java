@@ -11,6 +11,7 @@ import android.view.View;
 
 import com.aj.sendall.R;
 import com.aj.sendall.application.ThisApplication;
+import com.aj.sendall.controller.AppConsts;
 import com.aj.sendall.ui.adapter.PersonalInteractionsAdapter;
 import com.aj.sendall.ui.utils.PersonalInteractionsUtil;
 import com.aj.sendall.ui.interfaces.ItemSelectableView;
@@ -23,6 +24,9 @@ public class PersonalInteractionsActivity extends AppCompatActivity implements I
     private FloatingActionButton fltActionButtonSend;
     private RecyclerView recyclrVwPersInteractions;
 
+    private String userName;
+    private long userDBId;
+
     private int numberOfSelecedItems;
 
     @Override
@@ -30,8 +34,10 @@ public class PersonalInteractionsActivity extends AppCompatActivity implements I
         super.onCreate(savedInstanceState);
         ((ThisApplication)getApplication()).getDaggerInjector().inject(this);
         setContentView(R.layout.activity_pesonal_interaction_view);
+        userDBId = getIntent().getLongExtra(AppConsts.INTENT_EXTRA_KEY_1, 0);
+        userName = getIntent().getStringExtra(AppConsts.INTENT_EXTRA_KEY_2);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setTitle(getIntent().getStringExtra("title"));
+        toolbar.setTitle(userName);
         setSupportActionBar(toolbar);
         if(getSupportActionBar() != null) {
             getSupportActionBar().setHomeButtonEnabled(true);
@@ -67,7 +73,7 @@ public class PersonalInteractionsActivity extends AppCompatActivity implements I
     private void initPersonalInteractionView() {
         LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, true);
         recyclrVwPersInteractions.setLayoutManager(layoutManager);
-        PersonalInteractionsAdapter personalInteractionsAdapter = new PersonalInteractionsAdapter(0, this, this, personalInteractionsUtil);
+        PersonalInteractionsAdapter personalInteractionsAdapter = new PersonalInteractionsAdapter(userDBId, this, this, personalInteractionsUtil);
         recyclrVwPersInteractions.setAdapter(personalInteractionsAdapter);
     }
 

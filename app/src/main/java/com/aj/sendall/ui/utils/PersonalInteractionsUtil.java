@@ -17,17 +17,7 @@ public final class PersonalInteractionsUtil {
         this.appController = appController;
     }
 
-    public List<PersonalInteractionDTO> getFileInteractionsByConnectionId(int connectionId){
-        /*List<PersonalInteractionDTO> dtos = new ArrayList<>();
-        for(int i = 0; i < 100; i++){
-            PersonalInteractionDTO infoDTO = new PersonalInteractionDTO();
-            infoDTO.mediaType = getMediaType(i % 4);
-            infoDTO.title = "File kbksdkfgskdbkvskdffgksndllnbsdnbksdkkgrkbdkb" + i;
-            infoDTO.size = 10000l;
-            infoDTO.status = FileStatus.getFileStatus(i % 4);
-            dtos.add(infoDTO);
-        }
-        return dtos;*/
+    public List<PersonalInteractionDTO> getFileInteractionsByConnectionId(long connectionId){
         return appController.getPersonalInteractionDTOs(connectionId);
     }
 

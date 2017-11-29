@@ -70,7 +70,7 @@ public class CommonUiUtils {
         switch(mediaType){
             case MediaConsts.TYPE_VIDEO:
                 Glide.with(context)
-                        .load(fileInfoDTO.uri)
+                        .load(fileInfoDTO.filePath)
                         .error(R.mipmap.def_media_thumb)
                         .centerCrop()
                         .override(overrideWidth, overrideHeight)
@@ -78,7 +78,7 @@ public class CommonUiUtils {
                 break;
             case MediaConsts.TYPE_IMAGE:
                 Glide.with(context)
-                        .load(fileInfoDTO.uri)
+                        .load(fileInfoDTO.filePath)
                         .error(R.mipmap.def_media_thumb)
                         .centerCrop()
                         .override(overrideWidth, overrideHeight)

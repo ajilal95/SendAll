@@ -9,10 +9,11 @@
 
     <ImageView
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:contentDescription="@string/default_thumbnail_desc"
         app:srcCompat="@mipmap/def_media_thumb"
         android:id="@+id/img_vw_pers_inter_thumbnail"
-        android:padding="@dimen/pers_inter_item_img_padding"
+        android:padding="@dimen/thumbnail_default_padding"
         android:layout_gravity="center"/>
 
     <LinearLayout

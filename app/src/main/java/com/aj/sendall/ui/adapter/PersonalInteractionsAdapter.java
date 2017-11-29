@@ -28,7 +28,7 @@ public class PersonalInteractionsAdapter extends RecyclerView.Adapter<PersonalIn
 
     private Context context;
     private List<PersonalInteractionDTO> personalInteractionDTOs;
-    private int connectionId;
+    private long connectionId;
 
     private ItemSelectableView parentItemSelectable;
 
@@ -37,7 +37,7 @@ public class PersonalInteractionsAdapter extends RecyclerView.Adapter<PersonalIn
     private PersonalInteractionsUtil personalInteractionsUtil;
 
 
-    public PersonalInteractionsAdapter(int connectionId, @NonNull Context context, ItemSelectableView parentItemSelectable, PersonalInteractionsUtil personalInteractionsUtil){
+    public PersonalInteractionsAdapter(long connectionId, @NonNull Context context, ItemSelectableView parentItemSelectable, PersonalInteractionsUtil personalInteractionsUtil){
         this.parentItemSelectable = parentItemSelectable;
         this.context = context;
         this.connectionId = connectionId;
@@ -79,13 +79,13 @@ public class PersonalInteractionsAdapter extends RecyclerView.Adapter<PersonalIn
             case SENT:
                 ((RecyclerView.LayoutParams)holder.itemView.getLayoutParams()).leftMargin = 75;
                 ((RecyclerView.LayoutParams)holder.itemView.getLayoutParams()).rightMargin = 0;
-                ((LinearLayout)holder.itemView).setGravity(Gravity.RIGHT);
+                ((LinearLayout)holder.itemView).setGravity(Gravity.END);
                 break;
             case RECEIVING:
             case RECEIVED:
                 ((RecyclerView.LayoutParams)holder.itemView.getLayoutParams()).leftMargin = 0;
                 ((RecyclerView.LayoutParams)holder.itemView.getLayoutParams()).rightMargin = 75;
-                ((LinearLayout)holder.itemView).setGravity(Gravity.LEFT);
+                ((LinearLayout)holder.itemView).setGravity(Gravity.START);
                 break;
         }
     }

@@ -297,40 +297,41 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
 
             long bytesRemaining = nextFileSize - bytesReadForNextFile;
             int bytesToRead;
+            int bytesToReadRemaining;
             int bytesRead;
+            int readRetryCount = 0;
             byte[] buff = new byte[(int) Math.min(AppConsts.FILE_TRANS_BUFFER_SIZE, bytesRemaining)];
             while (bytesRemaining > 0){
                 bytesToRead = (int) Math.min(AppConsts.FILE_TRANS_BUFFER_SIZE, bytesRemaining);
-                try {
-                    bytesRead = dataInputStream.read(buff, 0, bytesToRead);
-                    if (bytesRead < 0 || bytesRead != bytesToRead) {
-                        throw new IOException("Could not read data");
+                bytesToReadRemaining = bytesToRead;
+                while(bytesToReadRemaining > 0) {
+                    try {
+                        bytesRead = dataInputStream.read(buff, 0, bytesToRead);
+                        if(bytesRead < 0){
+                            throw new IOException("Read -1 bytes");
+                        }
+                        readRetryCount = 0;
+                    } catch (Exception e) {
+                        int stat = (++readRetryCount > 5) ? STOP_TRANSFER : PAUSE_TRANSFER;
+                        dataOutputStream.writeInt(stat);
+                        dataOutputStream.flush();
+                        continue;
                     }
-                    dataOutputStream.writeInt(bytesRead);
-                    dataOutputStream.flush();
-                } catch (Exception e){
-                    dataOutputStream.writeInt(0);
-                    dataOutputStream.flush();
-                    continue;
+                    try {
+                        fos.write(buff, 0, bytesRead);
+                    } catch (IOException e) {
+                        dataOutputStream.writeInt(STOP_TRANSFER);
+                        dataOutputStream.flush();
+                        continue;
+                    }
+                    bytesToReadRemaining -= bytesRead;
+                    bytesRemaining -= bytesRead;
+                    bytesReadForNextFile += bytesRead;
                 }
-                try {
-                    fos.write(buff, 0, bytesRead);
-                } catch (IOException e){
-                    dataOutputStream.writeInt(0);
-                    dataOutputStream.flush();
-                    continue;
-                }
-                try {
-                    fos.flush();
-                } catch (IOException e){
-                    //indicate the server to stop
-                    dataOutputStream.writeInt(-1);
-                    dataOutputStream.flush();
-                    break;
-                }
-                bytesRemaining -= bytesRead;
-                bytesReadForNextFile += bytesRead;
+                dataOutputStream.writeInt(CONTINUE_TRANSFER);
+                dataOutputStream.flush();
             }
+            fos.flush();
             streamManager.close();
             pi.setBytesTransfered(bytesReadForNextFile);
             appController.update(pi);

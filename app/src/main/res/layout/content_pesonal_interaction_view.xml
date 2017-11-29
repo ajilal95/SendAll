@@ -14,9 +14,7 @@
 
     <android.support.v7.widget.RecyclerView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
+        android:layout_height="0dp"
         android:layout_weight="1"
         android:id="@+id/recycl_vw_personal_inter"
         app:reverseLayout="true"/>
@@ -24,7 +22,7 @@
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="right">
+        android:gravity="end">
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/flt_btn_send_personally"
             android:layout_width="match_parent"

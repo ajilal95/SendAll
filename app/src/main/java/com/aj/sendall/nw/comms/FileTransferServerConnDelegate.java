@@ -244,23 +244,26 @@ class FileTransferServerConnDelegate extends AbstractServerConnDelegate implemen
             if(bytesSkipped == bytesTransferred) {
                 DataInputStream fdis = new DataInputStream(is);
                 byte[] buff = new byte[(int) Math.min(AppConsts.FILE_TRANS_BUFFER_SIZE, file.size)];
-                int bytesRead;
-                int bytesReadAtClient;
-                while ((bytesRead = fdis.read(buff)) > 0) {
+                int bytesRead  = -1;
+                int ack;
+                boolean paused = false;
+                all :
+                while (paused || (bytesRead = fdis.read(buff)) > 0) {
                     try {
-                        dataOutputStream.write(buff, 0, bytesRead);
-                        dataOutputStream.flush();
-                        bytesReadAtClient = dataInputStream.readInt();//an acknowledgement from client that data received
-                        if (bytesReadAtClient == 0) {
-                            //file read failed at client resend the data
-                            while(bytesReadAtClient == 0){
-                                dataOutputStream.write(buff, 0, bytesRead);
-                                dataOutputStream.flush();
-                                bytesReadAtClient = dataInputStream.readInt();
-                            }
+                        if(!paused) {
+                            dataOutputStream.write(buff, 0, bytesRead);
+                            dataOutputStream.flush();
                         }
-                        if(bytesReadAtClient < 0){
-                            break;
+                        ack = dataInputStream.readInt();//an acknowledgement from client that data received
+                        switch(ack){
+                            case CONTINUE_TRANSFER :
+                                paused = false;
+                                break;
+                            case PAUSE_TRANSFER :
+                                paused = true;
+                                break;
+                            case STOP_TRANSFER :
+                                break all;
                         }
                     } catch (Exception e) {
                         break;
