@@ -5,6 +5,7 @@ import android.os.StatFs;
 
 import com.aj.sendall.events.EventRouter;
 import com.aj.sendall.events.EventRouterFactory;
+import com.aj.sendall.events.event.FileTransferStatusEvent;
 import com.aj.sendall.events.event.FileTransfersFinished;
 import com.aj.sendall.controller.AppConsts;
 import com.aj.sendall.controller.AppController;
@@ -74,7 +75,6 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
         pi.setFileSize(fileSize);
         pi.setBytesTransfered(bytesTransfered);
         pi.setFilePath(filePath);
-        pi.setFileUri("");
         pi.setFileStatus(FileStatus.RECEIVING);
         pi.setConnectionId(conn.getConnectionId());
         pi.setModifiedTime(new Date());
@@ -286,21 +286,26 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
             //communicate bytes send so far(for resuming transfer)
             dataOutputStream.writeLong(bytesReadForNextFile);
             dataOutputStream.flush();
-            String osMode;
-//            if(fileToWrite.exists()){
-                osMode = "a";
-//            } else {
-//                osMode = "w";
-//            }
+            String osMode = "a";
             StreamManager streamManager = StreamManagerFactory.getInstance(fileToWrite);
             FileOutputStream fos = (FileOutputStream) streamManager.getOutputStream(osMode);
 
+            //to update ui
+            FileTransferStatusEvent event = new FileTransferStatusEvent();
+            event.connectionId = pi.getConnectionId();
+            event.fileName = nextFile;
+
             long bytesRemaining = nextFileSize - bytesReadForNextFile;
+            if(bytesRemaining > 0L){
+                pi.setFileStatus(FileStatus.RECEIVING);
+                appController.update(pi);
+            }
             int bytesToRead;
             int bytesToReadRemaining;
             int bytesRead;
             int readRetryCount = 0;
             byte[] buff = new byte[(int) Math.min(AppConsts.FILE_TRANS_BUFFER_SIZE, bytesRemaining)];
+            all :
             while (bytesRemaining > 0){
                 bytesToRead = (int) Math.min(AppConsts.FILE_TRANS_BUFFER_SIZE, bytesRemaining);
                 bytesToReadRemaining = bytesToRead;
@@ -312,9 +317,11 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
                         }
                         readRetryCount = 0;
                     } catch (Exception e) {
-                        int stat = (++readRetryCount > 5) ? STOP_TRANSFER : PAUSE_TRANSFER;
-                        dataOutputStream.writeInt(stat);
-                        dataOutputStream.flush();
+                        if(++readRetryCount > 5) {
+                            dataOutputStream.writeInt(STOP_TRANSFER);
+                            dataOutputStream.flush();
+                            break all;
+                        }
                         continue;
                     }
                     try {
@@ -322,11 +329,13 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
                     } catch (IOException e) {
                         dataOutputStream.writeInt(STOP_TRANSFER);
                         dataOutputStream.flush();
-                        continue;
+                        break all;
                     }
                     bytesToReadRemaining -= bytesRead;
                     bytesRemaining -= bytesRead;
                     bytesReadForNextFile += bytesRead;
+                    event.totalTransferred = bytesReadForNextFile;
+                    eventRouter.broadcast(event);
                 }
                 dataOutputStream.writeInt(CONTINUE_TRANSFER);
                 dataOutputStream.flush();
@@ -345,7 +354,8 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
                     appController.update(pi);
                 }
             }
-
+            event.totalTransferred = FileTransferStatusEvent.COMPLETED;
+            eventRouter.broadcast(event);
         } catch (IOException e){
             throwNetIOE();
         }

@@ -32,15 +32,14 @@ public class PersonalInteractionDao extends AbstractDao<PersonalInteraction, Lon
     public static class Properties {
         public final static Property PersonalInteractionId = new Property(0, Long.class, "personalInteractionId", true, "PERSONAL_INTERACTION_ID");
         public final static Property ConnectionId = new Property(1, long.class, "connectionId", false, "CONNECTION_ID");
-        public final static Property FileUri = new Property(2, String.class, "fileUri", false, "FILE_URI");
-        public final static Property FilePath = new Property(3, String.class, "filePath", false, "FILE_PATH");
-        public final static Property MediaType = new Property(4, int.class, "mediaType", false, "MEDIA_TYPE");
-        public final static Property FileStatus = new Property(5, Integer.class, "fileStatus", false, "FILE_STATUS");
-        public final static Property ModifiedTime = new Property(6, java.util.Date.class, "modifiedTime", false, "MODIFIED_TIME");
-        public final static Property FileName = new Property(7, String.class, "fileName", false, "FILE_NAME");
-        public final static Property FileSize = new Property(8, Long.class, "fileSize", false, "FILE_SIZE");
-        public final static Property BytesTransfered = new Property(9, Long.class, "bytesTransfered", false, "BYTES_TRANSFERED");
-        public final static Property TransactionId = new Property(10, Long.class, "transactionId", false, "TRANSACTION_ID");
+        public final static Property FilePath = new Property(2, String.class, "filePath", false, "FILE_PATH");
+        public final static Property MediaType = new Property(3, int.class, "mediaType", false, "MEDIA_TYPE");
+        public final static Property FileStatus = new Property(4, Integer.class, "fileStatus", false, "FILE_STATUS");
+        public final static Property ModifiedTime = new Property(5, java.util.Date.class, "modifiedTime", false, "MODIFIED_TIME");
+        public final static Property FileName = new Property(6, String.class, "fileName", false, "FILE_NAME");
+        public final static Property FileSize = new Property(7, Long.class, "fileSize", false, "FILE_SIZE");
+        public final static Property BytesTransfered = new Property(8, Long.class, "bytesTransfered", false, "BYTES_TRANSFERED");
+        public final static Property TransactionId = new Property(9, Long.class, "transactionId", false, "TRANSACTION_ID");
     }
 
     private final FileStatusToIntConverter fileStatusConverter = new FileStatusToIntConverter();
@@ -60,15 +59,14 @@ public class PersonalInteractionDao extends AbstractDao<PersonalInteraction, Lon
         db.execSQL("CREATE TABLE " + constraint + "\"PERSONAL_INTERACTION\" (" + //
                 "\"PERSONAL_INTERACTION_ID\" INTEGER PRIMARY KEY AUTOINCREMENT ," + // 0: personalInteractionId
                 "\"CONNECTION_ID\" INTEGER NOT NULL ," + // 1: connectionId
-                "\"FILE_URI\" TEXT NOT NULL ," + // 2: fileUri
-                "\"FILE_PATH\" TEXT NOT NULL ," + // 3: filePath
-                "\"MEDIA_TYPE\" INTEGER NOT NULL ," + // 4: mediaType
-                "\"FILE_STATUS\" INTEGER," + // 5: fileStatus
-                "\"MODIFIED_TIME\" INTEGER NOT NULL ," + // 6: modifiedTime
-                "\"FILE_NAME\" TEXT NOT NULL ," + // 7: fileName
-                "\"FILE_SIZE\" INTEGER," + // 8: fileSize
-                "\"BYTES_TRANSFERED\" INTEGER," + // 9: bytesTransfered
-                "\"TRANSACTION_ID\" INTEGER);"); // 10: transactionId
+                "\"FILE_PATH\" TEXT NOT NULL ," + // 2: filePath
+                "\"MEDIA_TYPE\" INTEGER NOT NULL ," + // 3: mediaType
+                "\"FILE_STATUS\" INTEGER," + // 4: fileStatus
+                "\"MODIFIED_TIME\" INTEGER NOT NULL ," + // 5: modifiedTime
+                "\"FILE_NAME\" TEXT NOT NULL ," + // 6: fileName
+                "\"FILE_SIZE\" INTEGER," + // 7: fileSize
+                "\"BYTES_TRANSFERED\" INTEGER," + // 8: bytesTransfered
+                "\"TRANSACTION_ID\" INTEGER);"); // 9: transactionId
     }
 
     /** Drops the underlying database table. */
@@ -86,30 +84,29 @@ public class PersonalInteractionDao extends AbstractDao<PersonalInteraction, Lon
             stmt.bindLong(1, personalInteractionId);
         }
         stmt.bindLong(2, entity.getConnectionId());
-        stmt.bindString(3, entity.getFileUri());
-        stmt.bindString(4, entity.getFilePath());
-        stmt.bindLong(5, entity.getMediaType());
+        stmt.bindString(3, entity.getFilePath());
+        stmt.bindLong(4, entity.getMediaType());
  
         FileStatus fileStatus = entity.getFileStatus();
         if (fileStatus != null) {
-            stmt.bindLong(6, fileStatusConverter.convertToDatabaseValue(fileStatus));
+            stmt.bindLong(5, fileStatusConverter.convertToDatabaseValue(fileStatus));
         }
-        stmt.bindLong(7, entity.getModifiedTime().getTime());
-        stmt.bindString(8, entity.getFileName());
+        stmt.bindLong(6, entity.getModifiedTime().getTime());
+        stmt.bindString(7, entity.getFileName());
  
         Long fileSize = entity.getFileSize();
         if (fileSize != null) {
-            stmt.bindLong(9, fileSize);
+            stmt.bindLong(8, fileSize);
         }
  
         Long bytesTransfered = entity.getBytesTransfered();
         if (bytesTransfered != null) {
-            stmt.bindLong(10, bytesTransfered);
+            stmt.bindLong(9, bytesTransfered);
         }
  
         Long transactionId = entity.getTransactionId();
         if (transactionId != null) {
-            stmt.bindLong(11, transactionId);
+            stmt.bindLong(10, transactionId);
         }
     }
 
@@ -122,30 +119,29 @@ public class PersonalInteractionDao extends AbstractDao<PersonalInteraction, Lon
             stmt.bindLong(1, personalInteractionId);
         }
         stmt.bindLong(2, entity.getConnectionId());
-        stmt.bindString(3, entity.getFileUri());
-        stmt.bindString(4, entity.getFilePath());
-        stmt.bindLong(5, entity.getMediaType());
+        stmt.bindString(3, entity.getFilePath());
+        stmt.bindLong(4, entity.getMediaType());
  
         FileStatus fileStatus = entity.getFileStatus();
         if (fileStatus != null) {
-            stmt.bindLong(6, fileStatusConverter.convertToDatabaseValue(fileStatus));
+            stmt.bindLong(5, fileStatusConverter.convertToDatabaseValue(fileStatus));
         }
-        stmt.bindLong(7, entity.getModifiedTime().getTime());
-        stmt.bindString(8, entity.getFileName());
+        stmt.bindLong(6, entity.getModifiedTime().getTime());
+        stmt.bindString(7, entity.getFileName());
  
         Long fileSize = entity.getFileSize();
         if (fileSize != null) {
-            stmt.bindLong(9, fileSize);
+            stmt.bindLong(8, fileSize);
         }
  
         Long bytesTransfered = entity.getBytesTransfered();
         if (bytesTransfered != null) {
-            stmt.bindLong(10, bytesTransfered);
+            stmt.bindLong(9, bytesTransfered);
         }
  
         Long transactionId = entity.getTransactionId();
         if (transactionId != null) {
-            stmt.bindLong(11, transactionId);
+            stmt.bindLong(10, transactionId);
         }
     }
 
@@ -159,15 +155,14 @@ public class PersonalInteractionDao extends AbstractDao<PersonalInteraction, Lon
         PersonalInteraction entity = new PersonalInteraction( //
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // personalInteractionId
             cursor.getLong(offset + 1), // connectionId
-            cursor.getString(offset + 2), // fileUri
-            cursor.getString(offset + 3), // filePath
-            cursor.getInt(offset + 4), // mediaType
-            cursor.isNull(offset + 5) ? null : fileStatusConverter.convertToEntityProperty(cursor.getInt(offset + 5)), // fileStatus
-            new java.util.Date(cursor.getLong(offset + 6)), // modifiedTime
-            cursor.getString(offset + 7), // fileName
-            cursor.isNull(offset + 8) ? null : cursor.getLong(offset + 8), // fileSize
-            cursor.isNull(offset + 9) ? null : cursor.getLong(offset + 9), // bytesTransfered
-            cursor.isNull(offset + 10) ? null : cursor.getLong(offset + 10) // transactionId
+            cursor.getString(offset + 2), // filePath
+            cursor.getInt(offset + 3), // mediaType
+            cursor.isNull(offset + 4) ? null : fileStatusConverter.convertToEntityProperty(cursor.getInt(offset + 4)), // fileStatus
+            new java.util.Date(cursor.getLong(offset + 5)), // modifiedTime
+            cursor.getString(offset + 6), // fileName
+            cursor.isNull(offset + 7) ? null : cursor.getLong(offset + 7), // fileSize
+            cursor.isNull(offset + 8) ? null : cursor.getLong(offset + 8), // bytesTransfered
+            cursor.isNull(offset + 9) ? null : cursor.getLong(offset + 9) // transactionId
         );
         return entity;
     }
@@ -176,15 +171,14 @@ public class PersonalInteractionDao extends AbstractDao<PersonalInteraction, Lon
     public void readEntity(Cursor cursor, PersonalInteraction entity, int offset) {
         entity.setPersonalInteractionId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
         entity.setConnectionId(cursor.getLong(offset + 1));
-        entity.setFileUri(cursor.getString(offset + 2));
-        entity.setFilePath(cursor.getString(offset + 3));
-        entity.setMediaType(cursor.getInt(offset + 4));
-        entity.setFileStatus(cursor.isNull(offset + 5) ? null : fileStatusConverter.convertToEntityProperty(cursor.getInt(offset + 5)));
-        entity.setModifiedTime(new java.util.Date(cursor.getLong(offset + 6)));
-        entity.setFileName(cursor.getString(offset + 7));
-        entity.setFileSize(cursor.isNull(offset + 8) ? null : cursor.getLong(offset + 8));
-        entity.setBytesTransfered(cursor.isNull(offset + 9) ? null : cursor.getLong(offset + 9));
-        entity.setTransactionId(cursor.isNull(offset + 10) ? null : cursor.getLong(offset + 10));
+        entity.setFilePath(cursor.getString(offset + 2));
+        entity.setMediaType(cursor.getInt(offset + 3));
+        entity.setFileStatus(cursor.isNull(offset + 4) ? null : fileStatusConverter.convertToEntityProperty(cursor.getInt(offset + 4)));
+        entity.setModifiedTime(new java.util.Date(cursor.getLong(offset + 5)));
+        entity.setFileName(cursor.getString(offset + 6));
+        entity.setFileSize(cursor.isNull(offset + 7) ? null : cursor.getLong(offset + 7));
+        entity.setBytesTransfered(cursor.isNull(offset + 8) ? null : cursor.getLong(offset + 8));
+        entity.setTransactionId(cursor.isNull(offset + 9) ? null : cursor.getLong(offset + 9));
      }
     
     @Override

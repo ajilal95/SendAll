@@ -1,7 +1,6 @@
 package com.aj.sendall.nw.protocol;
 
 public interface FileTransferProtocol {
-    int PAUSE_TRANSFER = 0;
     int CONTINUE_TRANSFER = 1;
     int STOP_TRANSFER = -1;
 

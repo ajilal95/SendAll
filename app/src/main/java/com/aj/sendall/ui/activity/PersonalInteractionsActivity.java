@@ -1,6 +1,7 @@
 package com.aj.sendall.ui.activity;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -23,8 +24,8 @@ public class PersonalInteractionsActivity extends AppCompatActivity implements I
     public PersonalInteractionsUtil personalInteractionsUtil;
     private FloatingActionButton fltActionButtonSend;
     private RecyclerView recyclrVwPersInteractions;
+    private PersonalInteractionsAdapter personalInteractionsAdapter;
 
-    private String userName;
     private long userDBId;
 
     private int numberOfSelecedItems;
@@ -35,7 +36,7 @@ public class PersonalInteractionsActivity extends AppCompatActivity implements I
         ((ThisApplication)getApplication()).getDaggerInjector().inject(this);
         setContentView(R.layout.activity_pesonal_interaction_view);
         userDBId = getIntent().getLongExtra(AppConsts.INTENT_EXTRA_KEY_1, 0);
-        userName = getIntent().getStringExtra(AppConsts.INTENT_EXTRA_KEY_2);
+        String userName = getIntent().getStringExtra(AppConsts.INTENT_EXTRA_KEY_2);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle(userName);
         setSupportActionBar(toolbar);
@@ -73,7 +74,7 @@ public class PersonalInteractionsActivity extends AppCompatActivity implements I
     private void initPersonalInteractionView() {
         LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, true);
         recyclrVwPersInteractions.setLayoutManager(layoutManager);
-        PersonalInteractionsAdapter personalInteractionsAdapter = new PersonalInteractionsAdapter(userDBId, this, this, personalInteractionsUtil);
+        personalInteractionsAdapter = new PersonalInteractionsAdapter(userDBId, this, this, personalInteractionsUtil, new Handler(getMainLooper()));
         recyclrVwPersInteractions.setAdapter(personalInteractionsAdapter);
     }
 
@@ -122,7 +123,11 @@ public class PersonalInteractionsActivity extends AppCompatActivity implements I
     @Override
     protected void onPause() {
         super.onPause();
-        finish();
+        removeAllListeners();
+    }
+
+    private void removeAllListeners(){
+        personalInteractionsAdapter.unsubscribeFileTransferStatusEvents();
     }
 
     @Override

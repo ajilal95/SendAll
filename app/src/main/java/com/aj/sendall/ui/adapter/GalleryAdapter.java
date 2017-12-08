@@ -15,8 +15,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.aj.sendall.R;
-import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.db.dto.FileInfoDTO;
+import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.ui.interfaces.ItemSelectableView;
 import com.aj.sendall.ui.utils.CommonUiUtils;
 
@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Set;
 
 public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHolder>{
-    private String baseUriString;
     private final int mediaType;
     private String[] projections;
     private String sortField;
@@ -47,7 +46,6 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         this.handler = new Handler(context.getMainLooper());
         setSortField(mediaType);
         setProjections(mediaType);
-        setBaseContentUri(mediaType);
         allFileInfoDTOs = new ArrayList<>();
 //        initAdapter();
         new FileLoader().execute();
@@ -104,23 +102,6 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         }
     }
 
-    private void setBaseContentUri(int mediaType){
-        switch(mediaType){
-            case MediaConsts.TYPE_VIDEO:
-                baseUriString = MediaStore.Video.Media.EXTERNAL_CONTENT_URI.toString();
-                break;
-            case MediaConsts.TYPE_AUDIO:
-                baseUriString = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.toString();
-                break;
-            case MediaConsts.TYPE_IMAGE:
-                baseUriString = MediaStore.Images.Media.EXTERNAL_CONTENT_URI.toString();
-                break;
-            case MediaConsts.TYPE_OTHER:
-                baseUriString = MediaStore.Files.getContentUri("external").toString();
-                break;
-        }
-    }
-
     private void initAdapter(){
         selectedItems = new HashSet<>();
         allFileInfoDTOs = getGalleryItemsList();
@@ -149,7 +130,6 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                 if(mediaType == MediaConsts.TYPE_AUDIO){
                     dto.albumId = cursor.getInt(cursor.getColumnIndex(MediaStore.Audio.AudioColumns.ALBUM_ID));
                 }
-                dto.uri = Uri.parse(baseUriString + '/' + dto.id);
                 dto.filePath = cursor.getString(pathColIndex);
                 dto.title = dto.filePath.substring(dto.filePath.lastIndexOf('/') + 1);
                 fileInfoDTOs.add(dto);

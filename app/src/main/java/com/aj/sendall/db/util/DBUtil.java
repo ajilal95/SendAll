@@ -67,6 +67,7 @@ public class DBUtil {
         return new OnDemandConverterList<>(pis, new OnDemandConverterList.EntityConverter<PersonalInteraction, PersonalInteractionDTO>() {
             public PersonalInteractionDTO convert(PersonalInteraction pi){
                 PersonalInteractionDTO pidto = new PersonalInteractionDTO();
+                pidto.id = pi.getPersonalInteractionId();
                 pidto.filePath = pi.getFilePath();
                 pidto.mediaType = pi.getMediaType();
                 pidto.status = pi.getFileStatus();

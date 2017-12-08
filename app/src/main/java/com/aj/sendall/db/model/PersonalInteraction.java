@@ -17,9 +17,6 @@ public class PersonalInteraction {
     private long connectionId;
 
     @NotNull
-    private String fileUri;
-
-    @NotNull
     private String filePath;
     private int mediaType;
 
@@ -44,10 +41,9 @@ public class PersonalInteraction {
     }
 
     @Generated
-    public PersonalInteraction(Long personalInteractionId, long connectionId, String fileUri, String filePath, int mediaType, FileStatus fileStatus, java.util.Date modifiedTime, String fileName, Long fileSize, Long bytesTransfered, Long transactionId) {
+    public PersonalInteraction(Long personalInteractionId, long connectionId, String filePath, int mediaType, FileStatus fileStatus, java.util.Date modifiedTime, String fileName, Long fileSize, Long bytesTransfered, Long transactionId) {
         this.personalInteractionId = personalInteractionId;
         this.connectionId = connectionId;
-        this.fileUri = fileUri;
         this.filePath = filePath;
         this.mediaType = mediaType;
         this.fileStatus = fileStatus;
@@ -72,16 +68,6 @@ public class PersonalInteraction {
 
     public void setConnectionId(long connectionId) {
         this.connectionId = connectionId;
-    }
-
-    @NotNull
-    public String getFileUri() {
-        return fileUri;
-    }
-
-    /** Not-null value; ensure this value is available before it is saved to the database. */
-    public void setFileUri(@NotNull String fileUri) {
-        this.fileUri = fileUri;
     }
 
     @NotNull

@@ -16,7 +16,9 @@ class EventRouterImpl implements EventRouter {
                 rs = new HashSet<>();
                 subscribers.put(eventType, rs);
             }
-            rs.add(r);
+            synchronized (rs) {
+                rs.add(r);
+            }
         }
     }
 
@@ -25,7 +27,9 @@ class EventRouterImpl implements EventRouter {
         if(r != null){
             Set<Receiver> rs = subscribers.get(eventType);
             if(rs != null) {
-                rs.remove(r);
+                synchronized (rs) {
+                    rs.remove(r);
+                }
             }
         }
     }
@@ -33,10 +37,13 @@ class EventRouterImpl implements EventRouter {
     @Override
     @SuppressWarnings({"unchecked"})
     public void broadcast(Event ev) {
-        Set<Receiver> rs = subscribers.get(ev.getClass());
-        if(rs != null){
-            for(Receiver receiver : rs){
-                receiver.receive(ev);
+        Set<Receiver> rsorg = subscribers.get(ev.getClass());
+        if (rsorg != null) {
+            synchronized (rsorg) {
+                Set<Receiver> rs = new HashSet<>(rsorg);
+                for (Receiver receiver : rs) {
+                    receiver.receive(ev);
+                }
             }
         }
     }

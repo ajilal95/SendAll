@@ -7,6 +7,9 @@ import com.aj.sendall.db.dto.ConnectionsAndUris;
 import com.aj.sendall.db.dto.FileInfoDTO;
 import com.aj.sendall.db.enums.FileStatus;
 import com.aj.sendall.db.model.PersonalInteraction;
+import com.aj.sendall.events.EventRouter;
+import com.aj.sendall.events.EventRouterFactory;
+import com.aj.sendall.events.event.FileTransferStatusEvent;
 import com.aj.sendall.nw.comms.abstr.AbstractServerConnDelegate;
 import com.aj.sendall.nw.protocol.FileTransferProtocol;
 import com.aj.sendall.streams.StreamManager;
@@ -23,7 +26,8 @@ class FileTransferServerConnDelegate extends AbstractServerConnDelegate implemen
     private ConnectionViewData thisConn;
 
     private String nextFile = null;
-    private FileInfoDTO file = null;
+    private FileInfoDTO fileInfoDTO = null;
+    private EventRouter eventRouter = EventRouterFactory.getInstance();
 
     FileTransferServerConnDelegate(Socket socket, AppController appController, ConnectionsAndUris connectionsAndUris){
         super(socket, appController);
@@ -50,7 +54,6 @@ class FileTransferServerConnDelegate extends AbstractServerConnDelegate implemen
         pi.setFileName(fdto.title);
         pi.setFileSize(fdto.size);
         pi.setBytesTransfered(0L);
-        pi.setFileUri(fdto.uri != null ? fdto.uri.toString() : "");//TODO check the correctness ot toString() of URI
         pi.setFilePath(fdto.filePath);
         pi.setFileStatus(FileStatus.SENDING);
         pi.setMediaType(fdto.mediaType);
@@ -143,7 +146,7 @@ class FileTransferServerConnDelegate extends AbstractServerConnDelegate implemen
 
     @Override
     public void communicateFileNames() throws ProtocolException{
-        /*Now send the file names one by one. So that the client can request one by one*/
+        /*Now send the fileInfoDTO names one by one. So that the client can request one by one*/
         try {
             for(FileInfoDTO dto : connectionsAndUris.fileInfoDTOs){
                 dataOutputStream.writeUTF(dto.title);
@@ -169,10 +172,10 @@ class FileTransferServerConnDelegate extends AbstractServerConnDelegate implemen
     @Override
     public void confirmNextFileToTransfer() throws ProtocolException{
         try {
-            //handle the situation that the client is requesting an invalid file
-            file = getFileInfoByFileName(nextFile);
+            //handle the situation that the client is requesting an invalid fileInfoDTO
+            fileInfoDTO = getFileInfoByFileName(nextFile);
             //inform client if there is no files to send
-            if (file == null) {
+            if (fileInfoDTO == null) {
                 dataOutputStream.writeUTF(AppConsts.FAILED);
                 nextFile = null;
             } else {
@@ -187,15 +190,15 @@ class FileTransferServerConnDelegate extends AbstractServerConnDelegate implemen
     @Override
     public void doStorageCalculationsForNextFile() throws ProtocolException{
         try {
-            if (file != null) {
-                //communicate the total file size
-                dataOutputStream.writeLong(file.size);
+            if (fileInfoDTO != null) {
+                //communicate the total fileInfoDTO size
+                dataOutputStream.writeLong(fileInfoDTO.size);
                 dataOutputStream.flush();
-                //Illegal ;) . But communicate file type here
-                dataOutputStream.writeInt(file.mediaType);
+                //Illegal ;) . But communicate fileInfoDTO type here
+                dataOutputStream.writeInt(fileInfoDTO.mediaType);
                 dataOutputStream.flush();
                 //Now client has to check the space availability and inform the
-                //server if it is okay to send the file
+                //server if it is okay to send the fileInfoDTO
                 String clientResponse = dataInputStream.readUTF();
                 if(!AppConsts.SUCCESS.equals(clientResponse)){
                     throw new ProtocolException(clientResponse);
@@ -230,50 +233,58 @@ class FileTransferServerConnDelegate extends AbstractServerConnDelegate implemen
             }
 
             //find the PersonalInteraction
-            PersonalInteraction pi = appController.getPersonalInteraction(thisConn.profileId, file.title, file.mediaType, file.size);
+            PersonalInteraction pi = appController.getPersonalInteraction(thisConn.profileId, fileInfoDTO.title, fileInfoDTO.mediaType, fileInfoDTO.size);
             if(pi == null){
-                pi = saveNewPersonalInteraction(file);
+                pi = saveNewPersonalInteraction(fileInfoDTO);
             }
+
+            //To update ui
+            FileTransferStatusEvent event = new FileTransferStatusEvent();
+            event.connectionId = pi.getConnectionId();
+            event.fileName = nextFile;
 
             //communicate bytes send so far(for resuming transfer)
             long bytesTransferred = dataInputStream.readLong();
-            StreamManager streamManager = StreamManagerFactory.getInstance(file, appController);
+            StreamManager streamManager = StreamManagerFactory.getInstance(fileInfoDTO);
             InputStream is = streamManager.getInputStream();
             long bytesSkipped = is.skip(bytesTransferred);
 
             if(bytesSkipped == bytesTransferred) {
+                if(bytesTransferred < fileInfoDTO.size){
+                    pi.setFileStatus(FileStatus.SENDING);
+                    appController.update(pi);
+                }
                 DataInputStream fdis = new DataInputStream(is);
-                byte[] buff = new byte[(int) Math.min(AppConsts.FILE_TRANS_BUFFER_SIZE, file.size)];
-                int bytesRead  = -1;
+                byte[] buff = new byte[(int) Math.min(AppConsts.FILE_TRANS_BUFFER_SIZE, fileInfoDTO.size)];
+                int bytesRead;
                 int ack;
-                boolean paused = false;
                 all :
-                while (paused || (bytesRead = fdis.read(buff)) > 0) {
+                while ((bytesRead = fdis.read(buff)) > 0) {
                     try {
-                        if(!paused) {
-                            dataOutputStream.write(buff, 0, bytesRead);
-                            dataOutputStream.flush();
-                        }
+                        dataOutputStream.write(buff, 0, bytesRead);
+                        dataOutputStream.flush();
                         ack = dataInputStream.readInt();//an acknowledgement from client that data received
                         switch(ack){
                             case CONTINUE_TRANSFER :
-                                paused = false;
-                                break;
-                            case PAUSE_TRANSFER :
-                                paused = true;
                                 break;
                             case STOP_TRANSFER :
                                 break all;
                         }
                     } catch (Exception e) {
+                        e.printStackTrace();
                         break;
                     }
                     bytesTransferred += bytesRead;
+                    event.totalTransferred = bytesTransferred;
+                    eventRouter.broadcast(event);
                 }
             }
             streamManager.close();
             pi.setBytesTransfered(bytesTransferred);
+            pi.setFileStatus(FileStatus.SENT);
             appController.update(pi);
+            event.totalTransferred = FileTransferStatusEvent.COMPLETED;
+            eventRouter.broadcast(event);
         } catch (IOException e){
             throwNetIOE();
         }
