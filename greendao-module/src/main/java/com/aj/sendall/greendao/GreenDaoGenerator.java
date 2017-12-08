@@ -9,7 +9,7 @@ import org.greenrobot.greendao.generator.ToOne;
 public class GreenDaoGenerator {
 
     public static void main(String[] args){
-        Schema schema = new Schema(8, "com.aj.sendall.db.model");
+        Schema schema = new Schema(9, "com.aj.sendall.db.model");
         schema.setDefaultJavaPackageDao("com.aj.sendall.db.dao");
 //        schema.setDefaultJavaPackageTest("com.aj.sendall.dal.daotest");
 
@@ -25,7 +25,7 @@ public class GreenDaoGenerator {
         Entity personalInteraction = schema.addEntity("PersonalInteraction");
         personalInteraction.addLongProperty("personalInteractionId").primaryKey().autoincrement();
         Property persIntConnIdProp = personalInteraction.addLongProperty("connectionId").notNull().getProperty();
-        personalInteraction.addStringProperty("fileUri").notNull();
+        //personalInteraction.addStringProperty("fileUri").notNull();
         personalInteraction.addStringProperty("filePath").notNull();
         personalInteraction.addIntProperty("mediaType").notNull();
         personalInteraction.addIntProperty("fileStatus").customType(
