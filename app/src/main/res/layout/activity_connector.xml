@@ -50,6 +50,7 @@
             android:layout_height="match_parent"
             app:srcCompat="@android:drawable/sym_call_outgoing"
             android:id="@+id/img_btn_connector_initiate_connection"
+            android:contentDescription="@string/create_grp_btn_description"
             android:layout_weight="1"
             android:background="@android:color/holo_blue_dark"
             android:layout_gravity="center_vertical|center_horizontal"/>
@@ -59,6 +60,7 @@
             android:layout_height="match_parent"
             app:srcCompat="@android:drawable/sym_action_call"
             android:id="@+id/img_btn_connector_search_connection"
+            android:contentDescription="@string/join_grp_btn_description"
             android:layout_weight="1"
             android:background="@color/colorSteelBlue"
             android:layout_gravity="center_vertical|center_horizontal" />

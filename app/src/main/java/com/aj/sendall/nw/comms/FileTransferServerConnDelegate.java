@@ -257,19 +257,19 @@ class FileTransferServerConnDelegate extends AbstractServerConnDelegate implemen
                 DataInputStream fdis = new DataInputStream(is);
                 byte[] buff = new byte[(int) Math.min(AppConsts.FILE_TRANS_BUFFER_SIZE, fileInfoDTO.size)];
                 int bytesRead;
-                int ack;
-                all :
+//                int ack;
+//                all :
                 while ((bytesRead = fdis.read(buff)) > 0) {
                     try {
                         dataOutputStream.write(buff, 0, bytesRead);
-                        dataOutputStream.flush();
-                        ack = dataInputStream.readInt();//an acknowledgement from client that data received
-                        switch(ack){
-                            case CONTINUE_TRANSFER :
-                                break;
-                            case STOP_TRANSFER :
-                                break all;
-                        }
+//                        dataOutputStream.flush();
+//                        ack = dataInputStream.readInt();//an acknowledgement from client that data received
+//                        switch(ack){
+//                            case CONTINUE_TRANSFER :
+//                                break;
+//                            case STOP_TRANSFER :
+//                                break all;
+//                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                         break;
@@ -278,6 +278,7 @@ class FileTransferServerConnDelegate extends AbstractServerConnDelegate implemen
                     event.totalTransferred = bytesTransferred;
                     eventRouter.broadcast(event);
                 }
+                dataOutputStream.flush();
             }
             streamManager.close();
             pi.setBytesTransfered(bytesTransferred);

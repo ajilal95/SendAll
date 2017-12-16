@@ -22,6 +22,17 @@
     <string name="title_activity_pesonal_interaction_view">Connection</string>
     <string name="title_activity_settings">Settings</string>
 
+    <!-- First things dialogue -->
+    <string name="first_things_dia_title">First things first..</string>
+    <string name="first_things_dia_desc">Please fill in the following..</string>
+    <string name="first_things_yourname">Type a username</string>
+    <string name="first_things_cancel">Close App</string>
+    <string name="first_things_proceed">Proceed</string>
+
+    <!-- Connector Activity -->
+    <string name="create_grp_btn_description">Create</string>
+    <string name="join_grp_btn_description">Join</string>
+
     <!-- Example General settings -->
     <string name="pref_header_general">General</string>
 
@@ -91,4 +102,8 @@
     <string name="pref_ringtone_silent">Silent</string>
 
     <string name="pref_title_vibrate">Vibrate</string>
+    <string name="home_settings_img_desc">Settings</string>
+    <string name="settings_title">Settings</string>
+    <string name="save_txt">Save</string>
+    <string name="username_txt">Username</string>
 </resources>

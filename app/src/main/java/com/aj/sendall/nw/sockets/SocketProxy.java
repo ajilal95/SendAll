@@ -1,5 +1,6 @@
 package com.aj.sendall.nw.sockets;
 
+import com.aj.sendall.controller.AppConsts;
 import com.aj.sendall.events.EventRouter;
 import com.aj.sendall.events.EventRouterFactory;
 import com.aj.sendall.events.event.CloseAllSocketsCommand;
@@ -20,6 +21,12 @@ class SocketProxy extends Socket {
 
     SocketProxy(Socket socket){
         this.s = socket;
+        try {
+            s.setReceiveBufferSize(AppConsts.SOCKET_TRANSF_SIZE);
+            s.setSendBufferSize(AppConsts.SOCKET_TRANSF_SIZE);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
         eventRouter.subscribe(CloseAllSocketsCommand.class, new EventRouter.Receiver<CloseAllSocketsCommand>() {
             @Override
             public void receive(CloseAllSocketsCommand event) {

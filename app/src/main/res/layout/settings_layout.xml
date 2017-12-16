@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:text="@string/settings_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/settings_title"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@color/colorPrimary"
+        android:layout_marginStart="@dimen/fab_margin"
+        android:layout_marginBottom="@dimen/fab_margin" />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/activity_vertical_margin">
+
+        <TextView
+            android:text="@string/username_txt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/username_label"
+            android:textSize="14sp"
+            android:textStyle="italic"
+            android:labelFor="@id/username"
+            android:textColor="@color/colorDarkGrey" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPersonName"
+            android:hint="@string/first_things_yourname"
+            android:ems="10"
+            android:id="@+id/username"
+            android:textColor="@color/colorBlack"
+            android:textAppearance="@android:style/TextAppearance" />
+
+    </LinearLayout>
+
+    <Button
+        android:text="@string/save_txt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/save_button"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:textColor="@color/colorBlack" />
+
+</LinearLayout>

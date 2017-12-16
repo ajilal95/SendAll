@@ -1,5 +1,6 @@
 package com.aj.sendall.nw.sockets;
 
+import com.aj.sendall.controller.AppConsts;
 import com.aj.sendall.events.EventRouter;
 import com.aj.sendall.events.EventRouterFactory;
 import com.aj.sendall.events.event.CloseAllSocketsCommand;
@@ -37,6 +38,8 @@ class ServerSocketProxy extends ServerSocket {
     public Socket accept() throws IOException {
         notifyListening();
         Socket s = super.accept();
+        s.setReceiveBufferSize(AppConsts.SOCKET_TRANSF_SIZE);
+        s.setSendBufferSize(AppConsts.SOCKET_TRANSF_SIZE);
         SocketProxy sp = new SocketProxy(s);
         notifyServerAccepted(sp);
         return sp;

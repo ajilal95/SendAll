@@ -467,6 +467,10 @@ public class AppController implements Serializable{
         return sharedPrefUtil.getUserName();
     }
 
+    public void setUsername(String newUsername){
+        sharedPrefUtil.setUserName(newUsername);
+    }
+
     public String getThisDeviceId(){
         return sharedPrefUtil.getThisDeviceId();
     }

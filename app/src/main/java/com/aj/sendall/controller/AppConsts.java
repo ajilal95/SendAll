@@ -8,7 +8,8 @@ public class AppConsts {
     public static final String FAILED = "com.aj.sendall.controller.AppController.FAILED";
     public static final String SUCCESS = "com.aj.sendall.controller.AppController.SUCCESS";
 
-    public static final long FILE_TRANS_BUFFER_SIZE = 2048;
+    public static final int FILE_TRANS_BUFFER_SIZE = 8192;
+    public static final int SOCKET_TRANSF_SIZE = 131072;
 
     //For rerouting the low level updates to ui
     public static final String FILE_TRANSFER_SUCCESS = "FILE_TRANSFER_SUCCESS";

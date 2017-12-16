@@ -3,6 +3,7 @@ package com.aj.sendall.sharedprefs;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.wifi.ScanResult;
+import android.support.annotation.Nullable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -36,18 +37,14 @@ public class SharedPrefUtil {
         editor = null;
     }
 
-    public String getUserName() throws IllegalStateException{
-        String username = getSharedPrefs().getString(SharedPrefConstants.USER_NAME, null);
-        if(username == null){
-            return getThisDeviceId();
-        } else {
-            return username;
-        }
+    public @Nullable String getUserName() throws IllegalStateException{
+        return getSharedPrefs().getString(SharedPrefConstants.USER_NAME, null);
     }
 
     public void setUserName(String username) throws IllegalStateException{
         if(username != null && !(username.length() > SharedPrefConstants.USERNAME_MAX_LEN)) {
             getEditor().putString(SharedPrefConstants.USER_NAME, username);
+            commit();
         } else {
             throw new IllegalStateException();
         }

@@ -3,19 +3,19 @@ package com.aj.sendall.nw.comms;
 import android.os.Environment;
 import android.os.StatFs;
 
-import com.aj.sendall.events.EventRouter;
-import com.aj.sendall.events.EventRouterFactory;
-import com.aj.sendall.events.event.FileTransferStatusEvent;
-import com.aj.sendall.events.event.FileTransfersFinished;
 import com.aj.sendall.controller.AppConsts;
 import com.aj.sendall.controller.AppController;
 import com.aj.sendall.db.enums.FileStatus;
 import com.aj.sendall.db.model.Connections;
 import com.aj.sendall.db.model.PersonalInteraction;
+import com.aj.sendall.events.EventRouter;
+import com.aj.sendall.events.EventRouterFactory;
+import com.aj.sendall.events.event.FileTransferStatusEvent;
+import com.aj.sendall.events.event.FileTransfersFinished;
+import com.aj.sendall.nw.comms.abstr.AbstractClient;
 import com.aj.sendall.nw.protocol.FileTransferProtocol;
 import com.aj.sendall.streams.StreamManager;
 import com.aj.sendall.streams.StreamManagerFactory;
-import com.aj.sendall.nw.comms.abstr.AbstractClient;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -305,11 +305,11 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
             int bytesRead;
             int readRetryCount = 0;
             byte[] buff = new byte[(int) Math.min(AppConsts.FILE_TRANS_BUFFER_SIZE, bytesRemaining)];
-            all :
+//            all :
             while (bytesRemaining > 0){
                 bytesToRead = (int) Math.min(AppConsts.FILE_TRANS_BUFFER_SIZE, bytesRemaining);
-                bytesToReadRemaining = bytesToRead;
-                while(bytesToReadRemaining > 0) {
+//                bytesToReadRemaining = bytesToRead;
+//                while(bytesToReadRemaining > 0) {
                     try {
                         bytesRead = dataInputStream.read(buff, 0, bytesToRead);
                         if(bytesRead < 0){
@@ -318,27 +318,27 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
                         readRetryCount = 0;
                     } catch (Exception e) {
                         if(++readRetryCount > 5) {
-                            dataOutputStream.writeInt(STOP_TRANSFER);
-                            dataOutputStream.flush();
-                            break all;
+//                            dataOutputStream.writeInt(STOP_TRANSFER);
+//                            dataOutputStream.flush();
+                            break/* all*/;
                         }
                         continue;
                     }
                     try {
                         fos.write(buff, 0, bytesRead);
                     } catch (IOException e) {
-                        dataOutputStream.writeInt(STOP_TRANSFER);
-                        dataOutputStream.flush();
-                        break all;
+//                        dataOutputStream.writeInt(STOP_TRANSFER);
+//                        dataOutputStream.flush();
+                        break/* all*/;
                     }
-                    bytesToReadRemaining -= bytesRead;
+//                    bytesToReadRemaining -= bytesRead;
                     bytesRemaining -= bytesRead;
                     bytesReadForNextFile += bytesRead;
                     event.totalTransferred = bytesReadForNextFile;
                     eventRouter.broadcast(event);
-                }
-                dataOutputStream.writeInt(CONTINUE_TRANSFER);
-                dataOutputStream.flush();
+//                }
+//                dataOutputStream.writeInt(CONTINUE_TRANSFER);
+//                dataOutputStream.flush();
             }
             fos.flush();
             streamManager.close();

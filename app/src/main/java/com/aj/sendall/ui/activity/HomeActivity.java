@@ -11,18 +11,28 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputFilter;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.SearchView;
 import android.widget.Switch;
+import android.widget.Toast;
 
 import com.aj.sendall.R;
 import com.aj.sendall.application.ThisApplication;
+import com.aj.sendall.controller.AppController;
+import com.aj.sendall.dialog.SettingsDialog;
 import com.aj.sendall.events.EventRouter;
 import com.aj.sendall.events.event.AppStatusChanged;
-import com.aj.sendall.controller.AppController;
+import com.aj.sendall.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.ui.consts.ConnectionsConstants;
 import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.ui.fragment.ConnectionsFragment;
@@ -37,12 +47,15 @@ public class HomeActivity extends AppCompatActivity{
     @Inject
     public AppController appController;
 
+    public SettingsDialog settingsDialog;
+
     private ViewPager mViewPager;
     private TabLayout tabLayout;
     private SearchView searchView;
     private Switch statusSwitch;
     private HomePageTabsAdapter tabsAdapter;
     private Handler handler;
+    private ImageView settingsImage;
     private int currentTabPos = 0;
 
     private static final int PERMISSION_REQ_CODE = 100;
@@ -82,6 +95,7 @@ public class HomeActivity extends AppCompatActivity{
         findViews();
         initViews();
         setClickListeners();
+        showFirstThingsDialogueIfNeeded();
     }
 
     private void findViews() {
@@ -89,6 +103,8 @@ public class HomeActivity extends AppCompatActivity{
         tabLayout = (TabLayout) findViewById(R.id.tabs_vw_home);
         searchView = (SearchView) findViewById(R.id.srch_vw_home);
         statusSwitch = (Switch) findViewById(R.id.action_bar_nw_state_switch);
+        settingsImage = (ImageView) findViewById(R.id.settings_img_btn);
+        settingsDialog = new SettingsDialog(this, appController);
     }
 
     private void initViews() {
@@ -131,6 +147,14 @@ public class HomeActivity extends AppCompatActivity{
 
         subscribeEvents();
         statusSwitch.setOnCheckedChangeListener(new StateSwitckCheckedChangedListener());
+
+        settingsImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                settingsDialog.refresh();
+                settingsDialog.show();
+            }
+        });
     }
 
     @Override
@@ -300,6 +324,57 @@ public class HomeActivity extends AppCompatActivity{
             }
 
         }
+    }
+
+    private void showFirstThingsDialogueIfNeeded(){
+        String username = appController.getUsername();
+        if(username != null && !username.isEmpty()){
+            return;
+        }
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);
+        View view = this.getLayoutInflater().inflate(R.layout.first_things_dialogue_layout, new LinearLayout(this), false);
+        builder.setView(view);
+        final AlertDialog dialog = builder.create();
+
+        final EditText usernameet = (EditText) view.findViewById(R.id.username);
+        usernameet.setFilters(new InputFilter[]{new InputFilter.LengthFilter(SharedPrefConstants.USERNAME_MAX_LEN)});
+        Button cancelButton = (Button) view.findViewById(R.id.cancel_btn);
+        final Button proceedButton = (Button) view.findViewById(R.id.proceed_btn);
+
+        cancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+                HomeActivity.this.finish();
+            }
+        });
+        proceedButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String username = usernameet.getText().toString();
+                boolean validUsename = true;
+                if(username.isEmpty()){
+                    validUsename = false;
+                } else {
+                    for(int i = 0; i < username.length(); i++){
+                        char ch = username.charAt(i);
+                        if(!(Character.isAlphabetic(ch) || Character.isDigit(ch))){
+                            validUsename = false;
+                            break;
+                        }
+                    }
+                }
+                if(validUsename){
+                    appController.setUsername(username);
+                    dialog.dismiss();
+                } else {
+                    Toast.makeText(HomeActivity.this, "Username can contain 1 to 14 alphabet and numbers", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        dialog.show();
     }
 
 }
