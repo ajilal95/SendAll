@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="50dp">
+
+    <ImageView
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.3"
+        app:srcCompat="@android:drawable/sym_contact_card"
+        android:contentDescription="@string/string_directory" />
+
+    <TextView
+        android:layout_width="0dp"
+        android:paddingStart="@dimen/fab_margin"
+        android:layout_height="match_parent"
+        android:id="@+id/txt_foldername"
+        android:layout_weight="0.7"
+        android:ellipsize="end"
+        android:gravity="center_vertical"
+        android:textSize="24sp" />
+
+</LinearLayout>

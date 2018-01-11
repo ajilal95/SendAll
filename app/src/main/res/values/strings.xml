@@ -13,6 +13,7 @@
 
     <!-- Strings related to Settings -->
     <string name="string_turn_on_receiver">Turn on receiving</string>
+    <string name="str_storage_location">Storage location</string>
 
     <!-- Default Thumbnail description -->
     <string name="default_thumbnail_desc">Thumbnail</string>
@@ -106,4 +107,8 @@
     <string name="settings_title">Settings</string>
     <string name="save_txt">Save</string>
     <string name="username_txt">Username</string>
+    <string name="string_select">Select</string>
+    <string name="string_go_back">Go back</string>
+    <string name="string_create_new">Create new</string>
+    <string name="string_directory">Directory</string>
 </resources>

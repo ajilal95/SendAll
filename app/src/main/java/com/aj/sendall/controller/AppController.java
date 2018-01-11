@@ -6,9 +6,14 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.p2p.WifiP2pManager;
-import android.os.Environment;
 import android.support.annotation.NonNull;
 
+import com.aj.sendall.broadcastreceiver.WifiApScannerBR;
+import com.aj.sendall.db.dto.ConnectionsAndUris;
+import com.aj.sendall.db.dto.PersonalInteractionDTO;
+import com.aj.sendall.db.model.Connections;
+import com.aj.sendall.db.model.PersonalInteraction;
+import com.aj.sendall.db.util.DBUtil;
 import com.aj.sendall.events.EventRouter;
 import com.aj.sendall.events.EventRouterFactory;
 import com.aj.sendall.events.event.AppStatusChanged;
@@ -16,24 +21,18 @@ import com.aj.sendall.events.event.ClientModeStarted;
 import com.aj.sendall.events.event.ClientModeStopped;
 import com.aj.sendall.events.event.ServerModeStarted;
 import com.aj.sendall.events.event.ServerModeStopped;
-import com.aj.sendall.db.dto.ConnectionsAndUris;
-import com.aj.sendall.db.dto.PersonalInteractionDTO;
-import com.aj.sendall.db.model.Connections;
-import com.aj.sendall.db.model.PersonalInteraction;
-import com.aj.sendall.sharedprefs.SharedPrefConstants;
-import com.aj.sendall.sharedprefs.SharedPrefUtil;
-import com.aj.sendall.db.util.DBUtil;
-import com.aj.sendall.broadcastreceiver.WifiApScannerBR;
+import com.aj.sendall.notification.NotificationUtil;
 import com.aj.sendall.nw.comms.FileTransferClient;
 import com.aj.sendall.nw.comms.NewConnCreationClient;
+import com.aj.sendall.nw.sockets.SocketSystem;
+import com.aj.sendall.nw.sockets.SocketSystemFactory;
 import com.aj.sendall.services.FileTransferClientService;
 import com.aj.sendall.services.FileTransferServerService;
 import com.aj.sendall.services.NewConnCreationClientService;
 import com.aj.sendall.services.NewConnCreationServerService;
 import com.aj.sendall.services.ToggleReceiverService;
-import com.aj.sendall.notification.NotificationUtil;
-import com.aj.sendall.nw.sockets.SocketSystem;
-import com.aj.sendall.nw.sockets.SocketSystemFactory;
+import com.aj.sendall.sharedprefs.SharedPrefConstants;
+import com.aj.sendall.sharedprefs.SharedPrefUtil;
 import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.utils.PermissionUtil;
 import com.aj.sendall.utils.WifiNetUtil;
@@ -279,7 +278,7 @@ public class AppController implements Serializable{
         if (!isValidFileName(fileName)) {
             return null;
         }
-        File root = Environment.getExternalStorageDirectory();
+        File root = sharedPrefUtil.getStorageDirectory();
         File subDir = new File(root.getCanonicalPath() + '/' + SharedPrefConstants.APP_NAME + '/' + "Temp");
         if(!subDir.exists()){
             if(!subDir.mkdirs()){
@@ -299,7 +298,7 @@ public class AppController implements Serializable{
         if (!isValidFileName(fileName)) {
             return null;
         }
-        File root = Environment.getExternalStorageDirectory();
+        File root = sharedPrefUtil.getStorageDirectory();
         String subDirName = getSubDirName(fileType);
         File subDir = new File(root.getCanonicalPath() + '/' + SharedPrefConstants.APP_NAME + '/' + subDirName);
         if(!subDir.exists()){

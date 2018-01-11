@@ -3,7 +3,10 @@ package com.aj.sendall.sharedprefs;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.wifi.ScanResult;
+import android.os.Environment;
 import android.support.annotation.Nullable;
+
+import java.io.File;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -106,5 +109,26 @@ public class SharedPrefUtil {
             }
         }
         return false;
+    }
+
+    public File getStorageDirectory(){
+        String storage = getSharedPrefs().getString(SharedPrefConstants.STORAGE_DIR, null);
+        File file = null;
+        if(storage != null){
+            file = new File(storage);
+        }
+        if(file == null || !file.canWrite()){
+            file = Environment.getExternalStorageDirectory();
+        } else if(!file.exists()){
+            if(!file.mkdirs()){
+                file = Environment.getExternalStorageDirectory();
+            }
+        }
+        return file;
+    }
+
+    public void setStorageDirectory(String path){
+        getEditor().putString(SharedPrefConstants.STORAGE_DIR, path);
+        commit();
     }
 }

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/buttonLL"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/btn_go_back"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@color/colorGrey"
+            android:src="@android:drawable/ic_menu_revert"
+            android:contentDescription="@string/string_go_back" />
+
+        <ImageView
+            android:id="@+id/btn_new_folder"
+            android:layout_width="0dp"
+            android:background="@color/colorGrey"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:src="@android:drawable/ic_menu_add"
+            android:contentDescription="@string/string_create_new" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/curr_path"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/buttonLL"
+        android:layout_marginTop="@dimen/appbar_padding_top"
+        android:layout_marginBottom="@dimen/appbar_padding_top"
+        android:ellipsize="start"
+        android:textSize="18sp" />
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/rw_content"
+        android:layout_above="@+id/btn_select"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/curr_path" />
+
+    <Button
+        android:id="@+id/btn_select"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@android:color/transparent"
+        android:text="@string/string_select" />
+
+</RelativeLayout>

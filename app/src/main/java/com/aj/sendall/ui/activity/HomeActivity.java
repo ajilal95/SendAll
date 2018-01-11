@@ -33,6 +33,7 @@ import com.aj.sendall.dialog.SettingsDialog;
 import com.aj.sendall.events.EventRouter;
 import com.aj.sendall.events.event.AppStatusChanged;
 import com.aj.sendall.sharedprefs.SharedPrefConstants;
+import com.aj.sendall.sharedprefs.SharedPrefUtil;
 import com.aj.sendall.ui.consts.ConnectionsConstants;
 import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.ui.fragment.ConnectionsFragment;
@@ -46,6 +47,8 @@ import javax.inject.Inject;
 public class HomeActivity extends AppCompatActivity{
     @Inject
     public AppController appController;
+    @Inject
+    public SharedPrefUtil sharedPrefUtil;
 
     public SettingsDialog settingsDialog;
 
@@ -104,7 +107,7 @@ public class HomeActivity extends AppCompatActivity{
         searchView = (SearchView) findViewById(R.id.srch_vw_home);
         statusSwitch = (Switch) findViewById(R.id.action_bar_nw_state_switch);
         settingsImage = (ImageView) findViewById(R.id.settings_img_btn);
-        settingsDialog = new SettingsDialog(this, appController);
+        settingsDialog = new SettingsDialog(this, sharedPrefUtil);
     }
 
     private void initViews() {
@@ -151,7 +154,7 @@ public class HomeActivity extends AppCompatActivity{
         settingsImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                settingsDialog.refresh();
+                settingsDialog.init();
                 settingsDialog.show();
             }
         });

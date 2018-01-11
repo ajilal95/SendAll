@@ -1,6 +1,11 @@
 package com.aj.sendall.dialog;
 
 interface AppDialog {
-    void refresh();
+    void init();
     void show();
+    void setOnClose(OnClose onClose);
+
+    interface OnClose{
+        void onClose();
+    }
 }

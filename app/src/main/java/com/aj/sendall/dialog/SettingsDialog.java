@@ -10,37 +10,61 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.aj.sendall.R;
 import com.aj.sendall.controller.AppController;
 import com.aj.sendall.sharedprefs.SharedPrefConstants;
-import com.aj.sendall.ui.activity.HomeActivity;
+import com.aj.sendall.sharedprefs.SharedPrefUtil;
+
+import java.io.File;
+import java.io.IOException;
 
 public class SettingsDialog implements AppDialog {
-    private AppController appController;
+    private SharedPrefUtil sharedPrefUtil;
     private Activity activity;
     private AlertDialog dialog;
 
     private EditText username;
+    private TextView storageLocation;
 
-    public SettingsDialog(Activity activity, AppController appController){
-        this.appController = appController;
+    public SettingsDialog(Activity activity, SharedPrefUtil sharedPrefUtil){
+        this.sharedPrefUtil = sharedPrefUtil;
         this.activity = activity;
-        refresh();
+        init();
     }
 
-    public void refresh(){
+    @Override
+    public void init(){
         AlertDialog.Builder alertBuilder = new AlertDialog.Builder(activity);
-        View v = ((LayoutInflater) appController
-                .getApplicationContext()
+        View v = ((LayoutInflater) activity
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE))
-                .inflate(R.layout.settings_layout, new LinearLayoutCompat(appController.getApplicationContext()), false);
+                .inflate(R.layout.settings_layout, new LinearLayoutCompat(activity), false);
         alertBuilder.setView(v);
 
         username = (EditText) v.findViewById(R.id.username);
         username.setFilters(new InputFilter[]{new InputFilter.LengthFilter(SharedPrefConstants.USERNAME_MAX_LEN)});
-        username.setText(appController.getUsername());
+        username.setText(sharedPrefUtil.getUserName());
+
+        View storageLocComponent = ((LayoutInflater) activity
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE))
+                .inflate(R.layout.main_text_sub_text_layout, new LinearLayoutCompat(activity), false);
+        ((TextView) storageLocComponent.findViewById(R.id.txtMainText))
+                .setText(R.string.str_storage_location);
+        storageLocation = ((TextView) storageLocComponent.findViewById(R.id.txtSubText));
+        setValueForStorageLocation();
+        LinearLayout storageLocLayout = (LinearLayout) v.findViewById(R.id.lnrlytStorageLocation);
+        storageLocLayout.removeAllViews();
+        storageLocLayout.addView(storageLocComponent);
+        storageLocComponent.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showSelctDirDialog();
+            }
+        });
+
 
         Button saveButton = (Button) v.findViewById(R.id.save_button);
         saveButton.setOnClickListener(new View.OnClickListener() {
@@ -62,6 +86,34 @@ public class SettingsDialog implements AppDialog {
                 SettingsDialog.this.dialog = null;
             }
         });
+    }
+
+    private void showSelctDirDialog() {
+        try {
+            SelectDirectoryDialog dia = new SelectDirectoryDialog(activity, sharedPrefUtil.getStorageDirectory().getCanonicalPath());
+            dia.setOnDirSelected(new SelectDirectoryDialog.OnDirSelected() {
+                @Override
+                public void onSelected(String dir) {
+                    File file = new File(dir);
+                    if(file.canWrite()) {
+                        storageLocation.setText(dir);
+                    } else {
+                        Toast.makeText(activity, "Selected directory is not writable", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+            dia.show();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void setValueForStorageLocation() {
+        try {
+            storageLocation.setText(sharedPrefUtil.getStorageDirectory().getCanonicalPath());
+        } catch (IOException e){
+            e.printStackTrace();
+        }
     }
 
     private boolean validate(){
@@ -87,10 +139,22 @@ public class SettingsDialog implements AppDialog {
     }
 
     private void save(){
-        appController.setUsername(this.username.getText().toString());
+        sharedPrefUtil.setUserName(this.username.getText().toString());
+        sharedPrefUtil.setStorageDirectory((String)storageLocation.getText());
     }
 
+    @Override
     public void show(){
         dialog.show();
+    }
+
+    @Override
+    public void setOnClose(final OnClose onClose){
+        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                onClose.onClose();
+            }
+        });
     }
 }
