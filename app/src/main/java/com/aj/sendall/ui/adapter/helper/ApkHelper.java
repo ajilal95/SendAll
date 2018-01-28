@@ -1,7 +1,5 @@
 package com.aj.sendall.ui.adapter.helper;
 
-import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
@@ -9,26 +7,17 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.Icon;
-import android.os.Environment;
-import android.provider.MediaStore;
-import android.support.v4.app.ActivityCompat;
-import android.util.Log;
 import android.widget.ImageView;
 
 import com.aj.sendall.R;
 import com.aj.sendall.db.dto.FileInfoDTO;
 import com.aj.sendall.ui.consts.MediaConsts;
-import com.aj.sendall.ui.utils.CommonUiUtils;
 import com.bumptech.glide.Glide;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
