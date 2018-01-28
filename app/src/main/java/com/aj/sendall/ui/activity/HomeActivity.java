@@ -44,13 +44,14 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-public class HomeActivity extends AppCompatActivity{
+public class HomeActivity extends AppCompatActivity implements ActivityStarter{
     @Inject
     public AppController appController;
     @Inject
     public SharedPrefUtil sharedPrefUtil;
 
     public SettingsDialog settingsDialog;
+    private ActivityResultListener activityResultExternalListener;
 
     private ViewPager mViewPager;
     private TabLayout tabLayout;
@@ -164,19 +165,6 @@ public class HomeActivity extends AppCompatActivity{
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_home, menu);
         return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_settings) {
-            Intent settings = new Intent(this, SettingsActivity.class);
-            startActivity(settings);
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     public class HomePageTabsAdapter extends FragmentStatePagerAdapter {
@@ -380,4 +368,21 @@ public class HomeActivity extends AppCompatActivity{
         dialog.show();
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(activityResultExternalListener != null){
+            activityResultExternalListener.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    @Override
+    public void setResultListener(ActivityResultListener listener) {
+        this.activityResultExternalListener = listener;
+    }
+
+    @Override
+    public void startResultReturningActivity(Intent intent, int requestCode) {
+        startActivityForResult(intent, requestCode);
+    }
 }

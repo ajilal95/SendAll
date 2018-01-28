@@ -15,7 +15,7 @@
         android:layout_width="0dp"
         android:paddingStart="@dimen/fab_margin"
         android:layout_height="match_parent"
-        android:id="@+id/txt_foldername"
+        android:id="@+id/txt_new_thing_name_caption"
         android:layout_weight="0.7"
         android:ellipsize="end"
         android:gravity="center_vertical"

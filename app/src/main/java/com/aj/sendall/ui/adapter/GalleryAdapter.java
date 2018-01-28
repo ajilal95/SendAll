@@ -1,12 +1,8 @@
 package com.aj.sendall.ui.adapter;
 
-import android.content.ContentResolver;
 import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
-import android.provider.MediaStore;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +12,8 @@ import android.widget.TextView;
 
 import com.aj.sendall.R;
 import com.aj.sendall.db.dto.FileInfoDTO;
+import com.aj.sendall.ui.adapter.helper.AdapterHelper;
+import com.aj.sendall.ui.adapter.helper.AdapterHelperFactory;
 import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.ui.interfaces.ItemSelectableView;
 import com.aj.sendall.ui.utils.CommonUiUtils;
@@ -27,11 +25,10 @@ import java.util.Set;
 
 public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHolder>{
     private final int mediaType;
-    private String[] projections;
-    private String sortField;
     private final Context context;
     private List<FileInfoDTO> allFileInfoDTOs;
     private List<FileInfoDTO> filteredFileInfoDTOs;
+    private AdapterHelper adapterHelper;
 
     private Handler handler;
 
@@ -44,113 +41,14 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         this.mediaType = mediaType;
         this.viewParent = viewParent;
         this.handler = new Handler(context.getMainLooper());
-        setSortField(mediaType);
-        setProjections(mediaType);
+        adapterHelper = AdapterHelperFactory.getInstance(mediaType, context);
         allFileInfoDTOs = new ArrayList<>();
-//        initAdapter();
         new FileLoader().execute();
-    }
-
-    private void setSortField(int mediaType) {
-        switch(mediaType){
-            case MediaConsts.TYPE_VIDEO:
-                sortField = MediaConsts.VIDEO_SORT_FIELD;
-                break;
-            case MediaConsts.TYPE_AUDIO:
-                sortField = MediaConsts.AUDIO_SORT_FIELD;
-                break;
-            case MediaConsts.TYPE_IMAGE:
-                sortField = MediaConsts.IMAGE_SORT_FIELD;
-                break;
-            case MediaConsts.TYPE_OTHER:
-                sortField = MediaConsts.OTHER_SORT_FIELD;
-                break;
-        }
-    }
-
-    private void setProjections(int mediaType){
-        switch(mediaType){
-            case MediaConsts.TYPE_VIDEO:
-                projections = new String[]{
-                        MediaStore.Video.VideoColumns._ID,
-                        MediaStore.Video.VideoColumns.SIZE,
-                        MediaStore.Video.VideoColumns.DATA
-                };
-                break;
-            case MediaConsts.TYPE_AUDIO:
-                projections = new String[]{
-                        MediaStore.Audio.AudioColumns._ID,
-                        MediaStore.Audio.AudioColumns.SIZE,
-                        MediaStore.Audio.AudioColumns.DATA,
-                        MediaStore.Audio.AudioColumns.ALBUM_ID
-                };
-                break;
-            case MediaConsts.TYPE_IMAGE:
-                projections = new String[]{
-                        MediaStore.Images.ImageColumns._ID,
-                        MediaStore.Images.ImageColumns.SIZE,
-                        MediaStore.Images.ImageColumns.DATA
-                };
-                break;
-            case MediaConsts.TYPE_OTHER:
-                projections = new String[]{
-                        MediaStore.Files.FileColumns._ID,
-                        MediaStore.Files.FileColumns.SIZE,
-                        MediaStore.Files.FileColumns.DATA
-                };
-                break;
-        }
     }
 
     private void initAdapter(){
         selectedItems = new HashSet<>();
-        allFileInfoDTOs = getGalleryItemsList();
-    }
-
-    private List<FileInfoDTO> getGalleryItemsList() {
-        List<FileInfoDTO> fileInfoDTOs = null;
-        ContentResolver contentResolver = context.getContentResolver();
-        Uri uri = MediaStore.Files.getContentUri("external");
-        String select = getSelectString();
-        String sort = null;
-        if(sortField != null){
-            sort = sortField + " DESC";
-        }
-        Cursor cursor = contentResolver.query(uri, projections, select, null, sort);
-        if(cursor != null) {
-            fileInfoDTOs = new ArrayList<>();
-            int idColIndex = cursor.getColumnIndex(projections[0]);
-            int sizeColIndex = cursor.getColumnIndex(projections[1]);
-            int pathColIndex = cursor.getColumnIndex(projections[2]);
-            while(cursor.moveToNext()){
-                FileInfoDTO dto = new FileInfoDTO();
-                dto.id = cursor.getInt(idColIndex);
-                dto.size = cursor.getLong(sizeColIndex);
-                dto.mediaType = mediaType;
-                if(mediaType == MediaConsts.TYPE_AUDIO){
-                    dto.albumId = cursor.getInt(cursor.getColumnIndex(MediaStore.Audio.AudioColumns.ALBUM_ID));
-                }
-                dto.filePath = cursor.getString(pathColIndex);
-                dto.title = dto.filePath.substring(dto.filePath.lastIndexOf('/') + 1);
-                fileInfoDTOs.add(dto);
-            }
-            cursor.close();
-        }
-        return fileInfoDTOs;
-    }
-
-    private String getSelectString() {
-        switch(mediaType){
-            case MediaConsts.TYPE_VIDEO:
-            case MediaConsts.TYPE_AUDIO:
-            case MediaConsts.TYPE_IMAGE: return MediaConsts.COL_MEDIA_TYPE + "=" + mediaType;
-            case MediaConsts.TYPE_OTHER: return getSelectStringForNonMediaTypes();
-        }
-        return "";
-    }
-
-    private String getSelectStringForNonMediaTypes(){
-        return MediaConsts.COL_MIME_TYPE + " IN " + MediaConsts.OTHER_FILE_MIME_SET;
+        allFileInfoDTOs = adapterHelper.getData();
     }
 
     public Set<FileInfoDTO> getSelectedItems(){
@@ -175,14 +73,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             holder.txtVwFileName.setVisibility(View.GONE);
         }
         holder.txtVwFileSize.setText(CommonUiUtils.getFileSizeString(fileInfoDTO.size));
-
-        CommonUiUtils.setFileThumbnail(
-                mediaType,
-                context,
-                holder.imgVwThumbnail,
-                MediaConsts.MEDIA_THUMBNAIL_WIDTH_SMALL,
-                MediaConsts.MEDIA_THUMBNAIL_HEIGHT_SMALL,
-                fileInfoDTO);
+        adapterHelper.setThumbnail(holder.imgVwThumbnail, MediaConsts.MEDIA_THUMBNAIL_WIDTH_SMALL, MediaConsts.MEDIA_THUMBNAIL_HEIGHT_SMALL, fileInfoDTO);
 
         holder.itemView.setTag(fileInfoDTO);
         CommonUiUtils.setViewSelectedAppearanceRoundEdged(holder.itemView, fileInfoDTO.isSelected);

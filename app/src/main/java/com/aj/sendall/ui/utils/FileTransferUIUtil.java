@@ -36,10 +36,10 @@ public final class FileTransferUIUtil {
 
         getConnectionsAndUris().connections = receiverSet;
         if(getConnectionsAndUris().fileInfoDTOs == null || getConnectionsAndUris().fileInfoDTOs.isEmpty()){
-            return SendOperationResult.URI_EMPTY;
+            return SendOperationResult.FILES_EMPTY;
         } else {
             send();
-            clear();
+            clean();
             return SendOperationResult.SENDING;
         }
     }
@@ -53,7 +53,7 @@ public final class FileTransferUIUtil {
             return SendOperationResult.RECEIVER_EMPTY;
         } else {
             send();
-            clear();
+            clean();
             return SendOperationResult.SENDING;
         }
     }
@@ -66,11 +66,11 @@ public final class FileTransferUIUtil {
         appController.startFileTransferServer(getConnectionsAndUris());
     }
 
-    private void clear(){
+    public void clean(){
         connectionsAndUris = null;
     }
 
     public enum SendOperationResult{
-        SENDING, URI_EMPTY, RECEIVER_EMPTY, BUSY
+        SENDING, FILES_EMPTY, RECEIVER_EMPTY, BUSY
     }
 }

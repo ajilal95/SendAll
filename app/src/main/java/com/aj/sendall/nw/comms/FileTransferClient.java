@@ -15,9 +15,7 @@ import com.aj.sendall.events.event.FileTransfersFinished;
 import com.aj.sendall.nw.comms.abstr.AbstractClient;
 import com.aj.sendall.nw.protocol.FileTransferProtocol;
 import com.aj.sendall.streams.StreamManager;
-import com.aj.sendall.streams.StreamManagerFactory;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Socket;
@@ -37,7 +35,7 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
     private String nextFile = null;
     private long nextFileSize = 0;
     private int nextMediaType = 0;
-    private File fileToWrite;
+    private StreamManager streamToWrite;
     private long bytesReadForNextFile = 0;
 
     public FileTransferClient(String SSID, String passPhrase, int serverPort, AppController appController){
@@ -61,8 +59,8 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
         }
     }
 
-    private boolean checkSpaceAvailability(File fileToWrite, long bytesNeeded) throws IOException{
-        String filePath = fileToWrite.getCanonicalPath();
+    private boolean checkSpaceAvailability(StreamManager fileToWrite, long bytesNeeded) throws IOException{
+        String filePath = fileToWrite.getActualPath();
         StatFs statFs = new StatFs(filePath.substring(0, filePath.lastIndexOf('/')));
         long available = statFs.getAvailableBytes();
         return available >= bytesNeeded;
@@ -184,14 +182,14 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
     @Override
     public boolean moreFilesToTransfer() throws ProtocolException{
         try {
-            nextFile = fileNames.pollFirst();//take the first file and remove it from the list
+            nextFile = fileNames.pollFirst();//take the first file and remove it from the getListableDirs
             if (nextFile != null) {
                 //send the file name to the sender
                 dataOutputStream.writeUTF(nextFile);
                 dataOutputStream.flush();
                 return true;
             } else {
-                //list is empty means all files has been transferred
+                //getListableDirs is empty means all files has been transferred
                 dataOutputStream.writeUTF(AppConsts.SUCCESS);
                 dataOutputStream.flush();
                 return false;
@@ -225,11 +223,11 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
             //Now client has to check the space availability and inform the
             //server if it is okay to send the file
             try {
-                fileToWrite = appController.getTempFileToWrite(conn.getConnectionId(), nextFile, nextMediaType);
+                streamToWrite = appController.getTempFileToWrite(conn.getConnectionId(), nextFile, nextMediaType);
             } catch (Exception e){
                 e.printStackTrace();
             }
-            if(fileToWrite == null){
+            if(streamToWrite == null){
                 //failed. inform server and return.(AppConsts.FILE_TRANSFER_FAILED_FILE_IO_ERR);
                 nextFile = null;
                 dataOutputStream.writeUTF(AppConsts.FILE_TRANSFER_FAILED_FILE_IO_ERR);
@@ -237,9 +235,9 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
                 throw new ProtocolException(AppConsts.FILE_TRANSFER_FAILED_FILE_IO_ERR);
             }
 
-            bytesReadForNextFile = fileToWrite.length();
+            bytesReadForNextFile = streamToWrite.length();
             long bytesRemining = nextFileSize - bytesReadForNextFile;
-            if(!checkSpaceAvailability(fileToWrite, bytesRemining)){
+            if(!checkSpaceAvailability(streamToWrite, bytesRemining)){
                 //insufficient space. inform server (AppConsts.FILE_TRANSFER_FAILED_IN_SUFF_SPACE);
                 nextFile = null;
                 dataOutputStream.writeUTF(AppConsts.FILE_TRANSFER_FAILED_IN_SUFF_SPACE);
@@ -280,15 +278,15 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
             //find the PersonalInteraction
             PersonalInteraction pi = appController.getPersonalInteraction(conn.getConnectionId(), nextFile, nextMediaType, nextFileSize);
             if(pi == null){
-                pi = createNewPersInter(nextFile, nextFileSize, nextMediaType, fileToWrite.getCanonicalPath(), bytesReadForNextFile);
+                pi = createNewPersInter(nextFile, nextFileSize, nextMediaType, streamToWrite.getActualPath(), bytesReadForNextFile);
             }
 
             //communicate bytes send so far(for resuming transfer)
             dataOutputStream.writeLong(bytesReadForNextFile);
             dataOutputStream.flush();
             String osMode = "a";
-            StreamManager streamManager = StreamManagerFactory.getInstance(fileToWrite);
-            FileOutputStream fos = (FileOutputStream) streamManager.getOutputStream(osMode);
+//            StreamManager streamManager = StreamManagerFactory.getInstance(streamToWrite);
+            FileOutputStream fos = (FileOutputStream) streamToWrite.getOutputStream(osMode);
 
             //to update ui
             FileTransferStatusEvent event = new FileTransferStatusEvent();
@@ -341,15 +339,15 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
 //                dataOutputStream.flush();
             }
             fos.flush();
-            streamManager.close();
+            streamToWrite.close();
             pi.setBytesTransfered(bytesReadForNextFile);
             appController.update(pi);
 
             //now move the temporary file to permanent location if the file reading is complete
             if(bytesRemaining == 0) {
-                File actualFile = appController.getActualFileToWrite(nextFile, pi.getMediaType());
-                if(fileToWrite.renameTo(actualFile)){
-                    pi.setFilePath(actualFile.getPath());
+                StreamManager actualFile = appController.getActualFileToWrite(nextFile, pi.getMediaType());
+                if(streamToWrite.renameTo(actualFile)){
+                    pi.setFilePath(actualFile.getActualPath());
                     pi.setFileStatus(FileStatus.RECEIVED);
                     appController.update(pi);
                 }

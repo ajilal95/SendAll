@@ -1,10 +1,13 @@
 package com.aj.sendall.ui.utils;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.Point;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.view.Display;
 import android.view.View;
 import android.widget.ImageView;
@@ -13,6 +16,9 @@ import com.aj.sendall.R;
 import com.aj.sendall.db.dto.FileInfoDTO;
 import com.aj.sendall.ui.consts.MediaConsts;
 import com.bumptech.glide.Glide;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class CommonUiUtils {
     private static Point point = null;
@@ -66,56 +72,13 @@ public class CommonUiUtils {
         }
     }
 
-    public static void setFileThumbnail(int mediaType, Context context, ImageView imgVw, int overrideWidth, int overrideHeight, FileInfoDTO fileInfoDTO) {
-        switch(mediaType){
-            case MediaConsts.TYPE_VIDEO:
-                Glide.with(context)
-                        .load(fileInfoDTO.filePath)
-                        .error(R.mipmap.def_media_thumb)
-                        .centerCrop()
-                        .override(overrideWidth, overrideHeight)
-                        .into(imgVw);
-                break;
-            case MediaConsts.TYPE_IMAGE:
-                Glide.with(context)
-                        .load(fileInfoDTO.filePath)
-                        .error(R.mipmap.def_media_thumb)
-                        .centerCrop()
-                        .override(overrideWidth, overrideHeight)
-                        .into(imgVw);
-                break;
-            case MediaConsts.TYPE_AUDIO:
-                Uri albumArtURI = ContentUris.withAppendedId(MediaConsts.ALBUM_ART_URI, fileInfoDTO.albumId);
-                Glide.with(context)
-                        .load(albumArtURI)
-                        .error(R.mipmap.def_media_thumb)
-                        .centerCrop()
-                        .override(overrideWidth, overrideHeight)
-                        .into(imgVw);
-                break;
-            case MediaConsts.TYPE_OTHER:
-                Glide.with(context)
-                        .load(R.mipmap.def_other_file_thumb)
-                        .error(R.mipmap.def_other_file_thumb)
-                        .centerCrop()
-                        .override(overrideWidth, overrideHeight)
-                        .into(imgVw);
-                break;
+    public static void setViewActive(View view, boolean active){
+        if(active){
+            view.setBackgroundResource(R.color.colorSteelBlue);
+        } else {
+            view.setBackgroundResource(R.color.colorWhite);
         }
     }
-
-    /*public static int getLocalMediaType(int uriMediaType) {
-        switch(uriMediaType){
-            case MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO:
-                return MediaConsts.TYPE_VIDEO;
-            case MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE:
-                return MediaConsts.TYPE_IMAGE;
-            case MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO:
-                return MediaConsts.TYPE_AUDIO;
-            default:
-                return MediaConsts.TYPE_OTHER;
-        }
-    }*/
 
     public static int getGallerySectionWidth(Activity activity){
         if(point == null) {
@@ -124,5 +87,32 @@ public class CommonUiUtils {
             display.getSize(point);
         }
         return point.x - 15;
+    }
+
+    public static List<FileInfoDTO> getMediaStoreData(Context context, String selectClause, String sortField, String[] projection, String idCol, String sizeCol, String pathCol, int mediaType){
+        List<FileInfoDTO> fileInfoDTOs = null;
+        ContentResolver contentResolver = context.getContentResolver();
+        Uri uri = MediaStore.Files.getContentUri("external");
+        Cursor cursor = contentResolver.query(uri, projection, selectClause, null, sortField);
+        if(cursor != null) {
+            fileInfoDTOs = new ArrayList<>();
+            int idColIndex = cursor.getColumnIndex(idCol);
+            int sizeColIndex = cursor.getColumnIndex(sizeCol);
+            int pathColIndex = cursor.getColumnIndex(pathCol);
+            while(cursor.moveToNext()){
+                FileInfoDTO dto = new FileInfoDTO();
+                dto.id = cursor.getInt(idColIndex);
+                dto.size = cursor.getLong(sizeColIndex);
+                dto.mediaType = mediaType;
+                if(mediaType == MediaConsts.TYPE_AUDIO){
+                    dto.albumId = cursor.getInt(cursor.getColumnIndex(MediaStore.Audio.AudioColumns.ALBUM_ID));
+                }
+                dto.filePath = cursor.getString(pathColIndex);
+                dto.title = dto.filePath.substring(dto.filePath.lastIndexOf('/') + 1);
+                fileInfoDTOs.add(dto);
+            }
+            cursor.close();
+        }
+        return fileInfoDTOs;
     }
 }

@@ -3,6 +3,10 @@ package com.aj.sendall.dialog;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
+import android.support.v4.provider.DocumentFile;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutCompat;
 import android.text.InputFilter;
@@ -15,12 +19,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.aj.sendall.R;
-import com.aj.sendall.controller.AppController;
 import com.aj.sendall.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.sharedprefs.SharedPrefUtil;
+import com.aj.sendall.streams.FileUtil;
+import com.aj.sendall.streams.StreamManager;
+import com.aj.sendall.streams.StreamManagerFactory;
+import com.aj.sendall.ui.activity.ActivityStarter;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 
 public class SettingsDialog implements AppDialog {
     private SharedPrefUtil sharedPrefUtil;
@@ -89,28 +97,59 @@ public class SettingsDialog implements AppDialog {
     }
 
     private void showSelctDirDialog() {
-        try {
-            SelectDirectoryDialog dia = new SelectDirectoryDialog(activity, sharedPrefUtil.getStorageDirectory().getCanonicalPath());
-            dia.setOnDirSelected(new SelectDirectoryDialog.OnDirSelected() {
-                @Override
-                public void onSelected(String dir) {
-                    File file = new File(dir);
-                    if(file.canWrite()) {
-                        storageLocation.setText(dir);
-                    } else {
-                        Toast.makeText(activity, "Selected directory is not writable", Toast.LENGTH_SHORT).show();
+        if (Build.VERSION.SDK_INT < 21) {
+            try {
+                SelectDirectoryDialog dia = new SelectDirectoryDialog(activity, sharedPrefUtil.getStorageDirectory(activity).getActualPath());
+                dia.setOnDirSelected(new SelectDirectoryDialog.OnDirSelected() {
+                    @Override
+                    public void onSelected(String dir) {
+                        File file = new File(dir);
+                        if(file.canWrite()) {
+                            storageLocation.setText(dir);
+                        } else {
+                            Toast.makeText(activity, "Selected directory is not writable", Toast.LENGTH_SHORT).show();
+                        }
                     }
+                });
+                dia.show();
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        } else {
+            if(activity instanceof ActivityStarter){
+                final int requestCode = 111;
+                ActivityStarter as = (ActivityStarter) activity;
+                as.setResultListener(new ActivityStarter.ActivityResultListener() {
+                    @Override
+                    public void onActivityResult(int rCode, int resultCode, Intent resultData) {
+                        if(requestCode == rCode && Activity.RESULT_OK == resultCode){
+                            Uri treeUri = resultData.getData();
+                            try {
+                                activity.grantUriPermission(activity.getPackageName(), treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                                activity.getContentResolver().takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                                String path = FileUtil.getFullPathFromTreeUri(treeUri, activity);
+                                storageLocation.setText(path);
+                            } catch (Exception e){
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                });
+
+                try {
+                    as.startResultReturningActivity(new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), requestCode);
+                } catch (Exception e){
+                    e.printStackTrace();
                 }
-            });
-            dia.show();
-        } catch (IOException e){
-            e.printStackTrace();
+            }
+//            activity.startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), 111);
+
         }
     }
 
     private void setValueForStorageLocation() {
         try {
-            storageLocation.setText(sharedPrefUtil.getStorageDirectory().getCanonicalPath());
+            storageLocation.setText(sharedPrefUtil.getStorageDirectory(activity).getHumanReadablePath());
         } catch (IOException e){
             e.printStackTrace();
         }
@@ -149,12 +188,7 @@ public class SettingsDialog implements AppDialog {
     }
 
     @Override
-    public void setOnClose(final OnClose onClose){
-        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                onClose.onClose();
-            }
-        });
+    public void close(){
+        dialog.cancel();
     }
 }

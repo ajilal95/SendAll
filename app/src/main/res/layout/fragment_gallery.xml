@@ -24,8 +24,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="@dimen/appbar_padding_top"
-                    android:background="@color/colorGrey"
+                    android:background="@color/colorWhite"
                     android:textColor="@color/colorBlack"
+                    android:textStyle="bold"
                     android:textSize="@dimen/gallery_section_label_size"
                     android:id="@+id/txt_vw_lable_videos" />
 
@@ -53,8 +54,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="@dimen/appbar_padding_top"
-                    android:background="@color/colorGrey"
+                    android:background="@color/colorWhite"
                     android:textColor="@color/colorBlack"
+                    android:textStyle="bold"
                     android:textSize="@dimen/gallery_section_label_size"
                     android:id="@+id/txt_vw_lable_audios"/>
 
@@ -82,8 +84,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="@dimen/appbar_padding_top"
-                    android:background="@color/colorGrey"
+                    android:background="@color/colorWhite"
                     android:textColor="@color/colorBlack"
+                    android:textStyle="bold"
                     android:textSize="@dimen/gallery_section_label_size"
                     android:id="@+id/txt_vw_lable_images"/>
 
@@ -94,6 +97,38 @@
                     android:scrollbars="vertical"/>
 
             </LinearLayout>
+
+
+            <LinearLayout
+                android:layout_width="@dimen/gallery_item_margin"
+                android:layout_height="match_parent"
+                android:background="@color/colorBlack" />
+
+            <LinearLayout
+                android:layout_width="@dimen/gallery_item_width"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:id="@+id/lnrlyt_gallery_section_apk">
+
+                <TextView
+                    android:text="@string/string_apk"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/appbar_padding_top"
+                    android:background="@color/colorWhite"
+                    android:textColor="@color/colorBlack"
+                    android:textStyle="bold"
+                    android:textSize="@dimen/gallery_section_label_size"
+                    android:id="@+id/txt_vw_lable_apk"/>
+
+                <android.support.v7.widget.RecyclerView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/recycl_vw_gallery_apk"
+                    android:scrollbars="vertical" />
+
+            </LinearLayout>
+
 
             <LinearLayout
                 android:layout_width="@dimen/gallery_item_margin"
@@ -111,8 +146,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="@dimen/appbar_padding_top"
-                    android:background="@color/colorGrey"
+                    android:background="@color/colorWhite"
                     android:textColor="@color/colorBlack"
+                    android:textStyle="bold"
                     android:textSize="@dimen/gallery_section_label_size"
                     android:id="@+id/txt_vw_lable_other"/>
 

@@ -9,6 +9,7 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.support.annotation.NonNull;
 
 import com.aj.sendall.broadcastreceiver.WifiApScannerBR;
+import com.aj.sendall.db.dto.ConnectionViewData;
 import com.aj.sendall.db.dto.ConnectionsAndUris;
 import com.aj.sendall.db.dto.PersonalInteractionDTO;
 import com.aj.sendall.db.model.Connections;
@@ -33,6 +34,8 @@ import com.aj.sendall.services.NewConnCreationServerService;
 import com.aj.sendall.services.ToggleReceiverService;
 import com.aj.sendall.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.sharedprefs.SharedPrefUtil;
+import com.aj.sendall.streams.StreamManager;
+import com.aj.sendall.streams.StreamManagerFactory;
 import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.utils.PermissionUtil;
 import com.aj.sendall.utils.WifiNetUtil;
@@ -274,19 +277,20 @@ public class AppController implements Serializable{
         return !part1.isEmpty();
     }
 
-    public File getTempFileToWrite(long connId, String fileName, int mediaType) throws IOException{
+    public StreamManager getTempFileToWrite(long connId, String fileName, int mediaType) throws IOException{
         if (!isValidFileName(fileName)) {
             return null;
         }
-        File root = sharedPrefUtil.getStorageDirectory();
-        File subDir = new File(root.getCanonicalPath() + '/' + SharedPrefConstants.APP_NAME + '/' + "Temp");
+        StreamManager root = sharedPrefUtil.getStorageDirectory(context);
+        StreamManager subDir = root.createDir(SharedPrefConstants.APP_NAME).createDir("Temp");
         if(!subDir.exists()){
-            if(!subDir.mkdirs()){
+            subDir.create();
+            if(!subDir.exists()){
                 return null;
             }
         }
         String tempFileName = getTempFileName(connId, fileName, mediaType);
-        return new File(subDir.getCanonicalPath() + '/' + tempFileName);
+        return subDir.createFile(tempFileName);
     }
 
     private String getTempFileName(long connId, String fileName, int mediaType){
@@ -294,31 +298,32 @@ public class AppController implements Serializable{
         return connId + '_' + mediaType + '_' + fileName + ".tmp";
     }
 
-    public File getActualFileToWrite(String fileName, int fileType) throws IOException{
+    public StreamManager getActualFileToWrite(String fileName, int fileType) throws IOException{
         if (!isValidFileName(fileName)) {
             return null;
         }
-        File root = sharedPrefUtil.getStorageDirectory();
+        StreamManager root = sharedPrefUtil.getStorageDirectory(context);
         String subDirName = getSubDirName(fileType);
-        File subDir = new File(root.getCanonicalPath() + '/' + SharedPrefConstants.APP_NAME + '/' + subDirName);
+        StreamManager subDir = root.createDir(SharedPrefConstants.APP_NAME).createDir(subDirName);
         if(!subDir.exists()){
-            if(!subDir.mkdirs()){
+            subDir.create();
+            if(!subDir.exists()){
                 return null;
             }
         }
         return getUniqueFile(subDir, fileName);
     }
 
-    private File getUniqueFile(File dir, String fileName) throws IOException{
+    private StreamManager getUniqueFile(StreamManager dir, String fileName) throws IOException{
         String extnRemovedFileName = removeExtension(fileName);
         String extn = getExtensionIncludingPeriod(fileName);
-        String part1 = dir.getCanonicalPath() + '/' + extnRemovedFileName;
-        File uniqueFile = new File(part1 + extn);
+        String part1 = dir.getActualPath() + '/' + extnRemovedFileName;
+        StreamManager uniqueFile = StreamManagerFactory.getInstance(context, part1 + extn);
         //to avoid fileName conflict
         int count = 1;
         while(uniqueFile.exists()){
             String filePathTry = part1 + '(' + count + ')' + extn;
-            uniqueFile = new File(filePathTry);
+            uniqueFile = StreamManagerFactory.getInstance(context, filePathTry);
             count++;
         }
         return uniqueFile;
@@ -568,5 +573,15 @@ public class AppController implements Serializable{
 
     public String getHumanReadablePermString(String perm){
         return permissionUtil.getHumanReadablePermString(perm);
+    }
+
+    public ConnectionViewData getConnectionViewData(long connectionId){
+        Connections c = dbUtil.getConnection(connectionId);
+        ConnectionViewData cvd = new ConnectionViewData();
+        cvd.uniqueId = c.getSSID();
+        cvd.profileName = c.getConnectionName();
+        cvd.profileId = c.getConnectionId();
+        cvd.profilePicPath = c.getProfPicPath();
+        return cvd;
     }
 }

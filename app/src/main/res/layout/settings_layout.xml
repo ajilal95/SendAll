@@ -55,6 +55,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/save_button"
         style="@style/Widget.AppCompat.Button.Borderless"
-        android:textColor="@color/colorBlack" />
+        android:textColor="@color/colorBlack"
+        android:textAllCaps="false" />
 
 </LinearLayout>

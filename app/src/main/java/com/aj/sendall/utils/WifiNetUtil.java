@@ -328,7 +328,7 @@ final public class WifiNetUtil {
         }
     }
 
-    // getClients returns a list of all clients connected to the network.
+    // getClients returns a getListableDirs of all clients connected to the network.
     // Since the information is pulled from ARP, which is cached for up to
     // five minutes, this method may yield clients that disconnected
     // minutes ago.

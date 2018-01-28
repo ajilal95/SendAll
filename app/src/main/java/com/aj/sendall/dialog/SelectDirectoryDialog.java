@@ -2,7 +2,6 @@ package com.aj.sendall.dialog;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.LinearLayoutCompat;
@@ -14,12 +13,19 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.aj.sendall.R;
+import com.aj.sendall.streams.StreamManager;
+import com.aj.sendall.streams.StreamManagerFactory;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 class SelectDirectoryDialog implements AppDialog {
@@ -54,7 +60,7 @@ class SelectDirectoryDialog implements AppDialog {
         enableViews();
         addClickListeners();
         initView();
-        setNewView(new File(currentPath));
+        setNewView(StreamManagerFactory.getInstance(activity, currentPath));
 
         AlertDialog.Builder alertBuilder = new AlertDialog.Builder(
                 new ContextThemeWrapper(activity, R.style.AppTheme_NoActionBar));
@@ -94,11 +100,47 @@ class SelectDirectoryDialog implements AppDialog {
         btnGoBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                File parent = new File(currentPath).getParentFile();
+                StreamManager parent = StreamManagerFactory.getInstance(activity, currentPath).getParent();
                 setNewView(parent);
                 enableViews();
             }
         });
+
+        btnNewFolder.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showCreateFolderDia();
+            }
+        });
+    }
+
+    private void showCreateFolderDia(){
+        final CreateNewThingDialog dia = new CreateNewThingDialog(activity);
+        dia.setNewThingNameCaption(R.string.newfoldername_txt);
+        dia.setOnCancelListener(new CreateNewThingDialog.OnCancel() {
+            @Override
+            public void onCancel() {
+                dia.close();
+            }
+        });
+        dia.setOnCreateListener(new CreateNewThingDialog.OnCreate() {
+            @Override
+            public void onCreate(String newFolderName) {
+                StreamManager file = StreamManagerFactory.getInstance(activity, currentPath + "/" + newFolderName);
+                if(file.exists()){
+                    Toast.makeText(activity, "Directory exists", Toast.LENGTH_SHORT).show();
+                } else {
+                    file.create();
+                    if(!file.exists()){
+                        Toast.makeText(activity, "Couldn't create directory", Toast.LENGTH_SHORT).show();
+                    } else {
+                        setNewView(file);
+                    }
+                    dia.close();
+                }
+            }
+        });
+        dia.show();
     }
 
     private void initView(){
@@ -111,16 +153,11 @@ class SelectDirectoryDialog implements AppDialog {
     }
 
     @Override
-    public void setOnClose(final OnClose onClose){
-        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                onClose.onClose();
-            }
-        });
+    public void close(){
+        dialog.cancel();
     }
 
-    public void setOnDirSelected(OnDirSelected onDirSelected){
+    void setOnDirSelected(OnDirSelected onDirSelected){
         this.onDirSelected = onDirSelected;
     }
 
@@ -128,10 +165,10 @@ class SelectDirectoryDialog implements AppDialog {
         dialog.cancel();
     }
 
-    private void setNewView(File parent){
+    private void setNewView(StreamManager parent){
         try {
-            currentPath = parent.getCanonicalPath();
-            txtCurrPath.setText(currentPath);
+            currentPath = parent.getActualPath();
+            txtCurrPath.setText(parent.getHumanReadablePath());
             rWContent.setAdapter(new ContentAdapter(parent));
             enableViews();
         } catch (Exception e){
@@ -140,32 +177,16 @@ class SelectDirectoryDialog implements AppDialog {
     }
 
     private class ContentAdapter extends RecyclerView.Adapter<ContentAdapter.ViewHolder>{
-        List<File> folderList = new ArrayList<>();
+        List<StreamManager> folderList = null;
 
-        ContentAdapter(File thisLocation){
-            //only to add file names to the folder list
-            thisLocation.list(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                    if(!name.startsWith(".")){
-                        //do not show hidden folders
-                        try {
-                            File child = new File(dir.getCanonicalPath() + "/" + name);
-                            if(child.exists() && child.isDirectory() && child.canWrite()){
-                                folderList.add(child);
-                            }
-                        } catch (Exception e){
-                            e.printStackTrace();
-                        }
-                    }
-                    return false;
-                }
-            });
+        ContentAdapter(StreamManager thisLocation){
+            //only to add file names to the folder getListableDirs
+            folderList = thisLocation.getListableDirs();
         }
 
         @Override
         public void onBindViewHolder(ViewHolder holder, int position) {
-            final File thisFile = folderList.get(position);
+            final StreamManager thisFile = folderList.get(position);
             String fileName = thisFile.getName();
             holder.folderName.setText(fileName);
             holder.v.setOnClickListener(new View.OnClickListener() {
@@ -194,7 +215,7 @@ class SelectDirectoryDialog implements AppDialog {
             private ViewHolder(View v){
                 super(v);
                 this.v = v;
-                this.folderName = (TextView) v.findViewById(R.id.txt_foldername);
+                this.folderName = (TextView) v.findViewById(R.id.txt_new_thing_name_caption);
             }
         }
     }

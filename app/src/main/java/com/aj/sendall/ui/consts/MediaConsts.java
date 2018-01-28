@@ -10,7 +10,8 @@ public class MediaConsts {
     public static final int TYPE_VIDEO = MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
     public static final int TYPE_AUDIO = MediaStore.Files.FileColumns.MEDIA_TYPE_AUDIO;
     public static final int TYPE_IMAGE = MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
-    public static final int TYPE_OTHER = -1;
+    public static final int TYPE_APK = -1;
+    public static final int TYPE_OTHER = -2;
 
     public static final String VIDEO_SORT_FIELD = MediaStore.Video.VideoColumns.DATE_MODIFIED;
     public static final String AUDIO_SORT_FIELD = MediaStore.Audio.AudioColumns.ALBUM_ID;
@@ -18,6 +19,7 @@ public class MediaConsts {
     public static final String OTHER_SORT_FIELD = MediaStore.Files.FileColumns.DATE_MODIFIED;
 
     public static final String COL_MIME_TYPE = MediaStore.MediaColumns.MIME_TYPE;
+    public static final String COL_FILE_TITLE = MediaStore.Files.FileColumns.TITLE;
     public static final String COL_MEDIA_TYPE = MediaStore.Files.FileColumns.MEDIA_TYPE;
 
     private static final String QUOTED_MIME_TYPE_PDF = "'application/pdf'";

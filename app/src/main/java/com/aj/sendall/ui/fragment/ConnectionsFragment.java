@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -16,6 +17,9 @@ import android.widget.Toast;
 import com.aj.sendall.R;
 import com.aj.sendall.application.ThisApplication;
 import com.aj.sendall.controller.AppConsts;
+import com.aj.sendall.events.EventRouter;
+import com.aj.sendall.events.EventRouterFactory;
+import com.aj.sendall.events.event.FileTransferStatusEvent;
 import com.aj.sendall.ui.activity.ConnectionCreatorActivity;
 import com.aj.sendall.ui.activity.HomeActivity;
 import com.aj.sendall.ui.activity.PersonalInteractionsActivity;
@@ -40,6 +44,8 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
     private FloatingActionButton fltActionButtonAdd;
     private Activity parentActivity;
     private String purpose;
+    private EventRouter er = EventRouterFactory.getInstance();
+    private Handler handler;
 
     @Inject
     public ConnectionsActivityUtil connectionsActivityUtil;
@@ -51,6 +57,7 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
         connectionsFragment.parentActivity = parentActivity;
         connectionsFragment.purpose = purpose;
         connectionsFragment.adapter = new ConnectionAdapter(null, parentActivity);
+        connectionsFragment.handler = new Handler();
         ((ThisApplication)parentActivity.getApplication()).getDaggerInjector().inject(connectionsFragment);
 
         return connectionsFragment;
@@ -76,6 +83,22 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
         } else if(ConnectionsConstants.PURPOSE_SELECT.equals(purpose)){
             setListenersForPurposeSelect();
         }
+        er.subscribe(FileTransferStatusEvent.class, new EventRouter.Receiver<FileTransferStatusEvent>() {
+            @Override
+            public void receive(final FileTransferStatusEvent event) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(event.totalTransferred == FileTransferStatusEvent.COMPLETED){
+                            adapter.setConnectionInactive(event.connectionId);
+                        } else {
+                            adapter.setConnectionActive(event.connectionId);
+                        }
+                    }
+                });
+
+            }
+        });
     }
 
     private void setListenersForPurposeView(){
@@ -181,7 +204,7 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
         @Override
         public void onClick(View view) {
             FileTransferUIUtil.SendOperationResult result = fileTransferUIUtil.send_to(receivers);
-            if(FileTransferUIUtil.SendOperationResult.URI_EMPTY.equals(result)){
+            if(FileTransferUIUtil.SendOperationResult.FILES_EMPTY.equals(result)){
                 Intent fileSelectIntent = new Intent(parentActivity, SelectMediaActivity.class);
                 parentActivity.startActivity(fileSelectIntent);
             } else if(FileTransferUIUtil.SendOperationResult.SENDING.equals(result)){
@@ -191,5 +214,11 @@ public class ConnectionsFragment extends Fragment implements ItemFilterableView{
                 }
             }
         }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
     }
 }

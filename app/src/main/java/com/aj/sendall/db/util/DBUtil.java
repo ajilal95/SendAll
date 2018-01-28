@@ -124,4 +124,10 @@ public class DBUtil {
             connectionsDao.update(conn);
         }
     }
+
+    public Connections getConnection(long connectionId){
+        return daoSession.getConnectionsDao().queryBuilder().where(
+                ConnectionsDao.Properties.ConnectionId.eq(connectionId)
+        ).unique();
+    }
 }

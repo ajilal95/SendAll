@@ -13,11 +13,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.aj.sendall.R;
+import com.aj.sendall.db.dto.FileInfoDTO;
 import com.aj.sendall.db.dto.PersonalInteractionDTO;
 import com.aj.sendall.db.enums.FileStatus;
 import com.aj.sendall.events.EventRouter;
 import com.aj.sendall.events.EventRouterFactory;
 import com.aj.sendall.events.event.FileTransferStatusEvent;
+import com.aj.sendall.ui.adapter.helper.AdapterHelper;
+import com.aj.sendall.ui.adapter.helper.AdapterHelperFactory;
 import com.aj.sendall.ui.consts.MediaConsts;
 import com.aj.sendall.ui.interfaces.ItemSelectableView;
 import com.aj.sendall.ui.utils.CommonUiUtils;
@@ -32,6 +35,7 @@ public class PersonalInteractionsAdapter extends RecyclerView.Adapter<PersonalIn
     private EventRouter eventRouter = EventRouterFactory.getInstance();
     private Context context;
     private List<PersonalInteractionDTO> personalInteractionDTOs;
+    private Set<FileInfoDTO> selectedFiles = new HashSet<>();
     private long connectionId;
 
     private ItemSelectableView parentItemSelectable;
@@ -65,14 +69,13 @@ public class PersonalInteractionsAdapter extends RecyclerView.Adapter<PersonalIn
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         PersonalInteractionDTO dto = personalInteractionDTOs.get(position);
-
-        CommonUiUtils.setFileThumbnail(
-                dto.mediaType,
-                context,
-                holder.imgVwItemThumbnail,
-                MediaConsts.MEDIA_THUMBNAIL_WIDTH_BIG,
-                MediaConsts.MEDIA_THUMBNAIL_HEIGHT_BIG,
-                dto);
+        AdapterHelper ah = AdapterHelperFactory.getInstance(dto.mediaType, context);
+        if(ah != null) {
+            ah.setThumbnail(holder.imgVwItemThumbnail,
+                    MediaConsts.MEDIA_THUMBNAIL_WIDTH_BIG,
+                    MediaConsts.MEDIA_THUMBNAIL_HEIGHT_BIG,
+                    dto);
+        }
         holder.txtVwFileName.setText(dto.title);
         String size;
         if(FileStatus.SENT.equals(dto.status) || FileStatus.RECEIVED.equals(dto.status)) {
@@ -126,11 +129,14 @@ public class PersonalInteractionsAdapter extends RecyclerView.Adapter<PersonalIn
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    ((PersonalInteractionDTO)v.getTag()).isSelected = !((PersonalInteractionDTO)v.getTag()).isSelected;
-                    CommonUiUtils.setViewSelectedAppearanceRoundEdged(v, ((PersonalInteractionDTO)v.getTag()).isSelected);
-                    if(((PersonalInteractionDTO)v.getTag()).isSelected){
+                    PersonalInteractionDTO dto = (PersonalInteractionDTO)v.getTag();
+                    dto.isSelected = !dto.isSelected;
+                    CommonUiUtils.setViewSelectedAppearanceRoundEdged(v, dto.isSelected);
+                    if(dto.isSelected){
+                        selectedFiles.add(dto);
                         parentItemSelectable.incrementTotalNoOfSelections();
                     } else {
+                        selectedFiles.remove(dto);
                         parentItemSelectable.decrementTotalNoOfSelections();
                     }
                 }
@@ -193,5 +199,9 @@ public class PersonalInteractionsAdapter extends RecyclerView.Adapter<PersonalIn
         for(ViewHolder holder : allViewHolders){
             holder.unsubscribeEvents();
         }
+    }
+
+    public Set<FileInfoDTO> getSelectedFiles(){
+        return selectedFiles;
     }
 }

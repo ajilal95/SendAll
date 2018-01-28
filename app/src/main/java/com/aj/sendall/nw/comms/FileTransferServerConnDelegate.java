@@ -245,7 +245,7 @@ class FileTransferServerConnDelegate extends AbstractServerConnDelegate implemen
 
             //communicate bytes send so far(for resuming transfer)
             long bytesTransferred = dataInputStream.readLong();
-            StreamManager streamManager = StreamManagerFactory.getInstance(fileInfoDTO);
+            StreamManager streamManager = StreamManagerFactory.getInstance(appController.getApplicationContext(), fileInfoDTO);
             InputStream is = streamManager.getInputStream();
             long bytesSkipped = is.skip(bytesTransferred);
 

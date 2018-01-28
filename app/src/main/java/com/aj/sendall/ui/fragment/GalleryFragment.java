@@ -7,6 +7,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,11 +37,13 @@ public class GalleryFragment extends Fragment implements ItemSelectableView, Ite
     private LinearLayout lnrLytVideos;
     private LinearLayout lnrLytAudios;
     private LinearLayout lnrLytImages;
+    private LinearLayout lnrLytApkFiles;
     private LinearLayout lnrLytOtherFiles;
 
     private RecyclerView recyclerViewVideos;
     private RecyclerView recyclerViewAudios;
     private RecyclerView recyclerViewImages;
+    private RecyclerView recyclerViewApkFiles;
     private RecyclerView recyclerViewOtherFiles;
 
 
@@ -84,20 +87,25 @@ public class GalleryFragment extends Fragment implements ItemSelectableView, Ite
         lnrLytVideos = (LinearLayout) rootView.findViewById(R.id.lnrlyt_gallery_section_video);
         lnrLytAudios = (LinearLayout) rootView.findViewById(R.id.lnrlyt_gallery_section_audio);
         lnrLytImages = (LinearLayout) rootView.findViewById(R.id.lnrlyt_gallery_section_images);
+        lnrLytApkFiles = (LinearLayout) rootView.findViewById(R.id.lnrlyt_gallery_section_apk);
         lnrLytOtherFiles = (LinearLayout) rootView.findViewById(R.id.lnrlyt_gallery_section_other);
 
         recyclerViewVideos = (RecyclerView) rootView.findViewById(R.id.recycl_vw_gallery_videos);
         recyclerViewAudios = (RecyclerView) rootView.findViewById(R.id.recycl_vw_gallery_audios);
         recyclerViewImages = (RecyclerView) rootView.findViewById(R.id.recycl_vw_gallery_images);
+        recyclerViewApkFiles = (RecyclerView) rootView.findViewById(R.id.recycl_vw_gallery_apk);
         recyclerViewOtherFiles = (RecyclerView) rootView.findViewById(R.id.recycl_vw_gallery_other);
+
         fltBtnSend = (FloatingActionButton) rootView.findViewById(R.id.flt_btn_send_items_gallery);
     }
 
     private void initView() {
-        lnrLytVideos.getLayoutParams().width = CommonUiUtils.getGallerySectionWidth(parentActivity);
-        lnrLytAudios.getLayoutParams().width = CommonUiUtils.getGallerySectionWidth(parentActivity);
-        lnrLytImages.getLayoutParams().width = CommonUiUtils.getGallerySectionWidth(parentActivity);
-        lnrLytOtherFiles.getLayoutParams().width = CommonUiUtils.getGallerySectionWidth(parentActivity);
+        int w = CommonUiUtils.getGallerySectionWidth(parentActivity);
+        lnrLytVideos.getLayoutParams().width = w;
+        lnrLytAudios.getLayoutParams().width = w;
+        lnrLytImages.getLayoutParams().width = w;
+        lnrLytApkFiles.getLayoutParams().width = w;
+        lnrLytOtherFiles.getLayoutParams().width = w;
 
         recyclerViewVideos.setHasFixedSize(true);
         GridLayoutManager layoutManagerVideo = new GridLayoutManager(parentActivity, 4);
@@ -116,6 +124,12 @@ public class GalleryFragment extends Fragment implements ItemSelectableView, Ite
         recyclerViewImages.setLayoutManager(layoutManagerImages);
         GalleryAdapter adapterImages = new GalleryAdapter(parentActivity, MediaConsts.TYPE_IMAGE, this);
         recyclerViewImages.setAdapter(adapterImages);
+
+        recyclerViewApkFiles.setHasFixedSize(true);
+        GridLayoutManager layoutManagerApk = new GridLayoutManager(parentActivity, 4);
+        recyclerViewApkFiles.setLayoutManager(layoutManagerApk);
+        GalleryAdapter adapterApk = new GalleryAdapter(parentActivity, MediaConsts.TYPE_APK, this);
+        recyclerViewApkFiles.setAdapter(adapterApk);
 
         recyclerViewOtherFiles.setHasFixedSize(true);
         GridLayoutManager layoutManagerOtherFiles = new GridLayoutManager(parentActivity, 4);
@@ -155,6 +169,7 @@ public class GalleryFragment extends Fragment implements ItemSelectableView, Ite
         recyclerViews.add(recyclerViewVideos);
         recyclerViews.add(recyclerViewAudios);
         recyclerViews.add(recyclerViewImages);
+        recyclerViews.add(recyclerViewApkFiles);
         recyclerViews.add(recyclerViewOtherFiles);
         return recyclerViews;
     }
@@ -198,6 +213,12 @@ public class GalleryFragment extends Fragment implements ItemSelectableView, Ite
         if(galleryAdapter != null) {
             galleryAdapter.filter(filterString);
             recyclerViewImages.setAdapter(galleryAdapter);
+        }
+
+        galleryAdapter = (GalleryAdapter) recyclerViewApkFiles.getAdapter();
+        if(galleryAdapter != null) {
+            galleryAdapter.filter(filterString);
+            recyclerViewApkFiles.setAdapter(galleryAdapter);
         }
 
         galleryAdapter = (GalleryAdapter) recyclerViewOtherFiles.getAdapter();

@@ -6,6 +6,9 @@ import android.net.wifi.ScanResult;
 import android.os.Environment;
 import android.support.annotation.Nullable;
 
+import com.aj.sendall.streams.StreamManager;
+import com.aj.sendall.streams.StreamManagerFactory;
+
 import java.io.File;
 
 import javax.inject.Inject;
@@ -111,17 +114,18 @@ public class SharedPrefUtil {
         return false;
     }
 
-    public File getStorageDirectory(){
+    public StreamManager getStorageDirectory(Context c){
         String storage = getSharedPrefs().getString(SharedPrefConstants.STORAGE_DIR, null);
-        File file = null;
+        StreamManager file = null;
         if(storage != null){
-            file = new File(storage);
+            file = StreamManagerFactory.getInstance(c, storage);
         }
-        if(file == null || !file.canWrite()){
-            file = Environment.getExternalStorageDirectory();
+        if(file == null || !file.writable()){
+            file = StreamManagerFactory.getInstance(Environment.getExternalStorageDirectory());
         } else if(!file.exists()){
-            if(!file.mkdirs()){
-                file = Environment.getExternalStorageDirectory();
+            file.create();
+            if(!file.exists()){
+                file = StreamManagerFactory.getInstance(Environment.getExternalStorageDirectory());
             }
         }
         return file;

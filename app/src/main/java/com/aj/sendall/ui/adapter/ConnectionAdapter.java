@@ -14,13 +14,18 @@ import com.aj.sendall.db.dto.ConnectionViewData;
 import com.aj.sendall.ui.utils.CommonUiUtils;
 
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ConnectionAdapter extends BaseAdapter {
     private List<ConnectionViewData> dataList;
     private List<ConnectionViewData> filteredItems;
     private Context context;
     private String filterString = null;
+
+    Map<View, ConnectionViewData> viewToDTO = new HashMap<>();
 
     public ConnectionAdapter(List<ConnectionViewData> dataList, Context context){
         this.dataList = dataList;
@@ -95,6 +100,7 @@ public class ConnectionAdapter extends BaseAdapter {
             convertView.setTag(profileData);
             CommonUiUtils.setViewSelectedAppearanceSimple(convertView, profileData.isSelected);
         }
+        viewToDTO.put(convertView, profileData);
         return convertView;
     }
 
@@ -113,4 +119,33 @@ public class ConnectionAdapter extends BaseAdapter {
             return dataList;
         }
     }
+
+    public void setConnectionActive(Object connectionId){
+        try {
+            for (Map.Entry<View, ConnectionViewData> e : viewToDTO.entrySet()) {
+                ConnectionViewData cvd = e.getValue();
+                if (connectionId.equals(cvd.profileId)) {
+                    CommonUiUtils.setViewActive(e.getKey(), true);
+                }
+            }
+        } catch (ConcurrentModificationException e){
+            //view changed. call the method again
+            setConnectionActive(connectionId);
+        }
+    }
+
+    public void setConnectionInactive(Object connectionId){
+        try {
+            for (Map.Entry<View, ConnectionViewData> e : viewToDTO.entrySet()) {
+                ConnectionViewData cvd = e.getValue();
+                if (connectionId.equals(cvd.profileId)) {
+                    CommonUiUtils.setViewActive(e.getKey(), false);
+                }
+            }
+        } catch (ConcurrentModificationException e){
+            //view changed. call the method again
+            setConnectionInactive(connectionId);
+        }
+    }
+
 }

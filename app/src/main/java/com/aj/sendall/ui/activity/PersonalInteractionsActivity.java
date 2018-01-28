@@ -1,5 +1,6 @@
 package com.aj.sendall.ui.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
@@ -13,15 +14,30 @@ import android.view.View;
 import com.aj.sendall.R;
 import com.aj.sendall.application.ThisApplication;
 import com.aj.sendall.controller.AppConsts;
+import com.aj.sendall.controller.AppController;
+import com.aj.sendall.db.dto.ConnectionViewData;
+import com.aj.sendall.db.dto.FileInfoDTO;
+import com.aj.sendall.db.model.Connections;
+import com.aj.sendall.db.model.PersonalInteraction;
+import com.aj.sendall.streams.FileUtil;
 import com.aj.sendall.ui.adapter.PersonalInteractionsAdapter;
+import com.aj.sendall.ui.utils.FileTransferUIUtil;
 import com.aj.sendall.ui.utils.PersonalInteractionsUtil;
 import com.aj.sendall.ui.interfaces.ItemSelectableView;
+
+import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.inject.Inject;
 
 public class PersonalInteractionsActivity extends AppCompatActivity implements ItemSelectableView{
     @Inject
     public PersonalInteractionsUtil personalInteractionsUtil;
+    @Inject
+    public FileTransferUIUtil fileTransferUIUtil;
+    @Inject
+    public AppController appController;
     private FloatingActionButton fltActionButtonSend;
     private RecyclerView recyclrVwPersInteractions;
     private PersonalInteractionsAdapter personalInteractionsAdapter;
@@ -84,8 +100,16 @@ public class PersonalInteractionsActivity extends AppCompatActivity implements I
                 fltActionButtonSend.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Snackbar.make(view, "Send", Snackbar.LENGTH_LONG)
-                                .setAction("Action", null).show();
+                        fileTransferUIUtil.clean();//clean the existing file transfers
+                        ConnectionViewData cvd = appController.getConnectionViewData(userDBId);
+                        Set<ConnectionViewData> receivers = new HashSet<>();
+                        receivers.add(cvd);
+                        if(!FileTransferUIUtil.SendOperationResult.SENDING.equals(fileTransferUIUtil.send_to(receivers))){
+                            Intent i = new Intent(PersonalInteractionsActivity.this, SelectMediaActivity.class);
+                            PersonalInteractionsActivity.this.startActivity(i);
+                        } else {
+                            Snackbar.make(view, "Sending", Snackbar.LENGTH_SHORT).show();
+                        }
                     }
                 });
                 break;
@@ -93,8 +117,14 @@ public class PersonalInteractionsActivity extends AppCompatActivity implements I
                 fltActionButtonSend.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Snackbar.make(view, "Forward", Snackbar.LENGTH_LONG)
-                                .setAction("Action", null).show();
+                        fileTransferUIUtil.clean();
+                        Set<FileInfoDTO> files = personalInteractionsAdapter.getSelectedFiles();
+                        if(!FileTransferUIUtil.SendOperationResult.SENDING.equals(fileTransferUIUtil.send_items(files))){
+                            Intent i = new Intent(PersonalInteractionsActivity.this, SelectReceiversActivity.class);
+                            PersonalInteractionsActivity.this.startActivity(i);
+                        } else {
+                            Snackbar.make(view, "Sending", Snackbar.LENGTH_SHORT).show();
+                        }
                     }
                 });
                 break;
@@ -124,6 +154,7 @@ public class PersonalInteractionsActivity extends AppCompatActivity implements I
     protected void onPause() {
         super.onPause();
         removeAllListeners();
+        finish();
     }
 
     private void removeAllListeners(){

@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
 
     <application
@@ -41,15 +42,6 @@
         </activity>
         <activity android:name=".ui.activity.SelectReceiversActivity" />
         <activity android:name=".ui.activity.SelectMediaActivity" />
-        <activity
-            android:name=".ui.activity.SettingsActivity"
-            android:label="@string/title_activity_settings"
-            android:parentActivityName=".ui.activity.HomeActivity"
-            android:theme="@style/AppTheme.NoActionBar">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.aj.sendall.ui.activity.HomeActivity" />
-        </activity>
 
         <activity android:name=".ui.activity.ConnectionCreatorActivity" />
 

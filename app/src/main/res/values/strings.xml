@@ -9,6 +9,7 @@
     <string name="string_videos">Videos</string>
     <string name="string_audios">Audios</string>
     <string name="string_images">Images</string>
+    <string name="string_apk">Applications</string>
     <string name="string_other">Other files</string>
 
     <!-- Strings related to Settings -->
@@ -33,6 +34,9 @@
     <!-- Connector Activity -->
     <string name="create_grp_btn_description">Create</string>
     <string name="join_grp_btn_description">Join</string>
+
+    <!-- Create new folder dialog -->
+    <string name="string_type_name_for_new_dir">New directory name</string>
 
     <!-- Example General settings -->
     <string name="pref_header_general">General</string>
@@ -106,6 +110,9 @@
     <string name="home_settings_img_desc">Settings</string>
     <string name="settings_title">Settings</string>
     <string name="save_txt">Save</string>
+    <string name="create_txt">Create</string>
+    <string name="cancel_txt">Cancel</string>
+    <string name="newfoldername_txt">New directory name</string>
     <string name="username_txt">Username</string>
     <string name="string_select">Select</string>
     <string name="string_go_back">Go back</string>
