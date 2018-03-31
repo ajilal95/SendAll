@@ -138,11 +138,6 @@ public class SettingsDialog implements AppDialog {
                                 activity.grantUriPermission(activity.getPackageName(), treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                                 activity.getContentResolver().takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                                 String path = FileUtil.getFullPathFromTreeUri(treeUri, activity);
-                                appController.getTempFileToWrite(1, "Aj.mp3", MediaConsts.TYPE_AUDIO, null);
-//                                Uri test = Uri.parse(treeUri.toString());
-//                                DocumentFile ch1 = DocumentFile.fromTreeUri(activity,test).createDirectory("AjTest");
-//                                DocumentFile ch2 = ch1.createDirectory("AjTest2").createFile(null, "Ajilal.tzx");
-//                                Uri.parse()
                                 storageLocation.setText(path);
                                 if(ThisDevice.canUseTreeUri()) {
                                     storageLocation.setTag(treeUri);
