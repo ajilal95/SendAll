@@ -16,7 +16,7 @@ public interface StreamManager {
     long skipIS(long pos) throws IOException;
     boolean isDir();
     StreamManager createDir(String dirName) throws IOException;
-    StreamManager createFile(String fileName) throws IOException;
+    StreamManager createFile(String fileName, String MIMEType) throws IOException;
     String getHumanReadablePath() throws IOException;
     String getActualPath() throws IOException;
     boolean writable();

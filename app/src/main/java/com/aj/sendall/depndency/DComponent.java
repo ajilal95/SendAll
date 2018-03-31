@@ -1,6 +1,7 @@
 package com.aj.sendall.depndency;
 
 import com.aj.sendall.broadcastreceiver.WifiStatusBroadcastReceiver;
+import com.aj.sendall.dialog.SettingsDialog;
 import com.aj.sendall.services.FileTransferClientService;
 import com.aj.sendall.services.FileTransferServerService;
 import com.aj.sendall.services.NewConnCreationClientService;
@@ -32,4 +33,6 @@ public interface DComponent {
     void inject(NewConnCreationServerService serverSevice);
     void inject(FileTransferClientService fileTransferClientService);
     void inject(FileTransferServerService fileTransferServerService);
+
+    void inject(SettingsDialog settingsDialog);
 }

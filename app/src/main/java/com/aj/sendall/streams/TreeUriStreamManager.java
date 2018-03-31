@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.v4.provider.DocumentFile;
+import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,9 +24,29 @@ class TreeUriStreamManager implements StreamManager {
     TreeUriStreamManager(Context c, Uri treeUri){
         this.df = DocumentFile.fromTreeUri(c, treeUri);
         this.c = c;
-        c.grantUriPermission(c.getPackageName(), treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        c.getContentResolver().takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        if(df.isDirectory()) {
+            try {
+                c.grantUriPermission(c.getPackageName(), treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                c.getContentResolver().takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            } catch (SecurityException e){
+                Log.e(TreeUriStreamManager.class.getSimpleName(), "Could not get permission to access : " + treeUri.toString());
+            }
+        }
     }
+
+    private TreeUriStreamManager(Context c, DocumentFile df){
+        this.df = df;
+        this.c = c;
+//        if(df.isDirectory()) {
+//            try {
+//                c.grantUriPermission(c.getPackageName(), treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+//                c.getContentResolver().takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+//            } catch (SecurityException e){
+//                Log.e(TreeUriStreamManager.class.getSimpleName(), "Could not get permission to access : " + treeUri.toString());
+//            }
+//        }
+    }
+
     @Override
     public InputStream createInputStream() throws IOException, IllegalStateException {
         return is = c.getContentResolver().openInputStream(df.getUri());
@@ -98,27 +119,22 @@ class TreeUriStreamManager implements StreamManager {
 
     @Override
     public StreamManager createDir(String dirName) throws IOException {
-        return new TreeUriStreamManager(c, df.createDirectory(dirName).getUri());
+        for(DocumentFile chld : df.listFiles()){
+            if(chld.isDirectory() && chld.getName().equals(dirName)){
+                return new TreeUriStreamManager(c, chld.getUri());
+            }
+        }
+        return new TreeUriStreamManager(c, df.createDirectory(dirName));
     }
 
     @Override
-    public StreamManager createFile(String fileName) throws IOException {
-        return new TreeUriStreamManager(c, df.createFile(null, fileName).getUri());
+    public StreamManager createFile(String fileName, String MIMEType) throws IOException {
+        return new TreeUriStreamManager(c, df.createFile(MIMEType, fileName));
     }
 
     @Override
     public String getHumanReadablePath() throws IOException {
-        String encodedPath = df.getUri().toString();
-        String path = Uri.decode(encodedPath);
-        String[] split = path.split(":");
-        if(split.length == 2){
-            String part1 = "/Primary/";
-            if(!split[0].contains("primary")){
-                part1 = "/SDCard/";
-            }
-            return part1 + split[1];
-        }
-        return null;
+        return FileUtil.getFullPathFromTreeUri(df.getUri(), c);
     }
 
     @Override

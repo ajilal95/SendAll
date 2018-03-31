@@ -1,5 +1,11 @@
 package com.aj.sendall.streams;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.support.v4.content.ContextCompat;
+import android.util.Log;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -20,9 +26,11 @@ class FileStreamManager implements StreamManager {
     private FileOutputStream fos;
 
     private String currentOSMode;
+    private Context context;
 
-    FileStreamManager(File file){
+    FileStreamManager(File file, Context c){
         this.file = file;
+        this.context = c;
     }
 
     @Override
@@ -113,19 +121,28 @@ class FileStreamManager implements StreamManager {
     @Override
     public StreamManager createDir(String dirName) throws IOException{
         if(isDir()){
-            File newFile = new File(file.getCanonicalPath() + "/" + dirName);
+            File newFile = new File(file.getAbsolutePath() + "/" + dirName + "/");
             if(!newFile.exists()){
-                newFile.mkdir();
+                boolean created = newFile.mkdirs();
+                if(!created){
+                    int permission = ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                    boolean permissionGranted = (permission == PackageManager.PERMISSION_GRANTED);
+                    Log.e(FileStreamManager.class.getSimpleName(), "Could not create directory " + newFile.getName()
+                            + ", Parent exists " + exists()
+                            + ", Parent Dir writable : " + writable()
+                            + ", Permission granted : " + permissionGranted);
+
+                }
             }
-            return new FileStreamManager(newFile);
+            return new FileStreamManager(newFile, context);
         }
         return null;
     }
 
     @Override
-    public StreamManager createFile(String fileName) throws IOException{
+    public StreamManager createFile(String fileName, String MIMEType) throws IOException{
         if(isDir()){
-            return new FileStreamManager(new File(file.getCanonicalPath() + "/" + fileName));
+            return new FileStreamManager(new File(file.getCanonicalPath() + "/" + fileName), context);
         }
         return null;
     }
@@ -160,7 +177,7 @@ class FileStreamManager implements StreamManager {
         List<StreamManager> list = new ArrayList<>();
         for(File sub : file.listFiles()){
             if(!sub.getName().startsWith(".") && sub.isDirectory()){
-                list.add(new FileStreamManager(sub));
+                list.add(new FileStreamManager(sub, context));
             }
         }
 
@@ -180,7 +197,7 @@ class FileStreamManager implements StreamManager {
 
     @Override
     public StreamManager getParent() {
-        return new FileStreamManager(file.getParentFile());
+        return new FileStreamManager(file.getParentFile(), context);
     }
 
     @Override

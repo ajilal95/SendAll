@@ -277,7 +277,7 @@ public class AppController implements Serializable{
         return !part1.isEmpty();
     }
 
-    public StreamManager getTempFileToWrite(long connId, String fileName, int mediaType) throws IOException{
+    public StreamManager getTempFileToWrite(long connId, String fileName, int mediaType, String MIMEType) throws IOException{
         if (!isValidFileName(fileName)) {
             return null;
         }
@@ -290,7 +290,7 @@ public class AppController implements Serializable{
             }
         }
         String tempFileName = getTempFileName(connId, fileName, mediaType);
-        return subDir.createFile(tempFileName);
+        return subDir.createFile(tempFileName, MIMEType);
     }
 
     private String getTempFileName(long connId, String fileName, int mediaType){

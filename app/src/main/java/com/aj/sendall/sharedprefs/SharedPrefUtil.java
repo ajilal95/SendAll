@@ -121,11 +121,11 @@ public class SharedPrefUtil {
             file = StreamManagerFactory.getInstance(c, storage);
         }
         if(file == null || !file.writable()){
-            file = StreamManagerFactory.getInstance(Environment.getExternalStorageDirectory());
+            file = StreamManagerFactory.getInstance(Environment.getExternalStorageDirectory(), context);
         } else if(!file.exists()){
             file.create();
             if(!file.exists()){
-                file = StreamManagerFactory.getInstance(Environment.getExternalStorageDirectory());
+                file = StreamManagerFactory.getInstance(Environment.getExternalStorageDirectory(), context);
             }
         }
         return file;

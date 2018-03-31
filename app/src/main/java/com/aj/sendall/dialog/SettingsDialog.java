@@ -5,7 +5,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.v4.provider.DocumentFile;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutCompat;
@@ -19,18 +20,24 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.aj.sendall.R;
+import com.aj.sendall.application.ThisApplication;
+import com.aj.sendall.controller.AppController;
 import com.aj.sendall.sharedprefs.SharedPrefConstants;
 import com.aj.sendall.sharedprefs.SharedPrefUtil;
 import com.aj.sendall.streams.FileUtil;
-import com.aj.sendall.streams.StreamManager;
-import com.aj.sendall.streams.StreamManagerFactory;
 import com.aj.sendall.ui.activity.ActivityStarter;
+import com.aj.sendall.ui.consts.MediaConsts;
+import com.aj.sendall.utils.ThisDevice;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
+
+import javax.inject.Inject;
 
 public class SettingsDialog implements AppDialog {
+    @Inject
+    public AppController appController;
+
     private SharedPrefUtil sharedPrefUtil;
     private Activity activity;
     private AlertDialog dialog;
@@ -41,6 +48,7 @@ public class SettingsDialog implements AppDialog {
     public SettingsDialog(Activity activity, SharedPrefUtil sharedPrefUtil){
         this.sharedPrefUtil = sharedPrefUtil;
         this.activity = activity;
+        ((ThisApplication)sharedPrefUtil.context.getApplicationContext()).getDaggerInjector().inject(this);
         init();
     }
 
@@ -97,25 +105,27 @@ public class SettingsDialog implements AppDialog {
     }
 
     private void showSelctDirDialog() {
-        if (Build.VERSION.SDK_INT < 21) {
+        if (!ThisDevice.canUseSAF()) {
             try {
                 SelectDirectoryDialog dia = new SelectDirectoryDialog(activity, sharedPrefUtil.getStorageDirectory(activity).getActualPath());
                 dia.setOnDirSelected(new SelectDirectoryDialog.OnDirSelected() {
                     @Override
                     public void onSelected(String dir) {
                         File file = new File(dir);
-                        if(file.canWrite()) {
+                        if (file.canWrite()) {
                             storageLocation.setText(dir);
+                            storageLocation.setTag(dir);
                         } else {
                             Toast.makeText(activity, "Selected directory is not writable", Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
                 dia.show();
-            } catch (IOException e){
+            } catch (IOException e) {
                 e.printStackTrace();
             }
-        } else {
+        }
+        else {
             if(activity instanceof ActivityStarter){
                 final int requestCode = 111;
                 ActivityStarter as = (ActivityStarter) activity;
@@ -128,7 +138,17 @@ public class SettingsDialog implements AppDialog {
                                 activity.grantUriPermission(activity.getPackageName(), treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                                 activity.getContentResolver().takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                                 String path = FileUtil.getFullPathFromTreeUri(treeUri, activity);
+                                appController.getTempFileToWrite(1, "Aj.mp3", MediaConsts.TYPE_AUDIO, null);
+//                                Uri test = Uri.parse(treeUri.toString());
+//                                DocumentFile ch1 = DocumentFile.fromTreeUri(activity,test).createDirectory("AjTest");
+//                                DocumentFile ch2 = ch1.createDirectory("AjTest2").createFile(null, "Ajilal.tzx");
+//                                Uri.parse()
                                 storageLocation.setText(path);
+                                if(ThisDevice.canUseTreeUri()) {
+                                    storageLocation.setTag(treeUri);
+                                } else {
+                                    storageLocation.setTag(path);
+                                }
                             } catch (Exception e){
                                 e.printStackTrace();
                             }
@@ -179,7 +199,7 @@ public class SettingsDialog implements AppDialog {
 
     private void save(){
         sharedPrefUtil.setUserName(this.username.getText().toString());
-        sharedPrefUtil.setStorageDirectory((String)storageLocation.getText());
+        sharedPrefUtil.setStorageDirectory(storageLocation.getTag().toString());
     }
 
     @Override

@@ -223,7 +223,7 @@ public class FileTransferClient extends AbstractClient implements FileTransferPr
             //Now client has to check the space availability and inform the
             //server if it is okay to send the file
             try {
-                streamToWrite = appController.getTempFileToWrite(conn.getConnectionId(), nextFile, nextMediaType);
+                streamToWrite = appController.getTempFileToWrite(conn.getConnectionId(), nextFile, nextMediaType, "Dosomehing");
             } catch (Exception e){
                 e.printStackTrace();
             }
